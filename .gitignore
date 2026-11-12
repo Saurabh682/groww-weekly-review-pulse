@@ -38,3 +38,6 @@ venv/
 ENV/
 .idea/
 .vscode/
+
+hf_space/
+
