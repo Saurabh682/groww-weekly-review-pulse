@@ -1,0 +1,46 @@
+# Capability to Tool mapping for Model Context Protocol (MCP) integrations
+# Auth is handled entirely inside the MCP server/host environment; NO credentials live here.
+
+version: "1.0"
+
+# Allowed capabilities for this application.
+# IMPORTANT: Send email capabilities are strictly FORBIDDEN. This application is DRAFT-ONLY.
+allowed_capabilities:
+  - docs.create
+  - docs.update
+  - gmail.create_draft
+  - gmail.update_draft
+
+capabilities:
+  docs.create:
+    server: google_docs
+    tool: create_document
+    description: "Create a new Google Document for the weekly review pulse"
+    required: true
+
+  docs.update:
+    server: google_docs
+    tool: update_document
+    description: "Update existing weekly review pulse document"
+    required: false
+    fallback: versioned_create
+
+  gmail.create_draft:
+    server: gmail
+    tool: create_draft
+    description: "Create an unsent draft in Gmail addressed to self or alias"
+    required: true
+
+  gmail.update_draft:
+    server: gmail
+    tool: update_draft
+    description: "Update an existing draft for the same week"
+    required: false
+    fallback: versioned_draft
+
+policy:
+  draft_only: true
+  allow_send_email: false
+  retry_on_network_error: true
+  max_retries: 3
+  timeout_seconds: 30

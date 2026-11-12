@@ -1,0 +1,62 @@
+:root {
+  /* Canvas Foundation - Luminous Deep Space Slate */
+  --color-bg: #0b111e;
+  --color-canvas-subtle: #080e1b;
+  --color-sidebar: #0e1726;
+  
+  /* Layered Slate Containers (Glassmorphic Tiers) */
+  --color-surface: #162238;
+  --color-surface-dim: #0d1320;
+  --color-surface-low: #121b2d;
+  --color-surface-elevated: #1b2a47;
+  --color-surface-highest: #233454;
+  
+  /* Borders & Outlines */
+  --color-border: #1e293b;
+  --color-border-subtle: #2a3d5d;
+  --color-border-glass: rgba(42, 61, 93, 0.45);
+  
+  /* Text & Numerical Hierarchy */
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-on-surface-variant: #bacac1;
+  
+  /* Primary Luminous Pulse Teal */
+  --color-primary: #00d09c;
+  --color-primary-hover: #00b386;
+  --color-primary-tint: rgba(0, 208, 156, 0.12);
+  --color-primary-border: rgba(0, 208, 156, 0.3);
+  --color-primary-glow: rgba(0, 208, 156, 0.35);
+  --color-on-primary: #0b111e;
+  
+  /* Warm Amber (KYC / Friction) */
+  --color-friction: #f59e0b;
+  --color-friction-tint: rgba(245, 158, 11, 0.12);
+  --color-friction-border: rgba(245, 158, 11, 0.3);
+  --color-friction-glow: rgba(245, 158, 11, 0.35);
+  --color-friction-dark: #fbbf24;
+  
+  /* Crisp Coral (Critical / Drops / Outages) */
+  --color-critical: #f43f5e;
+  --color-critical-tint: rgba(244, 63, 94, 0.12);
+  --color-critical-border: rgba(244, 63, 94, 0.3);
+  --color-critical-glow: rgba(244, 63, 94, 0.4);
+  --color-critical-dark: #fb7185;
+
+  /* Analytical Blue (Telemetry & Secondary Signals) */
+  --color-blue: #38bdf8;
+  --color-blue-tint: rgba(56, 189, 248, 0.12);
+  --color-blue-border: rgba(56, 189, 248, 0.3);
+
+  /* Failure Red (Validation Failure Gate) */
+  --color-failure: #ef4444;
+  --color-failure-tint: rgba(239, 68, 68, 0.15);
+  --color-failure-border: rgba(239, 68, 68, 0.35);
+  --color-failure-dark: #fca5a5;
+
+  --radius-card: 10px;
+  --radius-chip: 9999px;
+  --max-content-width: 1280px;
+  --sidebar-width: 240px;
+}

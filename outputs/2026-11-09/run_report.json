@@ -1,0 +1,60 @@
+{
+  "run_id": "run_2026-11-10_63899",
+  "week_start": "2026-11-09",
+  "status": "validated",
+  "word_count": 208,
+  "max_words_allowed": 250,
+  "is_valid": true,
+  "errors": [],
+  "checks_passed": [
+    "word_count_cap",
+    "theme_count",
+    "theme_labels_unique",
+    "quotes_count",
+    "quotes_distinct_reviews",
+    "quote_1_verbatim",
+    "quote_2_verbatim",
+    "quote_3_verbatim",
+    "actions_count",
+    "google_play_scope",
+    "pii_free_rendered_note"
+  ],
+  "top_themes": [
+    {
+      "theme_id": "thm_2026-11-10_1",
+      "label": "Charges & Pricing",
+      "description": "User feedback regarding charges & pricing.",
+      "one_liner": "Users report unexpected charges and request transparent fee breakdowns on equity and DP deductions.",
+      "review_count": 205,
+      "share_pct": 0.3097,
+      "avg_rating": 2.63,
+      "neg_share": 0.0,
+      "is_top3": true
+    },
+    {
+      "theme_id": "thm_2026-11-10_2",
+      "label": "App Performance & Bugs",
+      "description": "User feedback regarding app performance & bugs.",
+      "one_liner": "Frequent app lag and freezing reported during peak trading hours, impacting order execution.",
+      "review_count": 191,
+      "share_pct": 0.2885,
+      "avg_rating": 2.43,
+      "neg_share": 0.0,
+      "is_top3": true
+    },
+    {
+      "theme_id": "thm_2026-11-10_3",
+      "label": "Positive UX & Simplicity",
+      "description": "User feedback regarding positive ux & simplicity.",
+      "one_liner": "Users praise intuitive navigation, clean interface design, and straightforward mutual fund investing.",
+      "review_count": 173,
+      "share_pct": 0.2613,
+      "avg_rating": 3.65,
+      "neg_share": 0.0,
+      "is_top3": true
+    }
+  ],
+  "quotes_count": 3,
+  "actions_count": 3,
+  "dry_run": true
+}

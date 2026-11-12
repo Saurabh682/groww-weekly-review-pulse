@@ -1,0 +1,30 @@
+{
+  "run_id": "run_2026-11-10_skeleton",
+  "week": "2026-11-10",
+  "timestamp": "2026-11-11T11:35:21.890244+00:00",
+  "word_count": 172,
+  "max_words_allowed": 250,
+  "themes_count": 3,
+  "quotes_count": 3,
+  "actions_count": 3,
+  "doc_result": {
+    "status": "success",
+    "server": "google_docs",
+    "tool": "create_document",
+    "doc_id": "doc_skeleton_mock_12345",
+    "doc_url": "https://docs.google.com/document/d/doc_skeleton_mock_12345/edit",
+    "title": "Groww Weekly Review Pulse: Week of 2026-11-10",
+    "characters": 1092
+  },
+  "draft_result": {
+    "status": "success",
+    "server": "gmail",
+    "tool": "create_draft",
+    "draft_id": "draft_skeleton_mock_67890",
+    "to": "",
+    "subject": "Groww Weekly Review Pulse | Week of 2026-11-10",
+    "body_length": 1173,
+    "is_sent": false
+  },
+  "local_fallback": "D:\\VibeCode\\Applied Generative AI Bootcamp\\groww-weekly-review-pulse\\outputs\\2026-11-10\\note.md"
+}

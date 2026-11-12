@@ -1,0 +1,28 @@
+{
+  "emails": [
+    "canary_user_alpha@example.com",
+    "canary_trader_99@growwfake.in",
+    "investor_secret_canary@testmail.org"
+  ],
+  "phones": [
+    "+91 98765 43210",
+    "9876543210",
+    "09123456789",
+    "+91-9988776655"
+  ],
+  "pans": [
+    "ABCDE1234F",
+    "ZXCVB9876Q",
+    "PLMKO5432R"
+  ],
+  "upi_ids": [
+    "canaryinvestor@okhdfcbank",
+    "fakeuser123@upi",
+    "rahul.trade@paytm"
+  ],
+  "sign_offs": [
+    "Regards, Rahul Sharma",
+    "Thanks, Priya Mehta",
+    "- Vikram Malhotra"
+  ]
+}

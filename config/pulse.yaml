@@ -1,0 +1,36 @@
+app:
+  name: Groww
+  play_store_id: com.nextbillion.groww
+  region: in
+
+window:
+  weeks: 12                           # min 8, max 12
+
+sources:
+  app_store:
+    enabled: false                    # Deferred for this build; must remain disabled
+  play_store:
+    mode: csv_import                  # csv_import | automated (disabled by default)
+    path: data/imports/play_reviews.csv
+    allow_automated: false
+
+themes:
+  max_themes: 5                       # Hard cap: maximum 5 themes
+  min_cluster_share: 0.03
+  top_n: 3                            # Top 3 themes in weekly note
+
+note:
+  max_words: 250                      # Hard cap: maximum 250 words
+  quotes: 3                           # Exactly 3 verbatim quotes
+  actions: 3                          # Exactly 3 concrete action ideas
+
+llm:
+  provider: gemini
+  model: gemini-2.5-flash
+  temperature: 0.2
+
+email:
+  to: "${PULSE_EMAIL_TO}"
+
+mcp:
+  config: config/mcp.yaml

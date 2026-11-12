@@ -1,0 +1,6 @@
+rating,title,text,date,app_version
+1,KYC failed email me,"My KYC is stuck. Contact me at canary_user_alpha@example.com or call +91 98765 43210. Regards, Rahul Sharma",2026-10-15,14.2.1
+1,PAN card issue,Uploaded my PAN ABCDE1234F multiple times but verification rejected. Email canary_trader_99@growwfake.in.,2026-10-18,14.2.1
+1,UPI transfer failed,"Transferred money to canaryinvestor@okhdfcbank transaction id 9876543210123456 but not credited. Thanks, Priya Mehta",2026-10-20,14.3.0
+2,Phone verification bug,OTP not coming on registered mobile 9876543210. Alternate number 09123456789. - Vikram Malhotra,2026-10-25,14.3.0
+1,Account folio error,My folio number 102938475632 is not syncing with my pan ZXCVB9876Q. Please email investor_secret_canary@testmail.org,2026-11-01,14.4.0

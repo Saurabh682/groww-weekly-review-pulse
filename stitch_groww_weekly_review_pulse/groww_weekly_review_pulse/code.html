@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-secondary": "#ffffff", "surface": "#f8f9fb", "tertiary-container": "#ea841b", "on-error": "#ffffff", "surface-container-lowest": "#ffffff", "on-secondary-fixed-variant": "#434751", "tertiary-fixed": "#ffdcc3", "inverse-on-surface": "#f0f1f3", "on-secondary-container": "#60646f", "on-tertiary-fixed": "#2f1500", "inverse-primary": "#50ddad", "primary": "#006c4f", "background": "#f8f9fb", "on-surface": "#191c1e", "error-container": "#ffdad6", "surface-container-highest": "#e1e2e4", "on-surface-variant": "#3c4a43", "tertiary": "#904d00", "surface-bright": "#f8f9fb", "on-primary-container": "#003d2c", "secondary-fixed": "#dfe2ef", "outline-variant": "#bbcac1", "on-background": "#191c1e", "primary-fixed": "#71fac8", "on-secondary-fixed": "#181c24", "surface-container": "#edeef0", "on-primary": "#ffffff", "secondary": "#5a5e69", "surface-dim": "#d9dadc", "error": "#ba1a1a", "on-error-container": "#93000a", "outline": "#6c7a73", "on-tertiary": "#ffffff", "surface-variant": "#e1e2e4", "tertiary-fixed-dim": "#ffb77d", "on-primary-fixed": "#002116", "secondary-fixed-dim": "#c3c6d2", "primary-container": "#00b386", "inverse-surface": "#2e3132", "surface-container-high": "#e7e8ea", "on-primary-fixed-variant": "#00513b", "on-tertiary-fixed-variant": "#6e3900", "surface-container-low": "#f2f4f6", "primary-fixed-dim": "#50ddad", "on-tertiary-container": "#542a00", "secondary-container": "#dfe2ef", "surface-tint": "#006c4f" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin": "1rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-lg": "1rem", "gutter": "1rem", "space-md": "0.75rem", "gutter-desktop": "1.5rem", "margin-desktop": "2rem", "space-xl": "1.5rem", "margin-tablet": "1.5rem" }, "fontFamily": { "label-sm": ["Inter"], "metric-num-md": ["Inter"], "metric-num-lg": ["Inter"], "display-lg": ["Inter"], "label-md": ["Inter"], "body-lg": ["Inter"], "headline-sm": ["Inter"], "headline-md": ["Inter"], "body-sm": ["Inter"], "headline-lg": ["Inter"], "display-lg-mobile": ["Inter"], "body-md": ["Inter"] }, "fontSize": { "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "metric-num-md": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "metric-num-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }], "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400" }], "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container-lowest border-r border-surface-container-highest z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-16 px-space-xl flex items-center gap-space-sm border-b border-surface-container-highest"><img alt="Groww Pulse Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ALJJyrBiOeLnztQTZt7g0DK3alEvTMPDJhRkLGDrEE2T7nm_Y3m9QyM80hrVlZKdIar1Ct3323C6cPsarEHE677FrBh3QGt3so0SbhxPf_TOpDPEPHCwMZFr8FXnJIoeceV9kT-viaWtx5d75j1NETqBXgYla-m8SzX9c6Jur5UkCBMEJYVRp-kZT6rZoSYwBWZg7Qg7-jJ3NYcfxAGY9Ix5eJ96I9m2Sc-id81kMTHAKbvv"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface leading-tight">Groww Pulse</span><span class="font-label-sm text-label-sm text-on-surface-variant font-normal">Weekly Review Intel</span></div></div><div class="px-space-xl pt-space-lg pb-space-sm"><div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-low border border-surface-container-highest"><span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase">Internal Intel • v2.4</span></div></div><nav class="flex flex-col gap-1 px-space-md py-space-sm" data-active-classes="bg-primary-fixed/20 text-on-primary-container font-headline-sm relative before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:bg-primary-container before:rounded-r"><a aria-current="page" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-colors bg-primary-fixed/20 text-on-primary-container font-headline-sm relative before:content-[''] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:bg-primary-container before:rounded-r" data-path="weekly-pulse" href="#"><span class="material-symbols-outlined text-[20px]">insights</span><span>Weekly Pulse</span></a><a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-label-md text-label-md" data-path="themes" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Themes</span></a><a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-label-md text-label-md" data-path="run-publish" href="#"><span class="material-symbols-outlined text-[20px]">send</span><span>Run & Publish</span></a><a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-label-md text-label-md" data-path="data-import" href="#"><span class="material-symbols-outlined text-[20px]">database</span><span>Data Import</span></a></nav></div><div class="p-space-lg border-t border-surface-container-highest flex flex-col gap-space-sm bg-surface-container-lowest"><div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm"><span class="material-symbols-outlined text-[16px] text-primary-container">sync</span><span>Play Store Sync: <strong class="text-on-surface font-semibold">Live (12m ago)</strong></span></div><div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm pt-1"><a class="hover:text-primary transition-colors flex items-center gap-1 font-label-sm text-label-sm" href="#"><span class="material-symbols-outlined text-[14px]">menu_book</span>Docs & Schema</a><span class="font-label-sm text-label-sm text-secondary">v2.4.1</span></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface-container-lowest/95 backdrop-blur-md border-b border-surface-container-highest z-40 px-margin-desktop"><div class="h-full w-full max-w-7xl mx-auto flex items-center justify-between gap-space-lg"><div class="flex items-center gap-space-md"><div class="flex items-center gap-2 bg-surface-container-low border border-surface-container-highest rounded-lg px-3 py-1.5 cursor-pointer hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px] text-on-surface-variant">calendar_today</span><span class="font-label-md text-label-md text-on-surface font-semibold">Week of 9 Nov 2026</span><span class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_more</span></div><div class="inline-flex items-center gap-1.5 bg-secondary-container/40 border border-surface-container-highest rounded-full px-2.5 py-1 text-on-secondary-container"><span class="material-symbols-outlined text-[16px] text-primary">shop</span><span class="font-label-sm text-label-sm font-medium">Google Play only</span></div><div class="inline-flex items-center rounded-full bg-surface-container px-2.5 py-1 text-on-surface-variant"><span class="font-label-sm text-label-sm">All Products (Stocks, MF, F&O, IPOs)</span></div></div><div class="flex items-center gap-space-lg"><div class="hidden xl:flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm"><span class="w-2 h-2 rounded-full bg-primary-container"></span><span>Generated Today, 08:30 AM</span></div><button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-surface-container-highest bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-label-md text-label-md transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">file_download</span><span>Export PDF</span></button><button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary-container text-on-primary hover:opacity-95 font-label-md text-label-md transition-all shadow-sm active:scale-[0.99]" type="button"><span class="material-symbols-outlined text-[18px]">auto_awesome</span><span>Run pulse</span></button><div class="relative flex items-center pl-2"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-surface-container-high cursor-pointer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCq_tolK-hHcEg7lmXHJC95tXlxNTcADezdL3TghbmheeRTiVLjUKd-5VzQPi0pzvOajYkgEW_vyS-77as8nep6qlAL1Xr20b3Kd8vCBJ43x1mMJJXBESb7_j1npqcJOh_IrrNVYlDFseVmuFGancXfyr2LXXx_6L5QBBsS2JdK8sQFBOnzrQGjYcIhvKEPe5YR8405lJ0qE8zUwdFKs0Eec6pYP1CawKbXPPRuo5s"/><span class="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-tertiary-container ring-2 ring-surface-container-lowest"></span></div></div></div></header><main class="relative pt-16 bg-surface"><div class="w-full max-w-7xl mx-auto p-margin-desktop"><div class="flex flex-col w-full pb-16 space-y-8">
+<!-- Top Meta / Executive Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2">
+<div>
+<div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm mb-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span>Analyzed by Pulse AI Engine • 99.4% confidence • Synced Nov 9, 2026 08:30 IST</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+        Weekly Review Pulse — Week of 9 Nov 2026
+      </h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">
+        Synthesized from <span class="font-semibold text-on-surface">4,820 verified Google Play reviews</span> across Stocks, Mutual Funds, IPOs & Payments.
+      </p>
+</div>
+<!-- Quick Tool Action Shortcuts -->
+<div class="flex items-center gap-2 self-start md:self-auto">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">share</span>
+<span>Share</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">bookmark</span>
+<span>Save Note</span>
+</button>
+</div>
+</div>
+<!-- 1. Executive Snapshot / Top KPI Cards (4-column grid) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1: Review Volume -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant mb-2">
+<span class="font-label-md text-label-md">Total Reviews (7d)</span>
+<span class="material-symbols-outlined text-[18px]">rate_review</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-metric-num-lg text-metric-num-lg text-on-surface">4,820</span>
+<span class="inline-flex items-center text-primary-container font-label-sm text-label-sm bg-primary-fixed/30 px-1.5 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[12px] mr-0.5">trending_up</span>+14% WoW
+          </span>
+</div>
+</div>
+<!-- Mini Sparkline visualization -->
+<div class="pt-4 flex items-end justify-between gap-1 h-8">
+<div class="w-full bg-surface-container-high rounded-sm h-[40%] hover:bg-primary-container transition-colors" title="Mon: 520"></div>
+<div class="w-full bg-surface-container-high rounded-sm h-[95%] bg-primary/70 rounded-sm" title="Tue: 1,240 (Expiry surge)"></div>
+<div class="w-full bg-surface-container-high rounded-sm h-[60%] hover:bg-primary-container transition-colors" title="Wed: 780"></div>
+<div class="w-full bg-surface-container-high rounded-sm h-[55%] hover:bg-primary-container transition-colors" title="Thu: 710"></div>
+<div class="w-full bg-surface-container-high rounded-sm h-[50%] hover:bg-primary-container transition-colors" title="Fri: 640"></div>
+<div class="w-full bg-surface-container-high rounded-sm h-[35%] hover:bg-primary-container transition-colors" title="Sat: 460"></div>
+<div class="w-full bg-surface-container-high rounded-sm h-[38%] hover:bg-primary-container transition-colors" title="Sun: 470"></div>
+</div>
+</div>
+<!-- Card 2: Play Store Rating -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant mb-2">
+<span class="font-label-md text-label-md">Play Store Rating</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-metric-num-lg text-metric-num-lg text-on-surface">4.3★</span>
+<span class="inline-flex items-center text-primary-container font-label-sm text-label-sm bg-primary-fixed/30 px-1.5 py-0.5 rounded-full">
+            +0.1★ WoW
+          </span>
+</div>
+</div>
+<!-- Rating Distribution Strip -->
+<div class="pt-3">
+<div class="flex items-center justify-between text-[10px] font-label-sm text-on-surface-variant mb-1">
+<span>5★ 68%</span>
+<span>4★ 14%</span>
+<span>1-3★ 18%</span>
+</div>
+<div class="h-2 w-full rounded-full bg-surface-container flex overflow-hidden">
+<div class="h-full bg-primary-container" style="width: 68%;"></div>
+<div class="h-full bg-primary-fixed" style="width: 14%;"></div>
+<div class="h-full bg-tertiary-fixed-dim" style="width: 10%;"></div>
+<div class="h-full bg-error" style="width: 8%;"></div>
+</div>
+</div>
+</div>
+<!-- Card 3: Net Sentiment Pulse -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant mb-2">
+<span class="font-label-md text-label-md">Net Sentiment Pulse</span>
+<span class="material-symbols-outlined text-[18px]">sentiment_satisfied</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-metric-num-lg text-metric-num-lg text-on-surface">+64</span>
+<span class="inline-flex items-center text-primary-container font-label-sm text-label-sm bg-primary-fixed/30 px-1.5 py-0.5 rounded-full">
+            +4 pts
+          </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-primary-fixed/30 text-on-primary-fixed font-label-sm text-label-sm">
+            Healthy
+          </span>
+</div>
+</div>
+<div class="pt-3 flex items-center gap-3 text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span>Positive: 76%</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span>Negative: 12%</span>
+</div>
+</div>
+</div>
+<!-- Card 4: Top Friction Driver -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant mb-2">
+<span class="font-label-md text-label-md">Top Friction Driver</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">
+            P0 Alert
+          </span>
+</div>
+<div class="font-headline-sm text-headline-sm text-on-surface leading-tight mt-1 line-clamp-1">
+          F&O Execution Latency
+        </div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+          1,412 complaints concentrated in 09:15-09:45 AM window.
+        </p>
+</div>
+<div class="pt-2 flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span>Impact: High Volume Traders</span>
+<span class="text-error font-semibold font-label-sm text-label-sm">-48% Sentiment</span>
+</div>
+</div>
+</div>
+<!-- 2. Executive 2-Minute Synthesis Banner -->
+<div class="rounded-xl p-6 bg-surface-container-low shadow-sm relative overflow-hidden">
+<div class="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-primary-fixed/20 pointer-events-none blur-2xl"></div>
+<div class="flex items-start gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary flex items-center justify-center flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[22px]">lightbulb</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-2">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">TL;DR Executive Pulse Note</h2>
+<span class="bg-primary-fixed/40 text-on-primary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded-full uppercase tracking-wider">
+            2-Min Executive Read
+          </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+<div class="p-3.5 bg-surface-container-lowest rounded-lg shadow-sm">
+<div class="flex items-center gap-1.5 text-error font-label-sm text-label-sm mb-1">
+<span class="material-symbols-outlined text-[16px]">error</span>
+<span class="font-semibold uppercase tracking-wider">Market Expiry Surge</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-snug">
+              Review volume surged on Tuesday expiry; <strong class="text-on-surface">31% of negative reviews</strong> cited F&O freeze & chart refresh lags between 09:15–09:45 AM.
+            </p>
+</div>
+<div class="p-3.5 bg-surface-container-lowest rounded-lg shadow-sm">
+<div class="flex items-center gap-1.5 text-primary font-label-sm text-label-sm mb-1">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span class="font-semibold uppercase tracking-wider">Mutual Fund AutoPay Delight</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-snug">
+              Seamless mandate migration to <strong class="text-on-surface">UPI AutoPay</strong> drove unprecedented positive reviews (+82 NPS on recurring investment journey).
+            </p>
+</div>
+<div class="p-3.5 bg-surface-container-lowest rounded-lg shadow-sm">
+<div class="flex items-center gap-1.5 text-tertiary font-label-sm text-label-sm mb-1">
+<span class="material-symbols-outlined text-[16px]">hourglass_empty</span>
+<span class="font-semibold uppercase tracking-wider">Primary Market ASBA Delay</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-snug">
+              Swiggy IPO unblock delays created a support bottleneck; users conflate sponsoring bank lien releases with Groww's internal processing.
+            </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. What Users Care About: Top 4 Themes -->
+<div class="space-y-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">
+          What Users Care About: Top Themes
+        </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Categorized & ranked by weighted volume impact and sentiment polarity.
+        </p>
+</div>
+<!-- Segment Filter Pills -->
+<div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="theme-filters">
+<button class="filter-btn active px-3 py-1.5 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm transition-all shadow-sm" type="button">
+          All Products
+        </button>
+<button class="filter-btn px-3 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm shadow-sm transition-all" type="button">
+          Stocks & F&O
+        </button>
+<button class="filter-btn px-3 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm shadow-sm transition-all" type="button">
+          Mutual Funds
+        </button>
+<button class="filter-btn px-3 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm shadow-sm transition-all" type="button">
+          IPOs
+        </button>
+<button class="filter-btn px-3 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm shadow-sm transition-all" type="button">
+          Reporting & Tax
+        </button>
+</div>
+</div>
+<!-- Themes Grid (2x2) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<!-- Theme 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between gap-2 mb-2">
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm">
+                Trading / Stocks
+              </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">
+                Critical Friction
+              </span>
+</div>
+<div class="text-right">
+<span class="font-metric-num-md text-metric-num-md text-error">-48%</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Sentiment</span>
+</div>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">
+            F&O Chart Rendering & Order Punch Latency
+          </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">
+            Users report TradingView candlestick charts freezing for 3-7 seconds on Nifty expiry morning, resulting in missed exit triggers and slippage complaints.
+          </p>
+</div>
+<div class="pt-3 bg-surface-container-low rounded-lg p-3">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm mb-1.5">
+<span>Volume: <strong class="text-on-surface font-semibold">1,412 reviews</strong> (29.3%)</span>
+<span class="text-error font-medium">72% Negative Skew</span>
+</div>
+<div class="h-2 w-full rounded-full bg-surface-container-highest flex overflow-hidden">
+<div class="h-full bg-error" style="width: 72%;" title="Negative: 72%"></div>
+<div class="h-full bg-surface-dim" style="width: 18%;" title="Neutral: 18%"></div>
+<div class="h-full bg-primary-container" style="width: 10%;" title="Positive: 10%"></div>
+</div>
+</div>
+</div>
+<!-- Theme 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between gap-2 mb-2">
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm">
+                Mutual Funds
+              </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-primary-fixed/30 text-on-primary-fixed font-label-sm text-label-sm font-semibold">
+                Major Delight
+              </span>
+</div>
+<div class="text-right">
+<span class="font-metric-num-md text-metric-num-md text-primary-container">+84%</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Sentiment</span>
+</div>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">
+            UPI AutoPay SIP Mandates & Instant Confirmation
+          </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">
+            Zero-failure rate for UPI AutoPay praised by first-time investors; instant confirmation notification and smooth mandate setup highlighted repeatedly.
+          </p>
+</div>
+<div class="pt-3 bg-surface-container-low rounded-lg p-3">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm mb-1.5">
+<span>Volume: <strong class="text-on-surface font-semibold">1,120 reviews</strong> (23.2%)</span>
+<span class="text-primary font-medium">88% Positive Skew</span>
+</div>
+<div class="h-2 w-full rounded-full bg-surface-container-highest flex overflow-hidden">
+<div class="h-full bg-primary-container" style="width: 88%;" title="Positive: 88%"></div>
+<div class="h-full bg-surface-dim" style="width: 8%;" title="Neutral: 8%"></div>
+<div class="h-full bg-error" style="width: 4%;" title="Negative: 4%"></div>
+</div>
+</div>
+</div>
+<!-- Theme 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between gap-2 mb-2">
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm">
+                Primary Markets / IPO
+              </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold">
+                Moderate Friction
+              </span>
+</div>
+<div class="text-right">
+<span class="font-metric-num-md text-metric-num-md text-tertiary">-14%</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Sentiment</span>
+</div>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">
+            IPO Allotment Status & ASBA Fund Unblock Timelines
+          </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">
+            Confusion around ASBA lien unblocking 48 hours post-allotment; users attribute delays to Groww rather than issuing banks, flooding support chats.
+          </p>
+</div>
+<div class="pt-3 bg-surface-container-low rounded-lg p-3">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm mb-1.5">
+<span>Volume: <strong class="text-on-surface font-semibold">840 reviews</strong> (17.4%)</span>
+<span class="text-tertiary font-medium">54% Negative Skew</span>
+</div>
+<div class="h-2 w-full rounded-full bg-surface-container-highest flex overflow-hidden">
+<div class="h-full bg-error" style="width: 54%;" title="Negative: 54%"></div>
+<div class="h-full bg-surface-dim" style="width: 32%;" title="Neutral: 32%"></div>
+<div class="h-full bg-primary-container" style="width: 14%;" title="Positive: 14%"></div>
+</div>
+</div>
+</div>
+<!-- Theme 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between gap-2 mb-2">
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm">
+                Reporting & Tax
+              </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-semibold">
+                Product Opportunity
+              </span>
+</div>
+<div class="text-right">
+<span class="font-metric-num-md text-metric-num-md text-on-surface">+22%</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Sentiment</span>
+</div>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">
+            Tax P&L Download & Capital Gains Clarity
+          </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">
+            Appreciated new FY26 tax report format, but high demand for mobile CSV exports and 1-click ClearTax integration ahead of advance tax filings.
+          </p>
+</div>
+<div class="pt-3 bg-surface-container-low rounded-lg p-3">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm mb-1.5">
+<span>Volume: <strong class="text-on-surface font-semibold">615 reviews</strong> (12.8%)</span>
+<span class="text-primary font-medium">48% Positive Skew</span>
+</div>
+<div class="h-2 w-full rounded-full bg-surface-container-highest flex overflow-hidden">
+<div class="h-full bg-primary-container" style="width: 48%;" title="Positive: 48%"></div>
+<div class="h-full bg-surface-dim" style="width: 38%;" title="Neutral: 38%"></div>
+<div class="h-full bg-error" style="width: 14%;" title="Negative: 14%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 4. What They Actually Said: Verbatim User Voices -->
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">
+          What They Actually Said: Verbatim Voices
+        </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Unfiltered quotes from Google Play showing raw sentiment, app build, and verified purchase context.
+        </p>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Showing 3 representative quotes</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- Quote A: Friction -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between border-l-4 border-l-error">
+<div>
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center text-error">
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px] text-surface-container-high">star</span>
+<span class="material-symbols-outlined text-[18px] text-surface-container-high">star</span>
+<span class="material-symbols-outlined text-[18px] text-surface-container-high">star</span>
+<span class="material-symbols-outlined text-[18px] text-surface-container-high">star</span>
+</div>
+<span class="font-label-sm text-label-sm text-error font-semibold bg-error-container/40 px-2 py-0.5 rounded">
+              F&O Latency
+            </span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface italic leading-relaxed mb-4">
+            “During peak Nifty expiry at 9:25 AM, the candlestick charts stopped updating for 4 minutes. Lost ₹12,400 because market orders got stuck in 'Processing'. Groww needs institutional-grade order execution speed.”
+          </p>
+</div>
+<div class="pt-3 border-t border-surface-container-high/60 space-y-1">
+<div class="font-label-md text-label-md text-on-surface font-semibold">
+            Rahul S., Delhi
+          </div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center justify-between">
+<span>v14.28.1 • Nov 7, 2026</span>
+<span class="text-on-surface font-medium">284 found helpful</span>
+</div>
+</div>
+</div>
+<!-- Quote B: Moderate Friction -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between border-l-4 border-l-tertiary">
+<div>
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center text-tertiary">
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px] text-surface-container-high">star</span>
+<span class="material-symbols-outlined text-[18px] text-surface-container-high">star</span>
+<span class="material-symbols-outlined text-[18px] text-surface-container-high">star</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold bg-tertiary-fixed/40 px-2 py-0.5 rounded">
+              IPO Mandate
+            </span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface italic leading-relaxed mb-4">
+            “My IPO allotment failed for Swiggy, but bank funds remained blocked for 4 days. Support chat bot just says 'wait 48 hours'. Please show direct bank lien unblocking status inside the app!”
+          </p>
+</div>
+<div class="pt-3 border-t border-surface-container-high/60 space-y-1">
+<div class="font-label-md text-label-md text-on-surface font-semibold">
+            Pooja Nair, Bengaluru
+          </div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center justify-between">
+<span>v14.27.0 • Nov 8, 2026</span>
+<span class="text-on-surface font-medium">142 found helpful</span>
+</div>
+</div>
+</div>
+<!-- Quote C: Delight -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between border-l-4 border-l-primary-container">
+<div>
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center text-primary-container">
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-semibold bg-primary-fixed/40 px-2 py-0.5 rounded">
+              SIP AutoPay
+            </span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface italic leading-relaxed mb-4">
+            “Setting up weekly SIP via UPI AutoPay took literally 20 seconds. The clear breakdown of expense ratios and fund comparison makes Groww the cleanest investing app in India. Keep it simple!”
+          </p>
+</div>
+<div class="pt-3 border-t border-surface-container-high/60 space-y-1">
+<div class="font-label-md text-label-md text-on-surface font-semibold">
+            Arun K., Pune
+          </div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center justify-between">
+<span>v14.28.2 • Nov 9, 2026</span>
+<span class="text-on-surface font-medium">96 found helpful</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 5. What To Do Next: 3 Concrete Action Ideas -->
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">
+          What To Do Next: Prioritized Action Ideas
+        </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Recommended engineering and product interventions derived from root-cause review synthesis.
+        </p>
+</div>
+<button class="inline-flex items-center gap-1 text-primary hover:text-on-primary-container font-label-md text-label-md transition-colors" type="button">
+<span>View all 12 backlog items</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+<div class="space-y-3">
+<!-- Action 1: P0 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex items-start gap-3.5 flex-1">
+<div class="mt-0.5 flex-shrink-0">
+<span class="inline-flex items-center justify-center px-2 py-1 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">
+              P0
+            </span>
+</div>
+<div class="space-y-1">
+<div class="flex flex-wrap items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                Deploy High-Frequency WebSocket Fallback for TradingView Charts
+              </h3>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+                Sprint 46 • ETA Nov 16
+              </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+              Implement automatic fallback to secondary CDN stream when chart latency exceeds 800ms during market opening (09:15 - 09:45 AM).
+            </p>
+<div class="flex flex-wrap items-center gap-4 pt-1 font-body-sm text-body-sm text-on-surface-variant">
+<span>Owner: <strong class="text-on-surface">Trading Tech (Vikram M.)</strong></span>
+<span>Impact: <strong class="text-primary-container font-semibold"><0.5% chart drop rate</strong></span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 self-start lg:self-center">
+<button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary transition-colors shadow-sm" type="button">
+<span>View JIRA (GROWW-1482)</span>
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+</div>
+</div>
+<!-- Action 2: P1 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex items-start gap-3.5 flex-1">
+<div class="mt-0.5 flex-shrink-0">
+<span class="inline-flex items-center justify-center px-2 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold">
+              P1
+            </span>
+</div>
+<div class="space-y-1">
+<div class="flex flex-wrap items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                Real-Time ASBA Bank Lien Lifecycle Tracker in Portfolio
+              </h3>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+                Sprint 47 • ETA Nov 24
+              </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+              Add visual bank mandate lifecycle tracking (“Initiated → Blocked → Allotment Done → Mandate Released”) with direct NPCI reference lookup to deflect ticket volume.
+            </p>
+<div class="flex flex-wrap items-center gap-4 pt-1 font-body-sm text-body-sm text-on-surface-variant">
+<span>Owner: <strong class="text-on-surface">IPO & Core Banking (Ananya R.)</strong></span>
+<span>Impact: <strong class="text-primary-container font-semibold">-45% unblock support tickets</strong></span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 self-start lg:self-center">
+<button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container font-label-md text-label-md transition-colors" type="button">
+<span>View PRD Spec</span>
+<span class="material-symbols-outlined text-[16px]">description</span>
+</button>
+</div>
+</div>
+<!-- Action 3: P2 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex items-start gap-3.5 flex-1">
+<div class="mt-0.5 flex-shrink-0">
+<span class="inline-flex items-center justify-center px-2 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">
+              P2
+            </span>
+</div>
+<div class="space-y-1">
+<div class="flex flex-wrap items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                Self-Serve 1-Click ClearTax & Native Excel Tax P&L Export
+              </h3>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+                Sprint 48 • ETA Dec 2
+              </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+              Enable instant download of FY 2026-27 realized capital gains directly into Excel and pre-fill direct OAuth integration with tax filing partners.
+            </p>
+<div class="flex flex-wrap items-center gap-4 pt-1 font-body-sm text-body-sm text-on-surface-variant">
+<span>Owner: <strong class="text-on-surface">Tax & Compliance Pod (Devendra P.)</strong></span>
+<span>Impact: <strong class="text-primary-container font-semibold">+30% tax reporting usage in Q4</strong></span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 self-start lg:self-center">
+<button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container font-label-md text-label-md transition-colors" type="button">
+<span>View Prototype</span>
+<span class="material-symbols-outlined text-[16px]">palette</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 6. Footer Utility & Action Bar -->
+<div class="mt-6 p-4 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-primary-container">info</span>
+<span>Groww Weekly Review Pulse is generated automatically from verified Google Play Store data pipelines.</span>
+</div>
+<div class="flex flex-wrap items-center gap-3">
+<button class="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">code</span>
+<span>Export Markdown</span>
+</button>
+<span class="text-surface-dim">•</span>
+<button class="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">send</span>
+<span>Send to Slack (#product-insights)</span>
+</button>
+<span class="text-surface-dim">•</span>
+<button class="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Configure Alerts</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  // Simple interactive filter toggle for product segments
+  document.querySelectorAll('#theme-filters button').forEach(button => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('#theme-filters button').forEach(b => {
+        b.classList.remove('bg-primary-container', 'text-on-primary', 'active');
+        b.classList.add('bg-surface-container-lowest', 'text-on-surface-variant');
+      });
+      button.classList.remove('bg-surface-container-lowest', 'text-on-surface-variant');
+      button.classList.add('bg-primary-container', 'text-on-primary', 'active');
+    });
+  });
+</script></div></main></div></body></html>

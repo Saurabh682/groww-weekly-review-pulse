@@ -1,0 +1,17 @@
+Groww Weekly Review Pulse: Week of 2026-11-09
+Google Play reviews (2026-08-17 to 2026-11-09) | Total: 1435 | Rating: 2.7★
+
+TOP THEMES:
+1. Charges & Pricing (31.0% share, 2.6★): Users report unexpected charges and request transparent fee breakdowns on equity and DP deductions.
+2. App Performance & Bugs (28.8% share, 2.4★): Frequent app lag and freezing reported during peak trading hours, impacting order execution.
+3. Positive UX & Simplicity (26.1% share, 3.6★): Users praise intuitive navigation, clean interface design, and straightforward mutual fund investing.
+
+CUSTOMER VOICE:
+- "Withdrawal request placed on Monday, still pending on Friday" (1★, 2026-11-04, Charges & Pricing)
+- "added USD 216 (21k rupees), 8 days ago and it was never added to my account" (1★, 2026-10-27, App Performance & Bugs)
+- "Hi team your nifty terminal lagging in the desktop and everything 20 to 25 minutes auto frezze please resolve this issue" (5★, 2026-10-22, Positive UX & Simplicity)
+
+RECOMMENDED ACTIONS:
+1. [Charges & Pricing] Deploy in-app fee breakdown calculator and display itemized DP charges on order confirmation screens. [Owner: Core Brokerage Team]
+2. [App Performance & Bugs] Conduct load testing on morning market-open websocket channels and patch chart rendering memory leaks. [Owner: Mobile Reliability Team]
+3. [Positive UX & Simplicity] Maintain current simplified mutual fund dashboard layout while streamlining advanced equity analytics. [Owner: Product Design Team]

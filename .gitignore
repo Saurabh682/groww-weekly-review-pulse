@@ -1,0 +1,40 @@
+# Frontend & Node
+node_modules/
+dist/
+.vercel/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+token.json
+credentials.json
+*.pem
+
+# SQLite databases & temp data (strictly PII protected)
+*.db
+*.sqlite3
+data/*.db
+
+# Test & coverage caches
+.pytest_cache/
+.coverage
+htmlcov/
+.pytest_tmp/
+
+# Virtual environments & IDE
+.venv/
+venv/
+ENV/
+.idea/
+.vscode/

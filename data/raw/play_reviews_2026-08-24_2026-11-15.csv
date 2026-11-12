@@ -1,0 +1,185 @@
+rating,title,text,date,app_version
+1,,KYC process is stuck since 4 days. Customer support is not responding to tickets. (Review sample 1),2026-11-03,
+2,,Took a week to verify my bank account. Document upload failed twice. (Review sample 2),2026-10-27,14.2.1
+4,,Onboarding was smooth and digilocker verification completed in 10 minutes. (Review sample 3),2026-10-24,14.4.2
+1,,My account activation failed without giving any clear rejection reason. (Review sample 4),2026-11-08,14.2.0
+2,,Video KYC link expired repeatedly. Please fix verification workflow. (Review sample 5),2026-11-02,
+1,,Money debited from bank account via UPI but not credited to Groww wallet. (Review sample 6),2026-11-08,14.2.0
+1,,UPI payment timeout during market hours. Frustrating experience. (Review sample 7),2026-10-30,
+2,,"Added funds via netbanking, got an error but amount was deducted. (Review sample 8)",2026-10-22,14.4.0
+5,,Instant fund transfer with Google Pay works effortlessly every time. (Review sample 9),2026-10-16,14.2.0
+2,,Payment gateway failed while placing mutual fund SIP order. (Review sample 10),2026-10-25,14.3.0
+1,,"Withdrawal request placed on Monday, still pending on Friday. (Review sample 11)",2026-11-02,
+2,,Delayed payout for stock sell. Settlement takes longer than other brokers. (Review sample 12),2026-10-21,
+1,,"Redeemed mutual fund units 5 days ago, money still not in savings account. (Review sample 13)",2026-10-28,
+4,,Withdrawal processed within 24 hours as promised. Good job. (Review sample 14),2026-10-05,14.2.0
+2,,Why does withdrawal take T+2 days when banking is instant now? (Review sample 15),2026-10-16,14.4.0
+1,,App crashed right at 9:15 AM market opening. Could not place stop loss. (Review sample 16),2026-11-09,14.4.2
+1,,Biometric fingerprint login fails frequently after the latest update. (Review sample 17),2026-10-31,14.2.0
+2,,Chart loading is extremely laggy on 5G network. Blank screen bug. (Review sample 18),2026-10-29,14.3.0
+2,,Option chain does not refresh prices in real time. Cost me money. (Review sample 19),2026-11-07,14.2.0
+3,,App is okay but freezes when switching between watchlist tabs. (Review sample 20),2026-10-11,14.3.0
+2,,Hidden regulatory and platform charges deducted without clear breakdown. (Review sample 21),2026-10-30,14.2.1
+1,,Brokerage for intraday is fine but pledge and unpledge charges are high. (Review sample 22),2026-10-20,14.2.0
+3,,STT and exchange charges should be shown before order confirmation. (Review sample 23),2026-10-13,14.2.1
+2,,Account maintenance charges suddenly debited from balance. (Review sample 24),2026-10-03,14.3.0
+4,,Transparent fee structure for mutual funds. Zero commission is genuine. (Review sample 25),2026-09-22,14.3.0
+1,,Support bot is useless. Gives generic answers and closes tickets automatically. (Review sample 26),2026-11-09,14.2.0
+1,,No phone support number available when urgent help is needed for orders. (Review sample 27),2026-10-23,14.2.0
+2,,Ticket raised for dividend credit was marked resolved without any resolution. (Review sample 28),2026-10-18,14.4.2
+2,,Waiting for human agent on live chat for over 45 minutes. (Review sample 29),2026-10-08,14.4.0
+4,,Support resolved my email change request within 4 hours. Helpful agent. (Review sample 30),2026-09-19,14.4.0
+5,,Cleanest UI for mutual fund SIPs and index funds. Love the simplicity. (Review sample 31),2026-10-16,14.2.1
+5,,Best investing app for beginners in India. Simple charts and zero clutter. (Review sample 32),2026-10-04,14.4.2
+5,,IPO bidding process with UPI mandate is seamless and fast. (Review sample 33),2026-09-27,14.4.0
+4,,Great portfolio tracker for stocks and mutual funds in one place. (Review sample 34),2026-09-15,14.2.1
+5,,Switched from traditional broker to Groww. Never looked back. (Review sample 35),2026-09-07,14.2.0
+2,,Took a week to verify my bank account. Document upload failed twice. (Review sample 37),2026-10-29,14.4.0
+4,,Onboarding was smooth and digilocker verification completed in 10 minutes. (Review sample 38),2026-10-24,14.4.2
+1,,My account activation failed without giving any clear rejection reason. (Review sample 39),2026-11-02,14.4.2
+2,,Video KYC link expired repeatedly. Please fix verification workflow. (Review sample 40),2026-11-02,14.2.0
+1,,Money debited from bank account via UPI but not credited to Groww wallet. (Review sample 41),2026-11-03,14.3.0
+1,,UPI payment timeout during market hours. Frustrating experience. (Review sample 42),2026-11-06,14.2.1
+2,,"Added funds via netbanking, got an error but amount was deducted. (Review sample 43)",2026-10-23,
+5,,Instant fund transfer with Google Pay works effortlessly every time. (Review sample 44),2026-10-16,14.2.1
+2,,Payment gateway failed while placing mutual fund SIP order. (Review sample 45),2026-10-19,14.3.0
+1,,"Withdrawal request placed on Monday, still pending on Friday. (Review sample 46)",2026-10-29,14.2.1
+1,,"Redeemed mutual fund units 5 days ago, money still not in savings account. (Review sample 48)",2026-10-26,14.4.2
+4,,Withdrawal processed within 24 hours as promised. Good job. (Review sample 49),2026-10-05,14.2.0
+2,,Why does withdrawal take T+2 days when banking is instant now? (Review sample 50),2026-10-18,14.3.0
+1,,App crashed right at 9:15 AM market opening. Could not place stop loss. (Review sample 51),2026-11-07,
+1,,Biometric fingerprint login fails frequently after the latest update. (Review sample 52),2026-11-04,
+2,,Chart loading is extremely laggy on 5G network. Blank screen bug. (Review sample 53),2026-10-22,14.4.2
+2,,Option chain does not refresh prices in real time. Cost me money. (Review sample 54),2026-11-06,
+3,,App is okay but freezes when switching between watchlist tabs. (Review sample 55),2026-10-10,14.2.1
+2,,Hidden regulatory and platform charges deducted without clear breakdown. (Review sample 56),2026-10-28,14.4.2
+1,,Brokerage for intraday is fine but pledge and unpledge charges are high. (Review sample 57),2026-10-18,14.4.2
+3,,STT and exchange charges should be shown before order confirmation. (Review sample 58),2026-10-12,14.4.0
+2,,Account maintenance charges suddenly debited from balance. (Review sample 59),2026-09-30,14.4.2
+4,,Transparent fee structure for mutual funds. Zero commission is genuine. (Review sample 60),2026-09-23,
+1,,No phone support number available when urgent help is needed for orders. (Review sample 62),2026-10-28,14.2.1
+2,,Waiting for human agent on live chat for over 45 minutes. (Review sample 64),2026-10-13,14.2.0
+4,,Support resolved my email change request within 4 hours. Helpful agent. (Review sample 65),2026-09-20,
+5,,Cleanest UI for mutual fund SIPs and index funds. Love the simplicity. (Review sample 66),2026-10-15,14.4.0
+5,,Best investing app for beginners in India. Simple charts and zero clutter. (Review sample 67),2026-10-09,14.4.2
+5,,IPO bidding process with UPI mandate is seamless and fast. (Review sample 68),2026-09-26,14.4.0
+4,,Great portfolio tracker for stocks and mutual funds in one place. (Review sample 69),2026-09-14,
+5,,Switched from traditional broker to Groww. Never looked back. (Review sample 70),2026-09-14,14.3.0
+1,,KYC process is stuck since 4 days. Customer support is not responding to tickets. (Review sample 71),2026-10-29,14.2.0
+2,,Took a week to verify my bank account. Document upload failed twice. (Review sample 72),2026-10-30,
+4,,Onboarding was smooth and digilocker verification completed in 10 minutes. (Review sample 73),2026-10-20,14.2.0
+1,,My account activation failed without giving any clear rejection reason. (Review sample 74),2026-11-06,
+2,,Video KYC link expired repeatedly. Please fix verification workflow. (Review sample 75),2026-10-25,14.4.0
+1,,Money debited from bank account via UPI but not credited to Groww wallet. (Review sample 76),2026-11-09,14.2.1
+1,,UPI payment timeout during market hours. Frustrating experience. (Review sample 77),2026-11-06,14.4.2
+2,,"Added funds via netbanking, got an error but amount was deducted. (Review sample 78)",2026-10-29,
+5,,Instant fund transfer with Google Pay works effortlessly every time. (Review sample 79),2026-10-12,14.2.0
+2,,Payment gateway failed while placing mutual fund SIP order. (Review sample 80),2026-10-24,
+1,,"Withdrawal request placed on Monday, still pending on Friday. (Review sample 81)",2026-10-30,14.4.0
+2,,Delayed payout for stock sell. Settlement takes longer than other brokers. (Review sample 82),2026-10-26,
+1,,"Redeemed mutual fund units 5 days ago, money still not in savings account. (Review sample 83)",2026-11-03,14.3.0
+4,,Withdrawal processed within 24 hours as promised. Good job. (Review sample 84),2026-10-03,14.4.2
+1,,App crashed right at 9:15 AM market opening. Could not place stop loss. (Review sample 86),2026-11-06,14.2.0
+1,,Biometric fingerprint login fails frequently after the latest update. (Review sample 87),2026-10-28,
+2,,Chart loading is extremely laggy on 5G network. Blank screen bug. (Review sample 88),2026-10-24,
+2,,Option chain does not refresh prices in real time. Cost me money. (Review sample 89),2026-11-01,14.4.2
+3,,App is okay but freezes when switching between watchlist tabs. (Review sample 90),2026-10-15,
+2,,Hidden regulatory and platform charges deducted without clear breakdown. (Review sample 91),2026-10-24,
+1,,Brokerage for intraday is fine but pledge and unpledge charges are high. (Review sample 92),2026-10-22,
+3,,STT and exchange charges should be shown before order confirmation. (Review sample 93),2026-10-14,14.2.1
+2,,Account maintenance charges suddenly debited from balance. (Review sample 94),2026-09-29,
+4,,Transparent fee structure for mutual funds. Zero commission is genuine. (Review sample 95),2026-09-27,14.2.0
+1,,No phone support number available when urgent help is needed for orders. (Review sample 97),2026-10-20,14.3.0
+2,,Waiting for human agent on live chat for over 45 minutes. (Review sample 99),2026-10-10,14.2.1
+4,,Support resolved my email change request within 4 hours. Helpful agent. (Review sample 100),2026-09-21,14.2.0
+5,,Cleanest UI for mutual fund SIPs and index funds. Love the simplicity. (Review sample 101),2026-10-18,14.4.2
+5,,Best investing app for beginners in India. Simple charts and zero clutter. (Review sample 102),2026-10-11,
+5,,IPO bidding process with UPI mandate is seamless and fast. (Review sample 103),2026-09-30,14.2.1
+5,,Switched from traditional broker to Groww. Never looked back. (Review sample 105),2026-09-10,14.4.0
+1,,KYC process is stuck since 4 days. Customer support is not responding to tickets. (Review sample 106),2026-10-27,14.4.2
+2,,Took a week to verify my bank account. Document upload failed twice. (Review sample 107),2026-10-23,
+4,,Onboarding was smooth and digilocker verification completed in 10 minutes. (Review sample 108),2026-10-17,14.2.0
+1,,My account activation failed without giving any clear rejection reason. (Review sample 109),2026-11-07,14.2.0
+2,,Video KYC link expired repeatedly. Please fix verification workflow. (Review sample 110),2026-10-25,
+1,,Money debited from bank account via UPI but not credited to Groww wallet. (Review sample 111),2026-11-07,14.3.0
+1,,UPI payment timeout during market hours. Frustrating experience. (Review sample 112),2026-11-04,14.3.0
+5,,Instant fund transfer with Google Pay works effortlessly every time. (Review sample 114),2026-10-19,14.3.0
+2,,Payment gateway failed while placing mutual fund SIP order. (Review sample 115),2026-10-27,
+1,,"Withdrawal request placed on Monday, still pending on Friday. (Review sample 116)",2026-11-04,14.3.0
+2,,Delayed payout for stock sell. Settlement takes longer than other brokers. (Review sample 117),2026-10-24,14.4.2
+4,,Withdrawal processed within 24 hours as promised. Good job. (Review sample 119),2026-10-09,14.2.1
+2,,Why does withdrawal take T+2 days when banking is instant now? (Review sample 120),2026-10-15,
+1,,App crashed right at 9:15 AM market opening. Could not place stop loss. (Review sample 121),2026-11-05,14.2.1
+1,,Biometric fingerprint login fails frequently after the latest update. (Review sample 122),2026-10-30,
+2,,Chart loading is extremely laggy on 5G network. Blank screen bug. (Review sample 123),2026-10-25,14.2.0
+2,,Option chain does not refresh prices in real time. Cost me money. (Review sample 124),2026-11-03,14.2.1
+3,,App is okay but freezes when switching between watchlist tabs. (Review sample 125),2026-10-16,14.4.2
+2,,Hidden regulatory and platform charges deducted without clear breakdown. (Review sample 126),2026-10-26,14.2.1
+1,,Brokerage for intraday is fine but pledge and unpledge charges are high. (Review sample 127),2026-10-21,14.2.1
+3,,STT and exchange charges should be shown before order confirmation. (Review sample 128),2026-10-09,
+2,,Account maintenance charges suddenly debited from balance. (Review sample 129),2026-09-30,14.4.0
+4,,Transparent fee structure for mutual funds. Zero commission is genuine. (Review sample 130),2026-09-27,14.2.0
+1,,Support bot is useless. Gives generic answers and closes tickets automatically. (Review sample 131),2026-11-06,14.4.0
+1,,No phone support number available when urgent help is needed for orders. (Review sample 132),2026-10-25,
+2,,Ticket raised for dividend credit was marked resolved without any resolution. (Review sample 133),2026-10-14,14.2.1
+4,,Support resolved my email change request within 4 hours. Helpful agent. (Review sample 135),2026-09-22,14.3.0
+5,,Cleanest UI for mutual fund SIPs and index funds. Love the simplicity. (Review sample 136),2026-10-17,14.3.0
+5,,Best investing app for beginners in India. Simple charts and zero clutter. (Review sample 137),2026-10-07,14.4.0
+5,,IPO bidding process with UPI mandate is seamless and fast. (Review sample 138),2026-09-25,14.2.0
+4,,Great portfolio tracker for stocks and mutual funds in one place. (Review sample 139),2026-09-19,14.3.0
+5,,Switched from traditional broker to Groww. Never looked back. (Review sample 140),2026-09-13,14.3.0
+1,,KYC process is stuck since 4 days. Customer support is not responding to tickets. (Review sample 141),2026-11-04,
+2,,Took a week to verify my bank account. Document upload failed twice. (Review sample 142),2026-10-25,14.3.0
+4,,Onboarding was smooth and digilocker verification completed in 10 minutes. (Review sample 143),2026-10-19,14.4.2
+1,,My account activation failed without giving any clear rejection reason. (Review sample 144),2026-11-08,14.4.2
+2,,Video KYC link expired repeatedly. Please fix verification workflow. (Review sample 145),2026-10-30,14.4.0
+1,,UPI payment timeout during market hours. Frustrating experience. (Review sample 147),2026-11-04,14.2.0
+2,,"Added funds via netbanking, got an error but amount was deducted. (Review sample 148)",2026-10-25,14.2.0
+5,,Instant fund transfer with Google Pay works effortlessly every time. (Review sample 149),2026-10-16,14.4.0
+2,,Payment gateway failed while placing mutual fund SIP order. (Review sample 150),2026-10-22,14.3.0
+1,,"Withdrawal request placed on Monday, still pending on Friday. (Review sample 151)",2026-10-29,
+2,,Delayed payout for stock sell. Settlement takes longer than other brokers. (Review sample 152),2026-10-20,14.4.0
+1,,"Redeemed mutual fund units 5 days ago, money still not in savings account. (Review sample 153)",2026-11-01,14.3.0
+4,,Withdrawal processed within 24 hours as promised. Good job. (Review sample 154),2026-10-04,14.2.0
+2,,Why does withdrawal take T+2 days when banking is instant now? (Review sample 155),2026-10-19,14.4.0
+1,,Biometric fingerprint login fails frequently after the latest update. (Review sample 157),2026-11-02,14.2.1
+2,,Chart loading is extremely laggy on 5G network. Blank screen bug. (Review sample 158),2026-10-28,14.4.2
+3,,App is okay but freezes when switching between watchlist tabs. (Review sample 160),2026-10-14,14.2.1
+2,,Hidden regulatory and platform charges deducted without clear breakdown. (Review sample 161),2026-10-29,
+1,,Brokerage for intraday is fine but pledge and unpledge charges are high. (Review sample 162),2026-10-24,14.4.0
+3,,STT and exchange charges should be shown before order confirmation. (Review sample 163),2026-10-14,14.4.2
+2,,Account maintenance charges suddenly debited from balance. (Review sample 164),2026-10-02,14.4.0
+4,,Transparent fee structure for mutual funds. Zero commission is genuine. (Review sample 165),2026-09-23,14.2.1
+1,,No phone support number available when urgent help is needed for orders. (Review sample 167),2026-10-22,14.4.2
+4,,Support resolved my email change request within 4 hours. Helpful agent. (Review sample 170),2026-09-18,
+5,,Cleanest UI for mutual fund SIPs and index funds. Love the simplicity. (Review sample 171),2026-10-11,14.4.2
+5,,IPO bidding process with UPI mandate is seamless and fast. (Review sample 173),2026-09-25,14.4.2
+4,,Great portfolio tracker for stocks and mutual funds in one place. (Review sample 174),2026-09-13,14.4.0
+5,,Switched from traditional broker to Groww. Never looked back. (Review sample 175),2026-09-08,14.2.1
+1,,KYC process is stuck since 4 days. Customer support is not responding to tickets. (Review sample 176),2026-10-31,14.4.2
+2,,Took a week to verify my bank account. Document upload failed twice. (Review sample 177),2026-10-24,14.3.0
+4,,Onboarding was smooth and digilocker verification completed in 10 minutes. (Review sample 178),2026-10-18,
+1,,My account activation failed without giving any clear rejection reason. (Review sample 179),2026-11-05,14.3.0
+2,,Video KYC link expired repeatedly. Please fix verification workflow. (Review sample 180),2026-10-28,14.2.0
+1,,UPI payment timeout during market hours. Frustrating experience. (Review sample 182),2026-11-01,14.2.1
+5,,Instant fund transfer with Google Pay works effortlessly every time. (Review sample 184),2026-10-12,14.2.0
+2,,Payment gateway failed while placing mutual fund SIP order. (Review sample 185),2026-10-24,14.4.0
+1,,"Withdrawal request placed on Monday, still pending on Friday. (Review sample 186)",2026-11-06,14.4.2
+1,,"Redeemed mutual fund units 5 days ago, money still not in savings account. (Review sample 188)",2026-10-30,14.4.0
+4,,Withdrawal processed within 24 hours as promised. Good job. (Review sample 189),2026-10-02,14.4.2
+2,,Why does withdrawal take T+2 days when banking is instant now? (Review sample 190),2026-10-20,14.3.0
+1,,App crashed right at 9:15 AM market opening. Could not place stop loss. (Review sample 191),2026-11-04,14.4.0
+1,,Biometric fingerprint login fails frequently after the latest update. (Review sample 192),2026-10-31,14.4.0
+2,,Chart loading is extremely laggy on 5G network. Blank screen bug. (Review sample 193),2026-10-27,14.2.1
+2,,Option chain does not refresh prices in real time. Cost me money. (Review sample 194),2026-10-31,
+3,,App is okay but freezes when switching between watchlist tabs. (Review sample 195),2026-10-11,14.2.0
+2,,Hidden regulatory and platform charges deducted without clear breakdown. (Review sample 196),2026-10-31,14.2.1
+1,,Brokerage for intraday is fine but pledge and unpledge charges are high. (Review sample 197),2026-10-17,
+3,,STT and exchange charges should be shown before order confirmation. (Review sample 198),2026-10-11,14.2.1
+2,,Account maintenance charges suddenly debited from balance. (Review sample 199),2026-09-28,14.4.0
+4,,Transparent fee structure for mutual funds. Zero commission is genuine. (Review sample 200),2026-09-26,14.4.0
+1,,Support bot is useless. Gives generic answers and closes tickets automatically. (Review sample 201),2026-11-08,14.4.0
+2,,Ticket raised for dividend credit was marked resolved without any resolution. (Review sample 203),2026-10-16,14.2.0
+5,,IPO bidding process with UPI mandate is seamless and fast. (Review sample 208),2026-09-26,14.3.0
+4,,Great portfolio tracker for stocks and mutual funds in one place. (Review sample 209),2026-09-18,14.2.0
+5,,Switched from traditional broker to Groww. Never looked back. (Review sample 210),2026-09-13,14.2.0
