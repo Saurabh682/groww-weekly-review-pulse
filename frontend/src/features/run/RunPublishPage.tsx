@@ -9,6 +9,7 @@ import { Chip } from '../../components/Chip';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Skeleton } from '../../components/Skeleton';
+import { GoogleDocModal, getSavedDocUrl, isMockDocUrl } from '../../components/GoogleDocModal';
 import {
   Play,
   RotateCcw,
@@ -33,6 +34,16 @@ export const RunPublishPage: React.FC = () => {
   const [isRunningSim, setIsRunningSim] = useState(false);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<PipelineStage | null>(null);
+  const [docModalOpen, setDocModalOpen] = useState(false);
+
+  const handleOpenGoogleDoc = () => {
+    const url = getSavedDocUrl();
+    if (isMockDocUrl(url)) {
+      setDocModalOpen(true);
+    } else {
+      window.open(url, '_blank');
+    }
+  };
 
   const loadRun = async () => {
     setLoading(true);
@@ -399,12 +410,7 @@ export const RunPublishPage: React.FC = () => {
             size="sm"
             disabled={isFailed}
             icon={<ExternalLink className="w-3.5 h-3.5" />}
-            onClick={() =>
-              window.open(
-                'https://docs.google.com/document/d/mock-groww-weekly-pulse-2026-11-09',
-                '_blank'
-              )
-            }
+            onClick={handleOpenGoogleDoc}
             className="w-full justify-center"
           >
             Open Google Doc
@@ -584,6 +590,12 @@ export const RunPublishPage: React.FC = () => {
         onClose={() => setIsLogsOpen(false)}
         stages={stages}
         error={runState?.error}
+      />
+
+      {/* Google Doc Connect & View Modal */}
+      <GoogleDocModal
+        isOpen={docModalOpen}
+        onClose={() => setDocModalOpen(false)}
       />
     </div>
   );

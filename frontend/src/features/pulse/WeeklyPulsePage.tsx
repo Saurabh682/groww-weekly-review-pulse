@@ -14,6 +14,7 @@ import { Skeleton } from '../../components/Skeleton';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorState } from '../../components/ErrorState';
 import { Toast } from '../../components/Toast';
+import { GoogleDocModal, getSavedDocUrl, isMockDocUrl } from '../../components/GoogleDocModal';
 import {
   Copy,
   ExternalLink,
@@ -33,6 +34,16 @@ export const WeeklyPulsePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [docModalOpen, setDocModalOpen] = useState(false);
+
+  const handleOpenGoogleDoc = () => {
+    const url = getSavedDocUrl();
+    if (isMockDocUrl(url)) {
+      setDocModalOpen(true);
+    } else {
+      window.open(url, '_blank');
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -358,12 +369,7 @@ ${note.actions.map((a, i) => `${i + 1}. [${a.owner}] ${a.text} (Target: ${a.succ
                 variant="secondary"
                 size="sm"
                 icon={<ExternalLink className="w-3.5 h-3.5" />}
-                onClick={() =>
-                  window.open(
-                    'https://docs.google.com/document/d/mock-groww-weekly-pulse-2026-11-09',
-                    '_blank'
-                  )
-                }
+                onClick={handleOpenGoogleDoc}
                 className="flex-1 sm:flex-initial text-xs"
               >
                 Open Google Doc
@@ -399,6 +405,28 @@ ${note.actions.map((a, i) => `${i + 1}. [${a.owner}] ${a.text} (Target: ${a.succ
       {toastMessage && (
         <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       )}
+
+      {/* Google Doc Connect & View Modal */}
+      <GoogleDocModal
+        isOpen={docModalOpen}
+        onClose={() => setDocModalOpen(false)}
+        noteMarkdown={note ? `
+# Groww Weekly Review Pulse
+**Window:** ${note.windowStart} to ${note.windowEnd} | **Reviews Analyzed:** ${note.totalReviews} | **Avg Rating:** ${note.avgRating}★
+
+## Pulse Score
+${note.pulseScore} / 100 — ${note.moodLabel}
+
+## Top 3 Themes
+${note.topThemes.map((t, i) => `${i + 1}. **${t.label}** (${t.sharePct}% share, ${t.avgRating}★): ${t.summary}`).join('\n')}
+
+## Voice of the Users (Verbatim Quotes)
+${note.quotes.map(q => `- "${q.text}" (${q.rating}★)`).join('\n')}
+
+## Operational Action Ideas
+${note.actions.map((a, i) => `${i + 1}. [${a.owner}] ${a.text} (Target: ${a.successSignal})`).join('\n')}
+        `.trim() : ''}
+      />
     </div>
   );
 };
