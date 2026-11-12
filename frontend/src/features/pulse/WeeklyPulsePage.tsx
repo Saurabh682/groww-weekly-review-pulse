@@ -15,6 +15,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { ErrorState } from '../../components/ErrorState';
 import { Toast } from '../../components/Toast';
 import { GoogleDocModal, getSavedDocUrl, isMockDocUrl } from '../../components/GoogleDocModal';
+import { GmailDraftModal } from '../../components/GmailDraftModal';
 import {
   Copy,
   ExternalLink,
@@ -35,6 +36,7 @@ export const WeeklyPulsePage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [docModalOpen, setDocModalOpen] = useState(false);
+  const [gmailModalOpen, setGmailModalOpen] = useState(false);
 
   const handleOpenGoogleDoc = () => {
     const url = getSavedDocUrl();
@@ -380,7 +382,7 @@ ${note.actions.map((a, i) => `${i + 1}. [${a.owner}] ${a.text} (Target: ${a.succ
                 variant="primary"
                 size="sm"
                 icon={<Mail className="w-3.5 h-3.5 text-[#0b111e]" />}
-                onClick={() => navigate('/run')}
+                onClick={() => setGmailModalOpen(true)}
                 className="gap-2 w-full sm:w-auto justify-center text-xs"
               >
                 <span>View Gmail draft</span>
@@ -426,6 +428,12 @@ ${note.quotes.map(q => `- "${q.text}" (${q.rating}★)`).join('\n')}
 ## Operational Action Ideas
 ${note.actions.map((a, i) => `${i + 1}. [${a.owner}] ${a.text} (Target: ${a.successSignal})`).join('\n')}
         `.trim() : ''}
+      />
+
+      {/* Gmail Draft Review & Staging Modal */}
+      <GmailDraftModal
+        isOpen={gmailModalOpen}
+        onClose={() => setGmailModalOpen(false)}
       />
     </div>
   );

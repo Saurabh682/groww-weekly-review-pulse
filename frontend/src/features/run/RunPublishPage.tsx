@@ -10,6 +10,7 @@ import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Skeleton } from '../../components/Skeleton';
 import { GoogleDocModal, getSavedDocUrl, isMockDocUrl } from '../../components/GoogleDocModal';
+import { GmailDraftModal } from '../../components/GmailDraftModal';
 import {
   Play,
   RotateCcw,
@@ -35,6 +36,7 @@ export const RunPublishPage: React.FC = () => {
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<PipelineStage | null>(null);
   const [docModalOpen, setDocModalOpen] = useState(false);
+  const [gmailModalOpen, setGmailModalOpen] = useState(false);
 
   const handleOpenGoogleDoc = () => {
     const url = getSavedDocUrl();
@@ -475,9 +477,7 @@ export const RunPublishPage: React.FC = () => {
             size="sm"
             disabled={isFailed}
             icon={<Mail className="w-3.5 h-3.5" />}
-            onClick={() => {
-              alert('Gmail Draft Preview: Created and staged in your Gmail drafts folder. Review before manual dispatch.');
-            }}
+            onClick={() => setGmailModalOpen(true)}
             className="w-full justify-center"
           >
             View Gmail draft
@@ -596,6 +596,14 @@ export const RunPublishPage: React.FC = () => {
       <GoogleDocModal
         isOpen={docModalOpen}
         onClose={() => setDocModalOpen(false)}
+      />
+
+      {/* Gmail Draft Review & Staging Modal */}
+      <GmailDraftModal
+        isOpen={gmailModalOpen}
+        onClose={() => setGmailModalOpen(false)}
+        to={runState?.draft?.to}
+        subject={runState?.draft?.subject}
       />
     </div>
   );
