@@ -10,7 +10,7 @@ interface GoogleDocModalProps {
 }
 
 export const STORAGE_KEY_DOC_URL = 'groww_pulse_google_doc_url';
-export const DEFAULT_MOCK_DOC_URL = 'https://docs.google.com/document/d/mock-groww-weekly-pulse-2026-11-09/edit';
+export const DEFAULT_MOCK_DOC_URL = 'https://docs.google.com/document/d/1BPe7HxJWozrCPsyr_xR1LEYDb04mTxFOKSyB340REKE/edit';
 
 export function getSavedDocUrl(): string {
   try {

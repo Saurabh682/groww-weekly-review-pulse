@@ -23,7 +23,7 @@ export const FIXTURE_RUN_STATE: RunState = {
   ],
   doc: {
     title: 'Groww Weekly Review Pulse - Week of 09 Nov 2026',
-    url: 'https://docs.google.com/document/d/mock-groww-weekly-pulse-2026-11-09',
+    url: 'https://docs.google.com/document/d/1BPe7HxJWozrCPsyr_xR1LEYDb04mTxFOKSyB340REKE/edit',
     status: 'Published',
     updatedAt: '09 Nov 2026, 06:30 IST',
   },
