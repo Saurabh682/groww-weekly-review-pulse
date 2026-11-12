@@ -6,6 +6,8 @@ timeout enforcement, structured error types, and dry-run/mock execution.
 
 import json
 import time
+import urllib.request
+import urllib.error
 from typing import Any, Dict, List, Optional
 
 
@@ -59,10 +61,94 @@ class MCPClient:
         arguments: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Invoke a tool on an MCP server with retries and structured error handling."""
-        # For production runs using external MCP servers (stdio or SSE),
-        # an external bridge or subprocess is used.
-        # This base client handles retry and contract logic.
         raise NotImplementedError("Subclasses or mock clients must implement call_tool.")
+
+
+class RemoteMCPClient(MCPClient):
+    """Real HTTP Streamable client for remote MCP servers."""
+
+    def __init__(
+        self,
+        server_url: str = "https://gmail-docs-mcp-five.vercel.app/api/mcp",
+        auth_token: str = "0f3780ce835e5a48f746104f6be69f6e57d373c79490e340",
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.server_url = server_url
+        self.auth_token = auth_token
+        self.req_id = 0
+
+    def call_tool(
+        self,
+        server: str,
+        tool: str,
+        arguments: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Invoke remote tool via JSON-RPC over Streamable HTTP."""
+        self.req_id += 1
+        headers = {
+            "Authorization": f"Bearer {self.auth_token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream",
+            "User-Agent": "GrowwReviewPulse/1.0"
+        }
+
+        payload = {
+            "jsonrpc": "2.0",
+            "id": self.req_id,
+            "method": "tools/call",
+            "params": {
+                "name": tool,
+                "arguments": arguments
+            }
+        }
+
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(self.server_url, data=data, headers=headers, method="POST")
+
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout_seconds) as resp:
+                    raw_text = resp.read().decode("utf-8")
+                    
+                    json_str = raw_text
+                    for line in raw_text.splitlines():
+                        if line.startswith("data:"):
+                            json_str = line[5:].strip()
+                            break
+
+                    parsed = json.loads(json_str)
+                    if "error" in parsed:
+                        err = parsed["error"]
+                        code = err.get("code")
+                        msg = err.get("message", "MCP error")
+                        if code == -32601:
+                            raise MCPToolNotFoundError(msg)
+                        raise MCPError(f"Remote MCP error ({code}): {msg}")
+
+                    result = parsed.get("result", {})
+                    if result.get("isError"):
+                        struct = result.get("structuredContent", {})
+                        err_info = struct.get("error", {})
+                        if err_info.get("code") == "AUTH_REQUIRED":
+                            raise MCPAuthExpiredError(err_info.get("message", "Authentication required"))
+                        raise MCPError(err_info.get("message") or str(result.get("content", "Tool failed")))
+
+                    return result
+            except urllib.error.HTTPError as e:
+                if e.code in (401, 403):
+                    raise MCPAuthExpiredError("MCP authentication token invalid or expired")
+                if e.code == 429:
+                    raise MCPRateLimitError("MCP rate limit exceeded")
+                if attempt == self.max_retries:
+                    raise MCPConnectionError(f"HTTP {e.code}: {e.reason}")
+                time.sleep(self.backoff_factor * (2 ** (attempt - 1)))
+            except (MCPError, MCPAuthExpiredError, MCPRateLimitError, MCPToolNotFoundError):
+                raise
+            except Exception as e:
+                if attempt == self.max_retries:
+                    raise MCPConnectionError(f"Connection to MCP server failed: {str(e)}")
+                time.sleep(self.backoff_factor * (2 ** (attempt - 1)))
 
 
 class MockMCPClient(MCPClient):

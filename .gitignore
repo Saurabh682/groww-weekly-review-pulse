@@ -21,10 +21,11 @@ token.json
 credentials.json
 *.pem
 
-# SQLite databases & temp data (strictly PII protected)
+# Data & outputs (strictly PII protected)
+data/
+outputs/
 *.db
 *.sqlite3
-data/*.db
 
 # Test & coverage caches
 .pytest_cache/
@@ -39,5 +40,5 @@ ENV/
 .idea/
 .vscode/
 
+# Space builds
 hf_space/
-
