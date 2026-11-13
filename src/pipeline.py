@@ -190,9 +190,315 @@ def run_themes_stage(
     return theme_result
 
 
+def validate_week_parameter(week_str: str):
+    """Validate week parameter against path traversal and format errors (SEC-06, WIN-06, ORC-12)."""
+    if not week_str or not isinstance(week_str, str):
+        raise ValueError("Week parameter must be a non-empty string.")
+    if ".." in week_str or "/" in week_str or "\\" in week_str:
+        raise ValueError(f"Path traversal detected in week parameter: {week_str!r} (SEC-06)")
+    cleaned = week_str.strip()
+    try:
+        datetime.strptime(cleaned, "%Y-%m-%d")
+    except ValueError as e:
+        raise ValueError(f"Invalid week date format: {week_str!r}. Expected YYYY-MM-DD.") from e
+    return normalize_to_week_start(cleaned)
+
+
+def run_full_pipeline(
+    week_str: str = "2026-11-10",
+    csv_path: Optional[Path | str] = None,
+    dry_run: bool = False,
+    stage_limit: Optional[str] = None,
+    retries: int = 3,
+    db: Optional[Database] = None,
+    config: Optional[PulseConfig] = None,
+    mcp_client=None,
+) -> Dict[str, any]:
+    """Execute complete weekly pulse pipeline (Phase 5 Orchestrator).
+    
+    Stages:
+    1. Ingest (allowlist, clean, dedupe, PII scrub, lang tag, persist)
+    2. Themes (embed, cluster <=5 themes, stats, ranking, spike check)
+    3. Note & Validate Gate with Multi-attempt Regeneration (VAL-01..07, INV-02)
+    4. Publish via MCP (Google Docs + Gmail draft staging; dry-run no-op)
+    5. Observability & Report (run_report.json, zero-PII guarantee)
+    """
+    start_time = datetime.now(timezone.utc)
+    week_start_dt = validate_week_parameter(week_str)
+    norm_week = week_start_dt.strftime("%Y-%m-%d")
+
+    if not config:
+        config = load_pulse_config()
+
+    root = get_project_root()
+    database = db or Database(root / "data" / "pulse.db")
+
+    window_start, window_end = calculate_window_bounds(week_start_dt, weeks=config.window.weeks)
+    run_id = f"run_{norm_week}_{int(start_time.timestamp() * 1000)}"
+
+    database.record_run_start(
+        run_id=run_id,
+        week_start=norm_week,
+        window_start=window_start,
+        window_end=window_end
+    )
+
+    stage_timings: Dict[str, float] = {}
+    stage_statuses: Dict[str, str] = {}
+
+    # Stage 1: Ingestion
+    t0 = datetime.now(timezone.utc)
+    try:
+        reviews_in_window = database.get_reviews_in_window(window_start, window_end)
+        if not reviews_in_window or stage_limit == "ingest" or csv_path is not None:
+            ingest_summary = process_and_ingest_reviews(
+                config=config,
+                week_str=norm_week,
+                csv_path=csv_path,
+                db=database
+            )
+            stage_statuses["ingest"] = "done"
+        else:
+            stage_statuses["ingest"] = "cached"
+            ingest_summary = {
+                "week": norm_week,
+                "window_start": window_start,
+                "window_end": window_end,
+                "total_analyzed": len(reviews_in_window),
+                "coverage_weeks": compute_coverage_weeks(reviews_in_window),
+                "short_coverage_flag": compute_coverage_weeks(reviews_in_window) < 8.0,
+            }
+
+        database.update_run(
+            run_id=run_id,
+            status="ingest_completed" if stage_limit == "ingest" else "running",
+            total_reviews=ingest_summary.get("total_analyzed", 0),
+            analyzed_reviews=ingest_summary.get("total_analyzed", 0),
+            avg_rating=ingest_summary.get("avg_rating", 0.0),
+            coverage_weeks=ingest_summary.get("coverage_weeks", 0.0),
+            finished=(stage_limit == "ingest")
+        )
+    except Exception as e:
+        database.update_run(run_id=run_id, status="failed", error=str(e), finished=True)
+        raise
+
+    stage_timings["ingest"] = (datetime.now(timezone.utc) - t0).total_seconds()
+    if stage_limit == "ingest":
+        return {
+            "run_id": run_id,
+            "status": "ingest_completed",
+            "stage_limit": "ingest",
+            "ingest": ingest_summary,
+            "timings": stage_timings
+        }
+
+    # Stage 2: Themes Clustering
+    t0 = datetime.now(timezone.utc)
+    try:
+        theme_summary = run_themes_stage(config=config, week_str=norm_week, db=database)
+        stage_statuses["themes"] = "done"
+        has_spike = any(t.get("is_spike", False) for t in theme_summary.get("themes", []))
+        database.update_run(
+            run_id=run_id,
+            status="themes_completed" if stage_limit == "themes" else "running",
+            finished=(stage_limit == "themes")
+        )
+    except Exception as e:
+        database.update_run(run_id=run_id, status="failed", error=str(e), finished=True)
+        raise
+
+    stage_timings["themes"] = (datetime.now(timezone.utc) - t0).total_seconds()
+    if stage_limit == "themes":
+        return {
+            "run_id": run_id,
+            "status": "themes_completed",
+            "stage_limit": "themes",
+            "themes": theme_summary,
+            "has_spike": has_spike,
+            "timings": stage_timings
+        }
+
+    # Stage 3: Note Generation & Validation Gate (Multi-attempt regeneration Task 5.2)
+    t0 = datetime.now(timezone.utc)
+    from src.note.engine import build_and_validate_pulse_note
+    from src.clean.pii import scrub_pii
+
+    attempt = 0
+    note = None
+    rendered_md = None
+    val_result = None
+    out_folder = None
+
+    while attempt < max(1, retries):
+        attempt += 1
+        note, rendered_md, val_result, out_folder = build_and_validate_pulse_note(
+            database=database,
+            week_start=norm_week,
+            dry_run=dry_run
+        )
+        if val_result.is_valid:
+            break
+
+    stage_timings["note_validation"] = (datetime.now(timezone.utc) - t0).total_seconds()
+
+    if not val_result.is_valid:
+        # Validation Gate Failed (INV-02: NEVER CALL PUBLISH!)
+        database.update_run(
+            run_id=run_id,
+            status="validation_failed",
+            error="; ".join(val_result.errors),
+            finished=True
+        )
+        stage_statuses["note"] = "validation_failed"
+        stage_statuses["publish"] = "skipped"
+
+        out_dir = root / "outputs" / norm_week
+        out_dir.mkdir(parents=True, exist_ok=True)
+        failed_report = {
+            "run_id": run_id,
+            "week_start": norm_week,
+            "window_start": window_start,
+            "window_end": window_end,
+            "status": "validation_failed",
+            "attempts": attempt,
+            "max_retries": retries,
+            "errors": val_result.errors,
+            "checks_passed": val_result.checks_passed,
+            "word_count": val_result.word_count,
+            "dry_run": dry_run,
+            "stage_statuses": stage_statuses,
+            "timings": stage_timings
+        }
+        (out_dir / "run_report.json").write_text(json.dumps(failed_report, indent=2), encoding="utf-8")
+
+        return {
+            "run_id": run_id,
+            "week": norm_week,
+            "status": "validation_failed",
+            "is_valid": False,
+            "errors": val_result.errors,
+            "attempts": attempt,
+            "report_path": str(out_dir / "run_report.json"),
+            "timings": stage_timings
+        }
+
+    stage_statuses["note"] = "done"
+    if stage_limit == "note":
+        database.update_run(run_id=run_id, status="validated", finished=True)
+        return {
+            "run_id": run_id,
+            "status": "validated",
+            "stage_limit": "note",
+            "word_count": val_result.word_count,
+            "timings": stage_timings
+        }
+
+    # Stage 4: Publish via MCP (Phase 4 MCP publishing)
+    t0 = datetime.now(timezone.utc)
+    pub_result = None
+
+    if not dry_run:
+        from src.mcp.capabilities import load_mcp_config
+        from src.mcp.client import MockMCPClient
+        from src.mcp.publisher import PulsePublisher
+
+        mcp_cfg = load_mcp_config(config.mcp.config)
+        client = mcp_client or MockMCPClient()
+        publisher = PulsePublisher(database=database, mcp_config=mcp_cfg, client=client)
+
+        recipient_to = config.email.to if config.email.to else "product-leadership@groww.in"
+        pub_result = publisher.publish_pulse(
+            week_start=norm_week,
+            note_markdown=rendered_md,
+            recipient_email=recipient_to
+        )
+
+        final_status = "published" if pub_result.status in ["published", "created", "updated", "no_change", "noop"] else "publish_failed"
+        database.update_run(run_id=run_id, status=final_status, finished=True)
+        stage_statuses["publish"] = "done" if final_status == "published" else "failed"
+    else:
+        # Dry-run: NO MCP calls, NO publish_state modifications (ORC-01)
+        database.update_run(run_id=run_id, status="validated", finished=True)
+        stage_statuses["publish"] = "skipped_dry_run"
+
+    stage_timings["publish"] = (datetime.now(timezone.utc) - t0).total_seconds()
+
+    # Stage 5: Observability & Run Report Generation (Task 5.4, ORC-10)
+    out_dir = root / "outputs" / norm_week
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    report_data = {
+        "run_id": run_id,
+        "week_start": norm_week,
+        "window_start": window_start,
+        "window_end": window_end,
+        "status": "published" if (not dry_run and pub_result and pub_result.status in ["published", "created", "updated", "no_change", "noop"]) else ("validated" if dry_run else "failed"),
+        "dry_run": dry_run,
+        "total_reviews": ingest_summary.get("total_analyzed", 0),
+        "analyzed_reviews": theme_summary.get("analyzable_reviews", 0),
+        "coverage_weeks": ingest_summary.get("coverage_weeks", 0.0),
+        "short_coverage_flag": ingest_summary.get("short_coverage_flag", False),
+        "has_spike": any(t.get("is_spike", False) for t in theme_summary.get("themes", [])),
+        "avg_rating": ingest_summary.get("avg_rating", 0.0),
+        "word_count": val_result.word_count,
+        "is_valid": val_result.is_valid,
+        "attempts": attempt,
+        "top_themes": [
+            {
+                "rank": t["rank"],
+                "label": t["label"],
+                "review_count": t["review_count"],
+                "share_pct": t["share_pct"],
+                "avg_rating": t["avg_rating"],
+                "is_spike": t.get("is_spike", False),
+            }
+            for t in theme_summary.get("top_3_themes", [])
+        ],
+        "quotes_count": len(note.quotes) if note else 0,
+        "actions_count": len(note.actions) if note else 0,
+        "publish": {
+            "status": pub_result.status if pub_result else "dry_run",
+            "doc_id": pub_result.doc_id if pub_result else None,
+            "doc_url": pub_result.doc_url if pub_result else None,
+            "draft_id": pub_result.draft_id if pub_result else None,
+        } if pub_result else None,
+        "stage_statuses": stage_statuses,
+        "timings": stage_timings,
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    report_json = json.dumps(report_data, indent=2)
+    pii_check = scrub_pii(report_json)
+    if pii_check.pii_found:
+        report_json = pii_check.cleaned_text
+
+    report_path = out_dir / "run_report.json"
+    report_path.write_text(report_json, encoding="utf-8")
+
+    return {
+        "run_id": run_id,
+        "week": norm_week,
+        "status": report_data["status"],
+        "is_valid": True,
+        "dry_run": dry_run,
+        "word_count": val_result.word_count,
+        "doc_url": pub_result.doc_url if pub_result else None,
+        "draft_id": pub_result.draft_id if pub_result else None,
+        "report_path": str(report_path),
+        "timings": stage_timings,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="Groww Weekly Review Pulse Pipeline")
     subparsers = parser.add_subparsers(dest="command", help="Pipeline commands")
+
+    run_parser = subparsers.add_parser("run", help="Execute complete weekly pulse pipeline (Phase 5)")
+    run_parser.add_argument("--week", default="2026-11-10", help="Run week (YYYY-MM-DD)")
+    run_parser.add_argument("--file", default=None, help="Path to input CSV file")
+    run_parser.add_argument("--dry-run", action="store_true", help="Stop after validation without publishing")
+    run_parser.add_argument("--stage", choices=["ingest", "themes", "note", "publish"], default=None, help="Stop after specified stage or resume")
+    run_parser.add_argument("--retries", type=int, default=3, help="Max regeneration attempts on validation failure")
 
     ingest_parser = subparsers.add_parser("ingest", help="Ingest, clean, and scrub Play reviews")
     ingest_parser.add_argument("--week", default="2026-11-10", help="Run week (YYYY-MM-DD)")
@@ -209,9 +515,36 @@ def main():
     pub_parser.add_argument("--week", default="2026-11-10", help="Run week (YYYY-MM-DD)")
     pub_parser.add_argument("--dry-run", action="store_true", help="Execute with mock MCP client without live side effects")
 
+    purge_parser = subparsers.add_parser("purge", help="Retention purge for old reviews and raw files (Task 5.5)")
+    purge_parser.add_argument("--week", default="2026-11-10", help="Current week to anchor retention window")
+    purge_parser.add_argument("--weeks", type=int, default=18, help="Total retention window in weeks (default: 18)")
+
     args = parser.parse_args()
 
-    if args.command == "ingest":
+    if args.command == "run":
+        res = run_full_pipeline(
+            week_str=args.week,
+            csv_path=args.file,
+            dry_run=args.dry_run,
+            stage_limit=args.stage,
+            retries=args.retries,
+        )
+        print("Weekly pulse run complete:")
+        print(json.dumps(res, indent=2))
+        if res.get("status") == "validation_failed":
+            sys.exit(2)  # distinct code for validation failure (ORC-11)
+        elif res.get("status") == "failed":
+            sys.exit(1)
+        sys.exit(0)
+    elif args.command == "purge":
+        from src.store.retention import calculate_retention_cutoff, purge_retention
+        db = Database()
+        cutoff = calculate_retention_cutoff(week_str=args.week, window_weeks=args.weeks // 2)
+        purge_res = purge_retention(database=db, cutoff_date=cutoff)
+        print("Retention purge complete:")
+        print(json.dumps(purge_res, indent=2))
+        sys.exit(0)
+    elif args.command == "ingest":
         summary = process_and_ingest_reviews(week_str=args.week, csv_path=args.file)
         print("Ingestion complete:")
         print(json.dumps(summary, indent=2))

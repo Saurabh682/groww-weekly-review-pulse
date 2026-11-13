@@ -265,19 +265,19 @@ Working `pulse publish`, `publish_state` tracking, contract tests, smoke-test no
 
 ### Tasks
 
-- [ ] **5.1 Orchestrator (`pipeline.py`).** `pulse run --week ...` executes ingest → clean → cluster → select → note → validate → publish; records stage status in `runs`; supports `--dry-run` and `--stage` resume from cached intermediates.
-- [ ] **5.2 Regeneration policy.** On validation failure, targeted regeneration up to N attempts, then fail loudly with a readable report; never publish on failure.
-- [ ] **5.3 Edge cases.**
+- [x] **5.1 Orchestrator (`pipeline.py`).** `pulse run --week ...` executes ingest → clean → cluster → select → note → validate → publish; records stage status in `runs`; supports `--dry-run` and `--stage` resume from cached intermediates.
+- [x] **5.2 Regeneration policy.** On validation failure, targeted regeneration up to N attempts, then fail loudly with a readable report; never publish on failure.
+- [x] **5.3 Edge cases.**
   - Low-volume week: still produce the note, flag small sample size.
   - Spike week (e.g., outage): highlight the theme share jump.
   - Window shorter than 8 weeks: flag the coverage shortfall in the run report.
   - Mixed-language and very short reviews: verified behaviors.
   - Rating/text mismatch: theme from text, rating reported separately.
-- [ ] **5.4 Observability.** Structured logs (run_id, stage, counts, durations; no review text), `run_report.json`, and a one-line console summary.
-- [ ] **5.5 Retention.** Purge rows and raw files older than the rolling window plus one prior window.
-- [ ] **5.6 Scheduling.** Weekly trigger via cron or a scheduled CI job (or documented manual command). Confirm the execution environment can reach the MCP servers with authorized sessions.
-- [ ] **5.7 Full test pass.** End-to-end test on fixtures with a mock MCP; invariant tests (themes ≤5, 3/3/3, ≤250 words); idempotency test; PII gate test across dataset, note, email, logs, and run report.
-- [ ] **5.8 Performance/cost check.** Confirm runtime and LLM/embedding cost per weekly run are acceptable; cache embeddings.
+- [x] **5.4 Observability.** Structured logs (run_id, stage, counts, durations; no review text), `run_report.json`, and a one-line console summary.
+- [x] **5.5 Retention.** Purge rows and raw files older than the rolling window plus one prior window.
+- [x] **5.6 Scheduling.** Weekly trigger via cron or a scheduled CI job (or documented manual command). Confirm the execution environment can reach the MCP servers with authorized sessions.
+- [x] **5.7 Full test pass.** End-to-end test on fixtures with a mock MCP; invariant tests (themes ≤5, 3/3/3, ≤250 words); idempotency test; PII gate test across dataset, note, email, logs, and run report.
+- [x] **5.8 Performance/cost check.** Confirm runtime and LLM/embedding cost per weekly run are acceptable; cache embeddings.
 
 ### Deliverables
 `pulse run`, scheduled job configuration, retention job, full passing suite.

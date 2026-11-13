@@ -29,13 +29,17 @@ class RunRecord:
     run_id: str
     week_start: str  # YYYY-MM-DD
     status: str
-    total_reviews: int
-    analyzed_reviews: int
-    avg_rating: float
-    coverage_weeks: float
+    total_reviews: int = 0
+    analyzed_reviews: int = 0
+    avg_rating: float = 0.0
+    coverage_weeks: float = 0.0
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
+    window_start: Optional[str] = None
+    window_end: Optional[str] = None
+    error: Optional[str] = None
+    finished_at: Optional[str] = None
 
 
 @dataclass

@@ -1,28 +1,28 @@
 # Groww Weekly Review Pulse: Week of 2026-11-09
 
-Google Play reviews (2026-08-17 to 2026-11-09) • Total: 1435 • Analyzed: 662 • Avg Rating: 2.7★
+Google Play reviews (2026-08-17 to 2026-11-09) • Total: 184 • Analyzed: 184 • Avg Rating: 2.5★
 
 ## Top Themes
 
-**1. Charges & Pricing** (31.0% share, 2.6★)
+**1. Charges & Pricing** (28.3% share, 2.0★)
 Users report unexpected charges and request transparent fee breakdowns on equity and DP deductions.
 
-**2. App Performance & Bugs** (28.8% share, 2.4★)
+**2. App Performance & Bugs** (25.0% share, 2.1★)
 Frequent app lag and freezing reported during peak trading hours, impacting order execution.
 
-**3. Positive UX & Simplicity** (26.1% share, 3.6★)
-Users praise intuitive navigation, clean interface design, and straightforward mutual fund investing.
+**3. Mutual Funds & SIPs** (20.1% share, 3.4★)
+Mutual Funds & SIPs accounts for 20.1% of reviews with an average rating of 3.4★.
 
 ## Customer Voice
 
+> "Money debited from bank account via UPI but not credited to Groww wallet"
+> — 1★ review (2026-11-08) • Charges & Pricing
+
 > "Withdrawal request placed on Monday, still pending on Friday"
-> — 1★ review (2026-11-04) • Charges & Pricing
+> — 1★ review (2026-11-04) • App Performance & Bugs
 
-> "added USD 216 (21k rupees), 8 days ago and it was never added to my account"
-> — 1★ review (2026-10-27) • App Performance & Bugs
-
-> "Hi team your nifty terminal lagging in the desktop and everything 20 to 25 minutes auto frezze please resolve this issue"
-> — 5★ review (2026-10-22) • Positive UX & Simplicity
+> "Redeemed mutual fund units 5 days ago, money still not in savings account"
+> — 1★ review (2026-10-28) • Mutual Funds & SIPs
 
 ## Recommended Actions
 
@@ -30,4 +30,4 @@ Users praise intuitive navigation, clean interface design, and straightforward m
 
 2. **[App Performance & Bugs]** Conduct load testing on morning market-open websocket channels and patch chart rendering memory leaks. *(Owner: Mobile Reliability Team)*
 
-3. **[Positive UX & Simplicity]** Maintain current simplified mutual fund dashboard layout while streamlining advanced equity analytics. *(Owner: Product Design Team)*
+3. **[Mutual Funds & SIPs]** Analyze positive feedback on mutual funds & sips to reinforce design standards across other product modules. *(Owner: Engineering Team)*

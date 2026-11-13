@@ -5,6 +5,7 @@ Enforces zero identity columns (SEC-01) and idempotent insertions.
 
 import sqlite3
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Generator, Iterable, List, Optional
 from src.config import resolve_project_path
@@ -36,11 +37,15 @@ CREATE TABLE IF NOT EXISTS runs (
     run_id TEXT PRIMARY KEY,
     week_start TEXT NOT NULL,
     status TEXT NOT NULL,
-    total_reviews INTEGER NOT NULL,
-    analyzed_reviews INTEGER NOT NULL,
-    avg_rating REAL NOT NULL,
-    coverage_weeks REAL NOT NULL,
-    created_at TEXT NOT NULL
+    total_reviews INTEGER NOT NULL DEFAULT 0,
+    analyzed_reviews INTEGER NOT NULL DEFAULT 0,
+    avg_rating REAL NOT NULL DEFAULT 0.0,
+    coverage_weeks REAL NOT NULL DEFAULT 0.0,
+    created_at TEXT NOT NULL,
+    window_start TEXT,
+    window_end TEXT,
+    error TEXT,
+    finished_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS themes (
@@ -98,9 +103,123 @@ class Database:
             conn.close()
 
     def init_schema(self) -> None:
-        """Create tables if they do not exist."""
+        """Create tables if they do not exist and apply backwards-compatible migrations."""
         with self.get_connection() as conn:
             conn.executescript(SCHEMA_SQL)
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(runs)")
+            existing_cols = {r["name"] for r in cursor.fetchall()}
+            for col in ["window_start", "window_end", "error", "finished_at"]:
+                if col not in existing_cols:
+                    cursor.execute(f"ALTER TABLE runs ADD COLUMN {col} TEXT;")
+            conn.commit()
+
+    def record_run_start(
+        self,
+        run_id: str,
+        week_start: str,
+        window_start: Optional[str] = None,
+        window_end: Optional[str] = None,
+    ) -> str:
+        """Record the start of a pipeline run in runs table."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT OR REPLACE INTO runs (
+                    run_id, week_start, status, total_reviews, analyzed_reviews,
+                    avg_rating, coverage_weeks, created_at, window_start, window_end
+                ) VALUES (?, ?, 'running', 0, 0, 0.0, 0.0, ?, ?, ?)
+                """,
+                (run_id, week_start, now_iso, window_start, window_end)
+            )
+            conn.commit()
+        return run_id
+
+    def update_run(
+        self,
+        run_id: str,
+        status: str,
+        total_reviews: Optional[int] = None,
+        analyzed_reviews: Optional[int] = None,
+        avg_rating: Optional[float] = None,
+        coverage_weeks: Optional[float] = None,
+        error: Optional[str] = None,
+        finished: bool = False,
+    ) -> None:
+        """Update run progress, metrics, or terminal status."""
+        finished_at = datetime.now(timezone.utc).isoformat() if finished else None
+        updates = ["status = ?"]
+        params = [status]
+        if total_reviews is not None:
+            updates.append("total_reviews = ?")
+            params.append(total_reviews)
+        if analyzed_reviews is not None:
+            updates.append("analyzed_reviews = ?")
+            params.append(analyzed_reviews)
+        if avg_rating is not None:
+            updates.append("avg_rating = ?")
+            params.append(avg_rating)
+        if coverage_weeks is not None:
+            updates.append("coverage_weeks = ?")
+            params.append(coverage_weeks)
+        if error is not None:
+            updates.append("error = ?")
+            params.append(error)
+        if finished_at is not None:
+            updates.append("finished_at = ?")
+            params.append(finished_at)
+
+        params.append(run_id)
+        sql = f"UPDATE runs SET {', '.join(updates)} WHERE run_id = ?"
+        with self.get_connection() as conn:
+            conn.execute(sql, tuple(params))
+            conn.commit()
+
+    def get_run(self, run_id: str) -> Optional[RunRecord]:
+        """Fetch a run by its ID."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,))
+            row = cursor.fetchone()
+            if row:
+                return RunRecord(**dict(row))
+        return None
+
+    def get_active_runs(self) -> List[str]:
+        """Fetch list of run_ids currently in 'running' state (ORC-08)."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT run_id FROM runs WHERE status = 'running'")
+            return [r[0] for r in cursor.fetchall()]
+
+    def purge_reviews_older_than(
+        self, cutoff_date: str, exclude_run_ids: Optional[List[str]] = None
+    ) -> int:
+        """Delete reviews with date < cutoff_date, preserving active runs (ORC-08)."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            if exclude_run_ids:
+                placeholders = ",".join("?" for _ in exclude_run_ids)
+                subquery = f"""
+                    SELECT review_id FROM review_themes rt
+                    JOIN themes t ON rt.theme_id = t.theme_id
+                    WHERE t.run_id IN ({placeholders})
+                """
+                cursor.execute(
+                    f"DELETE FROM reviews WHERE date < ? AND review_id NOT IN ({subquery})",
+                    (cutoff_date, *exclude_run_ids),
+                )
+            else:
+                cursor.execute("DELETE FROM reviews WHERE date < ?", (cutoff_date,))
+            deleted = cursor.rowcount
+            # Cleanup orphaned review_themes
+            cursor.execute(
+                "DELETE FROM review_themes WHERE review_id NOT IN (SELECT review_id FROM reviews)"
+            )
+            conn.commit()
+            return deleted
 
     def upsert_reviews(self, records: Iterable[ReviewRecord]) -> int:
         """Insert reviews, skipping duplicates based on review_id (idempotent ING-16).

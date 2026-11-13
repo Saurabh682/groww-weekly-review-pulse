@@ -1,60 +1,59 @@
 {
-  "run_id": "run_2026-11-10_63899",
+  "run_id": "run_2026-11-09_1794547581862",
   "week_start": "2026-11-09",
+  "window_start": "2026-08-24",
+  "window_end": "2026-11-15",
   "status": "validated",
-  "word_count": 208,
-  "max_words_allowed": 250,
+  "dry_run": true,
+  "total_reviews": 184,
+  "analyzed_reviews": 184,
+  "coverage_weeks": 9.1,
+  "short_coverage_flag": false,
+  "has_spike": false,
+  "avg_rating": 2.5,
+  "word_count": 201,
   "is_valid": true,
-  "errors": [],
-  "checks_passed": [
-    "word_count_cap",
-    "theme_count",
-    "theme_labels_unique",
-    "quotes_count",
-    "quotes_distinct_reviews",
-    "quote_1_verbatim",
-    "quote_2_verbatim",
-    "quote_3_verbatim",
-    "actions_count",
-    "google_play_scope",
-    "pii_free_rendered_note"
-  ],
+  "attempts": 1,
   "top_themes": [
     {
-      "theme_id": "thm_2026-11-10_1",
+      "rank": 1,
       "label": "Charges & Pricing",
-      "description": "User feedback regarding charges & pricing.",
-      "one_liner": "Users report unexpected charges and request transparent fee breakdowns on equity and DP deductions.",
-      "review_count": 205,
-      "share_pct": 0.3097,
-      "avg_rating": 2.63,
-      "neg_share": 0.0,
-      "is_top3": true
+      "review_count": 52,
+      "share_pct": 0.2826,
+      "avg_rating": 1.98,
+      "is_spike": false
     },
     {
-      "theme_id": "thm_2026-11-10_2",
+      "rank": 2,
       "label": "App Performance & Bugs",
-      "description": "User feedback regarding app performance & bugs.",
-      "one_liner": "Frequent app lag and freezing reported during peak trading hours, impacting order execution.",
-      "review_count": 191,
-      "share_pct": 0.2885,
-      "avg_rating": 2.43,
-      "neg_share": 0.0,
-      "is_top3": true
+      "review_count": 46,
+      "share_pct": 0.25,
+      "avg_rating": 2.11,
+      "is_spike": false
     },
     {
-      "theme_id": "thm_2026-11-10_3",
-      "label": "Positive UX & Simplicity",
-      "description": "User feedback regarding positive ux & simplicity.",
-      "one_liner": "Users praise intuitive navigation, clean interface design, and straightforward mutual fund investing.",
-      "review_count": 173,
-      "share_pct": 0.2613,
-      "avg_rating": 3.65,
-      "neg_share": 0.0,
-      "is_top3": true
+      "rank": 3,
+      "label": "Mutual Funds & SIPs",
+      "review_count": 37,
+      "share_pct": 0.2011,
+      "avg_rating": 3.35,
+      "is_spike": false
     }
   ],
   "quotes_count": 3,
   "actions_count": 3,
-  "dry_run": true
+  "publish": null,
+  "stage_statuses": {
+    "ingest": "done",
+    "themes": "done",
+    "note": "done",
+    "publish": "skipped_dry_run"
+  },
+  "timings": {
+    "ingest": 0.090041,
+    "themes": 0.255815,
+    "note_validation": 0.019216,
+    "publish": 0.073092
+  },
+  "finished_at": "2026-11-13T05:26:22.334256+00:00"
 }
