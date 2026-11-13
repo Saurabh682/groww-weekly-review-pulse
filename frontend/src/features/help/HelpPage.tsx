@@ -12,11 +12,19 @@ import {
   UploadCloud,
   Search,
   ChevronDown,
+  ChevronUp,
   CheckCircle2,
   Cpu,
   SlidersHorizontal,
   ExternalLink,
   Zap,
+  FileText,
+  Compass,
+  ArrowRight,
+  Maximize2,
+  Minimize2,
+  Check,
+  Copy,
 } from 'lucide-react';
 
 interface FaqItem {
@@ -25,6 +33,20 @@ interface FaqItem {
   question: string;
   answer: string;
   tag: string;
+}
+
+interface FeatureDetail {
+  id: string;
+  title: string;
+  category: 'core' | 'themes' | 'pipeline' | 'mcp' | 'hygiene' | 'invariants' | 'testing';
+  badge: string;
+  badgeVariant: 'teal' | 'coral' | 'blue' | 'gray' | 'amber';
+  summary: string;
+  keyCapabilities: string[];
+  workflow: string[];
+  architecture: string;
+  codeSnippet?: string;
+  safetyGuardrails: string[];
 }
 
 export const HelpPage: React.FC = () => {
@@ -36,9 +58,323 @@ export const HelpPage: React.FC = () => {
     'faq-3': false,
   });
 
+  // Track expanded features
+  const [expandedFeatureIds, setExpandedFeatureIds] = useState<Record<string, boolean>>({
+    'feat-pulse': true,
+    'feat-gdocs': true,
+  });
+
+  const [copiedSnippetId, setCopiedSnippetId] = useState<string | null>(null);
+
   const toggleFaq = (id: string) => {
     setOpenFaqIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const toggleFeature = (id: string) => {
+    setExpandedFeatureIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const expandAllFeatures = () => {
+    const allExpanded: Record<string, boolean> = {};
+    features.forEach((f) => {
+      allExpanded[f.id] = true;
+    });
+    setExpandedFeatureIds(allExpanded);
+  };
+
+  const collapseAllFeatures = () => {
+    setExpandedFeatureIds({});
+  };
+
+  const copyCode = (id: string, text: string) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedSnippetId(id);
+    setTimeout(() => setCopiedSnippetId(null), 2500);
+  };
+
+  const features: FeatureDetail[] = [
+    {
+      id: 'feat-pulse',
+      title: '90-Second Weekly Executive Note & Scoring Engine',
+      category: 'core',
+      badge: 'Core Intelligence',
+      badgeVariant: 'teal',
+      summary:
+        'Distills thousands of raw weekly customer reviews into a strictly budgeted <= 250-word executive briefing tailored for C-suite and product leadership, readable in under 90 seconds.',
+      keyCapabilities: [
+        'Composite Pulse Score (0-100) combining star ratings, sentiment polarity, and review velocity.',
+        'Dynamic Mood Status: Healthy (80+), Friction Flagged (65-79), High Friction (50-64), Severe Incident (<50).',
+        '12-Week ECG Heartbeat Waveform: Visual cardiac rhythm with beats <3.8★ highlighted in amber friction tint.',
+        'Top 3 Prioritized Customer Themes with volume share %, cohort star rating, and 4-week trend arrows.',
+        'Verbatim Customer Quotes matched directly against raw store data (zero hallucinated feedback).',
+        '3 Prioritized Operational Interventions with named team ownership (e.g. Core Brokerage, Mobile Reliability).',
+      ],
+      workflow: [
+        'Open the dashboard root route (/) on Monday morning at 08:30 AM IST.',
+        'Inspect the Pulse Score gauge and mood indicator to identify macro app health.',
+        'Review the Top 3 customer pain points and read verbatim user testimonials.',
+        'Examine the Sticky Note Checks Rail on the right to verify quality gate compliance.',
+        'Use "Copy note", "Open Google Doc", or "View Gmail draft" to distribute to leadership.',
+      ],
+      architecture:
+        'The synthesis engine operates in 2 phases: Analytical Clustering and Executive Distillation. Clustering groups reviews into unsupervised embeddings. Distillation runs a prompt bounded by deterministic length constraints (<= 250 words, Flesch-Kincaid Grade Level 8-10). Word count calculation strips Markdown syntax to ensure pure text readability in under 90 seconds (assuming standard 165 wpm executive reading speed).',
+      codeSnippet: `// Scoring Formula
+PulseScore = Math.round(
+  (avgRating / 5.0) * 60 +
+  (positiveSharePct * 30) -
+  (critical1StarSharePct * 20)
+); // Clamped between 0 and 100`,
+      safetyGuardrails: [
+        'Strict <= 250-word cap: Any draft exceeding 250 words is automatically rejected at the Quality Gate.',
+        'Hallucination prevention: Quotes must be exact substrings of raw user submissions.',
+        'Zero-PII guarantee: Reviewer names and account numbers are scrubbed before synthesis.',
+      ],
+    },
+    {
+      id: 'feat-gdocs',
+      title: 'Google Docs MCP Programmatic Sync & Cloud Publishing',
+      category: 'mcp',
+      badge: 'Google Workspace MCP',
+      badgeVariant: 'teal',
+      summary:
+        'Direct cloud delivery pipeline that writes the weekly executive report into Google Docs using the official Google Docs API (batchUpdate) without manual copy-pasting.',
+      keyCapabilities: [
+        'Programmatic batchUpdate text insertion at structural location index: 1.',
+        'Real-time cloud autosave: Once inserted, the report lives permanently in your Google Drive.',
+        'Interactive GoogleDocModal: Allows switching between prototype and live custom Google Doc IDs.',
+        'Dual-Engine Clipboard Fallback: navigator.clipboard with offscreen execCommand fallback.',
+        'Persistent Local Storage: Remembers your linked Google Document URL across sessions.',
+      ],
+      workflow: [
+        'Navigate to Run & Publish (/run) or Weekly Pulse (/).',
+        'Click "Open Google Doc" or open the Google Docs Integration modal.',
+        'On first run, grant OAuth consent (documents and gmail.send scopes).',
+        'The backend executes batchUpdate to inject the executive report into your document.',
+        'The Google Doc opens in a new tab with all headers, themes, quotes, and action items pre-filled.',
+      ],
+      architecture:
+        'Built on the official Google Docs REST API v1. The engine constructs an authorized OAuth2Client with refresh tokens stored in a secure local FileTokenStore. Calls docs.documents.batchUpdate with insertText operations. When users link a new document, the client normalizes URLs, extracts the 44-character document ID, and saves it in localStorage.',
+      codeSnippet: `// Google Docs API batchUpdate Request
+await docs.documents.batchUpdate({
+  documentId: '1BPe7HxJWozrCPsyr_xR1LEYDb04mTxFOKSyB340REKE',
+  requestBody: {
+    requests: [{
+      insertText: { location: { index: 1 }, text: reportContent }
+    }]
+  }
+});`,
+      safetyGuardrails: [
+        'Non-destructive append/prepend: Only writes to the specified document index.',
+        'OAuth scope isolation: Uses minimal necessary permissions (documents and gmail.send).',
+        'Mock URL guard: Automatically prevents broken 404 links on prototype IDs.',
+      ],
+    },
+    {
+      id: 'feat-gmail',
+      title: 'Gmail Draft Staging (Strict Draft-Only Architecture)',
+      category: 'mcp',
+      badge: 'Zero-Dispatch Safety',
+      badgeVariant: 'coral',
+      summary:
+        'Pre-composes executive email announcements and stages them directly into Gmail. By architectural rule, the system NEVER sends emails automatically — human review is mandatory.',
+      keyCapabilities: [
+        'Strict "View Gmail draft" only: Absolutely no automated "Send email" trigger exists.',
+        '1-Click Direct Gmail Compose: Generates native mail.google.com compose windows with pre-populated fields.',
+        'Automatic Draft Persistence: Gmail web automatically saves any open compose window into your Drafts folder.',
+        'Human-in-the-Loop Review: Leadership recipients, subject lines, and body text can be adjusted before dispatch.',
+        'Interactive GmailDraftModal: Preview formatted email headers, recipient lists, and copy text with 1 click.',
+      ],
+      workflow: [
+        'On the Weekly Pulse or Run & Publish page, click "View Gmail draft".',
+        'Inspect the Gmail Draft Review modal showing recipients, subject, and preview.',
+        'Click "Open in Gmail Compose" to open a pre-filled compose window in your browser.',
+        'Alternatively, click "Copy Subject & Body" or "Open Gmail Drafts folder".',
+        'Review the draft in Gmail and click Send manually when approved.',
+      ],
+      architecture:
+        'Operates via deep-linked Google Mail Compose URLs (https://mail.google.com/mail/?view=cm&fs=1&to=...&su=...&body=...) and the backend Gmail MCP server. Pre-fills encoded headers and body text while preserving leadership allowlists.',
+      codeSnippet: `// 1-Click Native Gmail Draft URL
+const composeUrl = \`https://mail.google.com/mail/?view=cm&fs=1\` +
+  \`&to=\${encodeURIComponent('product-leadership@groww.in, founders-office@groww.in')}\` +
+  \`&su=\${encodeURIComponent('[Weekly Pulse] Groww App Play Store Reviews')}\` +
+  \`&body=\${encodeURIComponent(fullExecutiveEmailBody)}\`;`,
+      safetyGuardrails: [
+        'Automated send prevention: Code reviews and Vitest test suites strictly enforce that no automated dispatch button can ever be committed.',
+        'Operator allowlist: Only approved leadership domains (@groww.in) are pre-filled as recipients.',
+      ],
+    },
+    {
+      id: 'feat-themes',
+      title: 'Themes Explorer & Neural PulseRing Orbit',
+      category: 'themes',
+      badge: 'Cluster Intelligence',
+      badgeVariant: 'blue',
+      summary:
+        'Interactive constellation and orbital map grouping customer feedback into unsupervised semantic clusters with rating sentiment histograms and verbatim quote drilldowns.',
+      keyCapabilities: [
+        'PulseRing Orbit Visualization: Orbital node layout where satellite radius reflects review volume share.',
+        'Top 3 vs Watchlist Segmentation: Strictly caps active pulse clusters at 3, moving others to Watchlist.',
+        '5-Cluster Global Ceiling: Enforces maximum 5 clusters overall to prevent cognitive overload for executives.',
+        'Slide-Over Theme Drawer: Click any theme node to view full star rating distribution (1★-5★) and user quotes.',
+        'Cohort Rating vs Historical Benchmark: Visual delta against previous 4-week performance.',
+      ],
+      workflow: [
+        'Navigate to Themes Explorer (/themes).',
+        'View the central PulseRing orbit with orbiting theme satellites.',
+        'Toggle between "Top Ranked" and "Watchlist" views.',
+        'Click on any theme card or orbit node to slide open the Theme Drawer.',
+        'Inspect sentiment distributions, key friction drivers, and authentic customer comments.',
+      ],
+      architecture:
+        'Clustering uses semantic embedding distances. Theme priority is computed via an institutional weighted formula favoring high volume and negative sentiment: Priority = (Share% × 0.40) + (NegShare% × 0.40) + ((5 - Rating) × 10 × 0.20).',
+      codeSnippet: `// Theme Priority Formula
+const priority = (theme.sharePct * 0.40) +
+                 (theme.negSharePct * 0.40) +
+                 ((5 - theme.avgRating) * 10 * 0.20);`,
+      safetyGuardrails: [
+        'Cluster cap: Maximum 5 clusters allowed; excess clusters are automatically merged or pruned.',
+        'Unique theme names: Duplicate or overlapping cluster labels are flagged as quality gate failures.',
+      ],
+    },
+    {
+      id: 'feat-pipeline',
+      title: '7-Stage Heartbeat Pipeline & Coral Flatline Circuit Breaker',
+      category: 'pipeline',
+      badge: 'Pipeline Heartbeat',
+      badgeVariant: 'teal',
+      summary:
+        'Automated end-to-end execution pipeline with live millisecond telemetry, step-by-step progress tracking, and a fail-safe circuit breaker that flatlines on errors.',
+      keyCapabilities: [
+        '7 Discrete Execution Stages: Ingest &rarr; Clean & PII &rarr; Cluster &rarr; Quotes &rarr; Synthesize &rarr; Validate Gate &rarr; Publish.',
+        'Oversized Validate Gate Node: Critical decision junction evaluating all quality rules before delivery.',
+        'Coral Flatline Connector: On failure, connector turns coral red and halts execution immediately.',
+        'Live Execution Simulation: Run interactive dry-runs with realistic stage durations and counters.',
+        'Detailed Diagnostic Logs Modal: Inspect timestamped JSON logs and telemetry for every step.',
+      ],
+      workflow: [
+        'Navigate to Run & Publish (/run).',
+        'Click "Run Simulation" or trigger an automated pipeline job.',
+        'Watch the PulseStepper heartbeat animation transition through each stage.',
+        'If a gate fails (e.g. ?scenario=validation-failed), observe the coral flatline halt the pipeline.',
+        'Click "View Diagnostic Logs" to inspect raw stage logs and execution timing.',
+      ],
+      architecture:
+        'Implements the State Machine and Circuit Breaker patterns. Stages execute sequentially. If any stage throws or returns status: "failed", subsequent stages are marked "skipped", preventing accidental downstream publication.',
+      codeSnippet: `// Circuit Breaker Execution Flow
+for (const stage of pipelineStages) {
+  const result = await executeStage(stage);
+  if (result.status === 'failed') {
+    circuitBreaker.triggerFlatline();
+    break; // Abort remaining delivery stages
+  }
+}`,
+      safetyGuardrails: [
+        'Zero-trust validation: Delivery stages cannot run without explicit green check on Stage 6 (Validate Gate).',
+        'Audit trail: Every run records duration, processed row counts, and checksums in run_report.json.',
+      ],
+    },
+    {
+      id: 'feat-invariants',
+      title: 'Six Deterministic Quality Gate Invariants',
+      category: 'invariants',
+      badge: 'Quality Gate Matrix',
+      badgeVariant: 'coral',
+      summary:
+        'Mathematical matrix of 6 non-negotiable invariant rules that must ALL pass with 100% certainty before any executive note can be published.',
+      keyCapabilities: [
+        'Invariant 1 (Word Count): Pure text word count strictly <= 250 words (guaranteeing <= 90 sec read).',
+        'Invariant 2 (Themes Count): Exactly 3 top themes synthesized (no more, no less).',
+        'Invariant 3 (Verbatim Quotes): Exactly 3 verbatim customer quotes matching raw review text.',
+        'Invariant 4 (Action Ideas): Exactly 3 concrete operational action ideas with designated team owners.',
+        'Invariant 5 (Cluster Cap): At most 5 cluster themes generated in total.',
+        'Invariant 6 (Zero PII): 0 personal identifiers (phone numbers, emails, names, account IDs).',
+      ],
+      workflow: [
+        'View the Invariant Verification Matrix table on the /run screen.',
+        'Each row displays the invariant name, rule ceiling, failure consequence, and verification logic.',
+        'A green badge confirms all 6 rules passed.',
+        'If any rule fails, the pipeline aborts Google Docs and Gmail delivery.',
+      ],
+      architecture:
+        'Validated through deterministic TypeScript and Python assertions. Word count uses regex word-boundary counting on stripped markdown. Verbatim quotes use substring containment checks on the sanitized raw reviews dataset.',
+      codeSnippet: `// Invariant Verification Matrix
+const invariants = [
+  { id: 'word-count', valid: countWords(text) <= 250 },
+  { id: 'themes-count', valid: topThemes.length === 3 },
+  { id: 'quotes-count', valid: quotes.length === 3 && quotesAreVerbatim(quotes, rawReviews) },
+  { id: 'actions-count', valid: actions.length === 3 && actionsHaveOwners(actions) },
+  { id: 'cluster-cap', valid: allThemes.length <= 5 },
+  { id: 'zero-pii', valid: containsPii(text) === false }
+];
+const allPassed = invariants.every(inv => inv.valid);`,
+      safetyGuardrails: [
+        'Hard failure: If even one invariant check fails, the pipeline status is marked "FAILED" and delivery is aborted.',
+      ],
+    },
+    {
+      id: 'feat-hygiene',
+      title: 'Zero-PII Sanitization & Review Hygiene Engine',
+      category: 'hygiene',
+      badge: 'Data Hygiene',
+      badgeVariant: 'teal',
+      summary:
+        'Comprehensive data cleaning pipeline that removes reviewer identities, strips sensitive personal data with negative-lookahead regex, and filters out low-signal spam reviews.',
+      keyCapabilities: [
+        '4 Ingestion Hygiene Metrics: Cleaned & Indexed, Duplicates Pruned, Low-Info Excluded, PII Scrubbed.',
+        'Negative-Lookahead Institutional PII Filter: Strips Indian mobile numbers (+91), emails, PANs, transaction IDs.',
+        'Smart Value Preservation: Safely preserves timestamps (9:15 AM), app versions (v18.2), and currency amounts (₹500, Rs 21k).',
+        'Low-Information Heuristic: Excludes unhelpful single-word reviews ("good", "ok", "app", "nice") without useful context.',
+        'Drag-and-Drop Batch Ingestion: Validates raw Google Play Console CSV and JSON files up to 50MB.',
+      ],
+      workflow: [
+        'Navigate to Data Import (/import).',
+        'Drag and drop raw Play Store export CSV or JSON files into the dropzone.',
+        'The engine checks required columns (review_text, rating, date).',
+        'Review the 4 hygiene metric cards to see how many duplicates or PII items were purged.',
+        'Inspect the 12-week review coverage waveform for sample density gaps.',
+      ],
+      architecture:
+        'Uses multi-pass regex sanitization. Dropped identifiers never hit disk or downstream LLMs. Review volume coverage requires >= 100 reviews per weekly sample to ensure statistical validity.',
+      codeSnippet: `// Indian Phone Number Sanitizer with Time/Version Preservation
+const PHONE_REGEX = /(?:\\+91[\\-\\s]?)?[6-9]\\d{9}/g;
+// Preserves timestamps like 9:15 AM and currency like Rs 10000`,
+      safetyGuardrails: [
+        'Pre-ingestion stripping: Reviewer usernames and Google profile IDs are omitted immediately at the parser level.',
+      ],
+    },
+    {
+      id: 'feat-scenarios',
+      title: 'Scenario Simulator for Edge-Case & Resiliency Testing',
+      category: 'testing',
+      badge: 'Resiliency Simulator',
+      badgeVariant: 'blue',
+      summary:
+        'Built-in sandbox simulation engine supporting 5 deterministic state scenarios to test empty states, API errors, quality gate rejections, and low coverage gaps.',
+      keyCapabilities: [
+        'Normal Scenario (?scenario=ok): Baseline healthy operational run (Score 68, 662 reviews).',
+        'Empty State (?scenario=empty): Tests system behavior when zero reviews exist for the target week.',
+        'API Error 500 (?scenario=error): Simulates server/database failure with retry recovery buttons.',
+        'Validation Failed (?scenario=validation-failed): Simulates word count limit breach triggering the coral flatline.',
+        'Low Coverage (?scenario=low-coverage): Simulates review volume drop (< 10 weeks coverage) with amber alert.',
+      ],
+      workflow: [
+        'Use the Scenario Simulator selector dropdown in the left navigation sidebar.',
+        'Select any scenario (e.g. "Validation Failed").',
+        'The URL updates with ?scenario=validation-failed and re-renders the application state.',
+        'Inspect how the UI handles errors, disables delivery buttons, and renders circuit breakers.',
+        'Return to Normal (ok) to restore standard production data.',
+      ],
+      architecture:
+        'State is driven by query parameters parsed in the application router and React outlet context. Mock APIs intercept requests and return deterministic fixture payloads matching each scenario type.',
+      codeSnippet: `// URL Scenario Integration
+const [searchParams] = useSearchParams();
+const scenario = searchParams.get('scenario') || 'ok';
+const data = await pulseApi.getRun(week, scenario);`,
+      safetyGuardrails: [
+        'Sandbox isolation: Scenario simulations run purely in client-side memory and never mutate production data.',
+      ],
+    },
+  ];
 
   const faqs: FaqItem[] = [
     {
@@ -99,6 +435,24 @@ export const HelpPage: React.FC = () => {
     },
   ];
 
+  // Filtering features
+  const filteredFeatures = features.filter((feat) => {
+    if (activeCategory !== 'all' && feat.category !== activeCategory) {
+      return false;
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (
+        feat.title.toLowerCase().includes(q) ||
+        feat.summary.toLowerCase().includes(q) ||
+        feat.architecture.toLowerCase().includes(q) ||
+        feat.keyCapabilities.some((k) => k.toLowerCase().includes(q))
+      );
+    }
+    return true;
+  });
+
+  // Filtering FAQs
   const filteredFaqs = faqs.filter((faq) => {
     if (activeCategory !== 'all' && faq.category !== activeCategory) {
       return false;
@@ -150,7 +504,7 @@ export const HelpPage: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search help topics (e.g., PII masking, 250 words, Gmail draft, PulseLine, formulas)..."
+            placeholder="Search all features, technical explanations, APIs, invariants, or formulas..."
             className="w-full bg-transparent text-xs text-white placeholder:text-text-muted focus:outline-none font-sans"
           />
           {searchQuery && (
@@ -163,32 +517,202 @@ export const HelpPage: React.FC = () => {
           )}
         </div>
 
-        {/* Category Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
-          {[
-            { id: 'all', label: 'All Topics' },
-            { id: 'core', label: 'Core Pulse & Scoring' },
-            { id: 'pipeline', label: 'Pipeline & Quality Gate' },
-            { id: 'hygiene', label: 'Zero-PII & Hygiene' },
-            { id: 'mcp', label: 'MCP Delivery' },
-            { id: 'scenarios', label: 'Scenarios' },
-          ].map((cat) => (
+        {/* Category Pills & Expand/Collapse Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
+            {[
+              { id: 'all', label: 'All Topics' },
+              { id: 'core', label: 'Core Pulse & Scoring' },
+              { id: 'mcp', label: 'Google Docs & Gmail MCP' },
+              { id: 'themes', label: 'Themes & Orbit' },
+              { id: 'pipeline', label: 'Pipeline & Gates' },
+              { id: 'hygiene', label: 'Zero-PII & Hygiene' },
+              { id: 'invariants', label: 'Invariants' },
+              { id: 'testing', label: 'Scenarios' },
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`px-3 py-1 rounded-full transition-all ${
+                  activeCategory === cat.id
+                    ? 'bg-primary text-[#0b111e] font-bold shadow-glow-teal-sm'
+                    : 'bg-[#162238] border border-[#2a3d5d] text-text-muted hover:text-white hover:bg-[#1b2a47]'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-3 py-1 rounded-full transition-all ${
-                activeCategory === cat.id
-                  ? 'bg-primary text-[#0b111e] font-bold shadow-glow-teal-sm'
-                  : 'bg-[#162238] border border-[#2a3d5d] text-text-muted hover:text-white hover:bg-[#1b2a47]'
-              }`}
+              type="button"
+              onClick={expandAllFeatures}
+              className="px-2.5 py-1 text-[11px] font-mono rounded bg-[#162238] border border-[#2a3d5d] text-text-muted hover:text-white transition-colors flex items-center gap-1"
             >
-              {cat.label}
+              <Maximize2 className="w-3 h-3 text-teal-400" /> Expand All
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={collapseAllFeatures}
+              className="px-2.5 py-1 text-[11px] font-mono rounded bg-[#162238] border border-[#2a3d5d] text-text-muted hover:text-white transition-colors flex items-center gap-1"
+            >
+              <Minimize2 className="w-3 h-3 text-text-muted" /> Collapse All
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 3. The 4 Core Screens System Architecture */}
+      {/* 3. FEATURE DEEP-DIVE EXPLORER (With Expandable Technical Details) */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Compass className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold font-display text-white">
+              Feature Deep-Dive Explorer & Architecture Manual
+            </h2>
+          </div>
+          <span className="text-xs text-text-muted font-mono">
+            {filteredFeatures.length} comprehensive feature specifications
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          {filteredFeatures.map((feat) => {
+            const isExpanded = expandedFeatureIds[feat.id] ?? false;
+            return (
+              <Card
+                key={feat.id}
+                className="p-5 bg-[#162238]/90 border border-[#2a3d5d] shadow-card transition-all hover:border-primary/40"
+              >
+                {/* Feature Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1e293b]">
+                  <div className="flex items-start sm:items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-primary-tint border border-primary-border flex items-center justify-center text-primary shrink-0 mt-0.5 sm:mt-0">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold font-display text-white">
+                        {feat.title}
+                      </h3>
+                      <p className="text-xs text-text-muted font-sans mt-0.5">
+                        {feat.summary}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    <Badge variant={feat.badgeVariant}>{feat.badge}</Badge>
+                    <button
+                      type="button"
+                      onClick={() => toggleFeature(feat.id)}
+                      className="px-3 py-1.5 rounded-lg bg-[#0e1726] border border-[#2a3d5d] text-xs font-mono text-teal-400 hover:text-white hover:bg-[#1b2a47] transition-all flex items-center gap-1.5"
+                    >
+                      <span>{isExpanded ? 'Hide Details' : 'Expand Explanation'}</span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Key Capabilities Bullet Grid */}
+                <div className="py-3">
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-text-muted block mb-2">
+                    Core Capabilities & Output Artifacts
+                  </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-text-secondary">
+                    {feat.keyCapabilities.map((cap, i) => (
+                      <div key={i} className="flex items-start gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                        <span>{cap}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* EXPANDABLE DEEP DIVE SECTION */}
+                {isExpanded && (
+                  <div className="mt-3 pt-4 border-t border-[#1e293b] space-y-4 animate-fade-in bg-[#0c1424]/70 -mx-5 -mb-5 p-5 rounded-b-card">
+                    {/* Step-by-Step Workflow */}
+                    <div>
+                      <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-teal-400 flex items-center gap-1.5 mb-2">
+                        <ArrowRight className="w-3.5 h-3.5" /> Step-by-Step Operational Workflow
+                      </h4>
+                      <ol className="list-decimal list-inside space-y-1.5 text-xs text-text-secondary">
+                        {feat.workflow.map((step, idx) => (
+                          <li key={idx} className="leading-relaxed">
+                            <span className="text-white font-medium">{step.split(':')[0]}:</span>
+                            {step.includes(':') ? step.split(':').slice(1).join(':') : ''}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+
+                    {/* Architecture & Implementation Details */}
+                    <div>
+                      <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-teal-400 flex items-center gap-1.5 mb-1.5">
+                        <Cpu className="w-3.5 h-3.5" /> Under-the-Hood Architecture & Design
+                      </h4>
+                      <p className="text-xs text-text-secondary leading-relaxed bg-[#090d16] p-3 rounded-lg border border-[#1e293b]">
+                        {feat.architecture}
+                      </p>
+                    </div>
+
+                    {/* Code / Formula Specification Snippet */}
+                    {feat.codeSnippet && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5" /> Technical Specification & Code Contract
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => copyCode(feat.id, feat.codeSnippet!)}
+                            className="text-[10px] font-mono text-text-muted hover:text-white flex items-center gap-1"
+                          >
+                            {copiedSnippetId === feat.id ? (
+                              <>
+                                <Check className="w-3 h-3 text-teal-400" /> Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" /> Copy Snippet
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <pre className="p-3 rounded-lg bg-[#070b12] border border-[#1e293b] text-text-primary text-xs font-mono overflow-x-auto leading-relaxed">
+                          {feat.codeSnippet}
+                        </pre>
+                      </div>
+                    )}
+
+                    {/* Safety Guardrails & Edge Cases */}
+                    <div>
+                      <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-rose-400 flex items-center gap-1.5 mb-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5" /> Safety Guardrails & Fail-Safe Mechanisms
+                      </h4>
+                      <ul className="space-y-1 text-xs text-text-secondary">
+                        {feat.safetyGuardrails.map((guard, gi) => (
+                          <li key={gi} className="flex items-start gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0 mt-1.5" />
+                            <span>{guard}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 4. The 4 Core Screens System Architecture (Existing Section) */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-4 rounded-full bg-primary" />
@@ -247,7 +771,7 @@ export const HelpPage: React.FC = () => {
                 <li className="flex items-start gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                   <span>
-                    <strong className="text-white">Voice of Users & Actions:</strong> Verbatim verbatim quotes + operational action ideas mapped to Product/Engineering.
+                    <strong className="text-white">Voice of Users & Actions:</strong> Verbatim quotes + operational action ideas mapped to Product/Engineering.
                   </span>
                 </li>
                 <li className="flex items-start gap-1.5">
@@ -363,13 +887,13 @@ export const HelpPage: React.FC = () => {
                 <li className="flex items-start gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                   <span>
-                    <strong className="text-white">Google Docs MCP:</strong> One-click open link to live synced Google Doc format.
+                    <strong className="text-white">Google Docs MCP:</strong> Programmatically syncs and opens live Google Docs with full reports.
                   </span>
                 </li>
                 <li className="flex items-start gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                   <span>
-                    <strong className="text-white">Gmail Staging:</strong> Exclusively "View Gmail draft"; zero direct automated dispatch.
+                    <strong className="text-white">Gmail Staging:</strong> Exclusively "View Gmail draft" via native compose; zero automated dispatch.
                   </span>
                 </li>
               </ul>
@@ -441,7 +965,7 @@ export const HelpPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. The Six Deterministic Quality Gate Invariants */}
+      {/* 5. The Six Deterministic Invariant Checks */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-primary" />
@@ -555,7 +1079,7 @@ export const HelpPage: React.FC = () => {
         </Card>
       </section>
 
-      {/* 5. Mathematical Models & Formulas */}
+      {/* 6. Mathematical Models & Formulas */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Cpu className="w-5 h-5 text-primary" />
@@ -606,7 +1130,7 @@ export const HelpPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 6. Scenario Simulator Cheat Sheet */}
+      {/* 7. Scenario Simulator Cheat Sheet */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="w-5 h-5 text-primary" />
@@ -679,7 +1203,7 @@ export const HelpPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 7. Interactive Frequently Asked Questions */}
+      {/* 8. Interactive Frequently Asked Questions */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -731,7 +1255,7 @@ export const HelpPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 8. Technical Support & Quick Links */}
+      {/* 9. Technical Support & Quick Links */}
       <div className="p-5 rounded-xl bg-gradient-to-r from-[#162238] to-[#0e1726] border border-[#2a3d5d] shadow-card flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-sm font-bold font-display text-white">
