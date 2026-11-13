@@ -50,7 +50,7 @@ export const Shell: React.FC = () => {
     { to: '/themes', label: 'Themes', icon: <Layers className="w-4 h-4" /> },
     { to: '/run', label: 'Run & Publish', icon: <PlayCircle className="w-4 h-4" /> },
     { to: '/import', label: 'Data Import', icon: <UploadCloud className="w-4 h-4" /> },
-    { to: '/help', label: 'App Guide', icon: <HelpCircle className="w-4 h-4" /> },
+    { to: '/help', label: 'Help', icon: <HelpCircle className="w-4 h-4" /> },
   ];
 
   const getNavPath = (path: string) => {
@@ -163,8 +163,16 @@ export const Shell: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Run Action */}
-            <div className="flex items-center gap-2">
+            {/* Quick Run Action & Help Button */}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => navigate(getNavPath('/help'))}
+                className="px-2 py-1 rounded-lg bg-[#162238] border border-[#2a3d5d] text-xs font-mono text-teal-400 hover:text-white flex items-center gap-1 transition-colors"
+                title="Help & Guide"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Help</span>
+              </button>
               <Button
                 variant="primary"
                 size="sm"
@@ -223,7 +231,7 @@ export const Shell: React.FC = () => {
                 : location.pathname.startsWith('/import')
                 ? 'Data Import'
                 : location.pathname.startsWith('/help')
-                ? 'App Guide'
+                ? 'Help'
                 : 'Groww Pulse'}
             </span>
           </div>
@@ -284,8 +292,18 @@ export const Shell: React.FC = () => {
               </div>
             </div>
 
-            {/* Right section: Export PDF & Run pulse button */}
+            {/* Right section: Help, Export PDF & Run pulse button */}
             <div className="flex items-center gap-2.5">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<HelpCircle className="w-3.5 h-3.5 text-teal-400" />}
+                onClick={() => navigate(getNavPath('/help'))}
+                className="text-xs"
+              >
+                Help
+              </Button>
+
               <Button
                 variant="secondary"
                 size="sm"
