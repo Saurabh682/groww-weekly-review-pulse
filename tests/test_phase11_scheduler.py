@@ -12,6 +12,7 @@ from src.config import PROJECT_ROOT, load_pulse_config, outputs_root
 from src.ingest.collect import collection_window
 from src.mcp.errors import PublishStoppedArchived
 from src.mcp.publisher import PulsePublisher
+from src.note.engine import build_and_validate_pulse_note
 from src.pipeline import run_full_pipeline
 from src.registry.dispatch import GitHubDispatcher
 from src.registry.service import ListingRequest, RegistryService
@@ -328,6 +329,32 @@ def test_COL_11_backfill_then_pulse(swiggy, composio):
     assert composio.tools_called().count("GMAIL_CREATE_EMAIL_DRAFT") == 1
 
 
+def test_note_dates_and_counts_match_the_analyzed_window(groww_store, composio):
+    records = _baseline() + [
+        {"platform": "play_store", "rating": 4, "title": None, "date": d, "app_version": None,
+         "text": f"Portfolio screen shows the right balance on {d} for me"}
+        for d in ("2026-08-23", "2026-08-24", "2026-11-15", "2026-11-16")
+    ]
+    run_job(groww_store, "backfill", MONDAY, sources=_sources(records), mcp_client=composio.client())
+    run = groww_store.latest_themed_run_for_week("2026-11-09")
+    assert (run.window_start, run.window_end) == ("2026-08-24", "2026-11-15")
+    note_dir = outputs_root() / "groww" / "2026-11-09"
+    count = len(groww_store.get_reviews_in_window("2026-08-24", "2026-11-15"))
+    assert count < groww_store.count_reviews()
+    for name in ("note.md", "note.html", "note.txt"):
+        text = (note_dir / name).read_text(encoding="utf-8")
+        assert "Reviews 2026-08-24 to 2026-11-15" in text
+        assert f"Google Play {count:,}" in text
+
+
+def test_note_refuses_a_run_without_a_stored_window(groww_store, composio):
+    run_job(groww_store, "backfill", MONDAY, sources=_sources(_baseline()), mcp_client=composio.client())
+    with groww_store.connector.session() as s:
+        s.execute("UPDATE runs SET window_start = NULL, window_end = NULL")
+    with pytest.raises(ValueError, match="no stored review window"):
+        build_and_validate_pulse_note(groww_store, "2026-11-09")
+
+
 def test_failed_backfill_publishes_nothing(swiggy, composio):
     report = run_job(swiggy, "backfill", MONDAY, sources=_sources(error=RuntimeError("x")), mcp_client=composio.client())
     assert (report.status, swiggy.refresh().status) == ("failed", "failed")
@@ -456,7 +483,7 @@ def test_rerun_with_fewer_themes_drops_the_stale_ones(groww_store):
                 "avg_rating": 3.0, "is_top3": 1, "neg_share": neg_share, "priority_score": neg_share / 5, "member_review_ids": []}
 
     def save(themes):
-        groww_store.save_theme_run("run1", "2026-11-09", 5, 5, 3.0, 12.0, themes)
+        groww_store.save_theme_run("run1", "2026-11-09", "2026-08-24", "2026-11-15", 5, 5, 3.0, 12.0, themes)
 
     save([theme(n) for n in range(5)])
     save([theme(n, neg_share=0.75) for n in range(3)])
@@ -472,7 +499,7 @@ def test_version_3_database_gains_theme_scores(tmp_path):
                 "date": "2026-11-10", "app_version": None} for r in (1, 2, 5, 4)]
     run_job(store, "daily", date(2026, 11, 10), sources=_sources(records))
     ids = [r.review_id for r in store.get_reviews_in_window("2026-11-01", "2026-11-30")]
-    store.save_theme_run("run1", "2026-11-09", 4, 4, 3.0, 12.0, [
+    store.save_theme_run("run1", "2026-11-09", "2026-08-24", "2026-11-15", 4, 4, 3.0, 12.0, [
         {"theme_id": "t1", "label": "L", "description": "d", "review_count": 4, "share_pct": 1.0, "avg_rating": 3.0,
          "is_top3": 1, "neg_share": 0.0, "priority_score": 0.0, "member_review_ids": ids}])
     conn = sqlite3.connect(path)

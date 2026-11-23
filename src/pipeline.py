@@ -122,6 +122,8 @@ def run_themes_stage(
         reviews=reviews,
         store=store,
         week_str=week_str,
+        window_start=window_start,
+        window_end=window_end,
         config=config,
     )
     return theme_result

@@ -296,6 +296,8 @@ class AppStore:
         self,
         run_id: str,
         week_start: str,
+        window_start: str,
+        window_end: str,
         total_reviews: int,
         analyzed_reviews: int,
         avg_rating: float,
@@ -313,12 +315,14 @@ class AppStore:
         with self._session() as s:
             s.execute(
                 "INSERT INTO runs (app_key, run_id, week_start, status, total_reviews, analyzed_reviews, "
-                "avg_rating, coverage_weeks, created_at) VALUES (?, ?, ?, 'themes_completed', ?, ?, ?, ?, ?) "
+                "avg_rating, coverage_weeks, created_at, window_start, window_end) "
+                "VALUES (?, ?, ?, 'themes_completed', ?, ?, ?, ?, ?, ?, ?) "
                 "ON CONFLICT (app_key, run_id) DO UPDATE SET status = excluded.status, "
                 "total_reviews = excluded.total_reviews, analyzed_reviews = excluded.analyzed_reviews, "
-                "avg_rating = excluded.avg_rating, coverage_weeks = excluded.coverage_weeks",
+                "avg_rating = excluded.avg_rating, coverage_weeks = excluded.coverage_weeks, "
+                "window_start = excluded.window_start, window_end = excluded.window_end",
                 (self.app_key, run_id, week_start, total_reviews, analyzed_reviews, avg_rating,
-                 coverage_weeks, _now()),
+                 coverage_weeks, _now(), window_start, window_end),
             )
             kept = [theme["theme_id"] for theme in themes]
             stale = [

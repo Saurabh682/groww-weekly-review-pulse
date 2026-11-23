@@ -1,7 +1,7 @@
 """Full note generation and validation workflow for weekly review pulse notes (Phase 3)."""
 
 import json
-from datetime import date, datetime, timedelta
+from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -33,6 +33,11 @@ def build_and_validate_pulse_note(
     if run_record is None:
         raise ValueError(
             f"No themed run found for app {store.app_key!r} and week {week_start}. Run 'pulse themes' first."
+        )
+
+    if run_record.window_start is None or run_record.window_end is None:
+        raise ValueError(
+            f"Run {run_record.run_id} has no stored review window. Run the 'themes' stage again for week {week_start}."
         )
 
     themes = store.get_themes(run_record.run_id)
@@ -75,21 +80,13 @@ def build_and_validate_pulse_note(
     # 6. Synthesize grounded action items
     action_items = synthesize_action_items(top_themes, pack)
 
-    # Compute window dates from week_start
-    # Note covers week_start backwards ~9 weeks
-    dt_end = datetime.strptime(week_start, "%Y-%m-%d")
-    dt_start = dt_end - timedelta(weeks=run_record.coverage_weeks if run_record.coverage_weeks > 0 else 8.0)
-    window_start_str = dt_start.strftime("%Y-%m-%d")
-
     # 7. Construct WeeklyPulseNote
     note = WeeklyPulseNote(
         week_start=week_start,
-        window_start=window_start_str,
-        window_end=week_start,
+        window_start=run_record.window_start,
+        window_end=run_record.window_end,
         app_name=store.app.display_name,
-        store_coverage=build_store_coverage(
-            store, run_record.window_start or window_start_str, run_record.window_end or week_start
-        ),
+        store_coverage=build_store_coverage(store, run_record.window_start, run_record.window_end),
         total_reviews=run_record.total_reviews,
         analyzed_reviews=run_record.analyzed_reviews,
         avg_rating=run_record.avg_rating,

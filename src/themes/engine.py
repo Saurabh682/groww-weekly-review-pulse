@@ -18,6 +18,8 @@ def run_theme_pipeline(
     reviews: List[ReviewRecord],
     store: AppStore,
     week_str: str,
+    window_start: str,
+    window_end: str,
     config: Optional[PulseConfig] = None,
     run_id: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -96,6 +98,8 @@ def run_theme_pipeline(
     store.save_theme_run(
         run_id=active_run_id,
         week_start=week_str,
+        window_start=window_start,
+        window_end=window_end,
         total_reviews=len(reviews),
         analyzed_reviews=len(filtered_reviews),
         avg_rating=overall_avg_rating,

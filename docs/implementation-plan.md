@@ -514,6 +514,7 @@ Fixed on the way:
 - A pulse never imports the Groww CSV for an app with no reviews; `ingest` needs `--file`.
 - A short App Store backfill stays marked "partial" in the note after later daily runs.
 - `deploy/hf_space/` is tracked, and its `app.py` imports again.
+- The note header's review dates and per-store counts come from the stored analysis window; they were guessed from a hardcoded 12 weeks. A run with no stored window is refused.
 
 ---
 
