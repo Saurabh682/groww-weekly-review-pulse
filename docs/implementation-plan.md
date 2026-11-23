@@ -5,6 +5,8 @@
 
 **Status:** Draft v1  |  **Target app:** Groww (`com.nextbillion.groww`)  |  **Sources:** Google Play only
 
+> **v2 (2026-11-23):** Phases 0-6 below are the v1 build. The multi-app build continues as **Phases 7-13** in [§9](#9-v2-multi-app-build-phases-7-13). §6 "Deferred" items for the App Store and automated collection are now in scope there.
+
 ---
 
 ## 1. Scope Adjustments from `architecture.md`
@@ -374,3 +376,178 @@ All acceptance items checked; demo recorded; README reviewed by someone who did 
 ## 8. Definition of Done (Project)
 
 The project is done when `pulse run --week <date>` produces, from public Google Play reviews of Groww, a validated one-page pulse as a Google Doc and a Gmail draft, both via MCP, with ≤5 themes (top 3 shown), 3 verbatim quotes, 3 grounded action ideas, ≤250 words, and zero PII in every artifact, and all items in the acceptance checklist are verified.
+
+---
+
+## 9. v2 Multi-App Build (Phases 7-13)
+
+Derived from `groww-weekly-review-pulse-problem.md` (v2) and `multi-app-architecture.md`. Edge-case IDs are in `edge-case.md` §19-§28.
+
+**Open v1 work carried over:** the Phase 6 items (README, acceptance run, demo, sample output) were never checked off. They fold into Phase 13.
+
+### 9.1 Phase overview
+
+| Phase | Name | Goal | Est. effort |
+|---|---|---|---|
+| **7** | Multi-app foundations | One `src/`, no secrets in repo, `PulseStore` interface, Supabase schema, `app_key` through the pipeline with Groww as app #1 | 2-3 days |
+| **8** | Automated collectors | Play and App Store adapters with backfill, daily and reconcile modes | 2 days |
+| **9** | Registry and resolution | Search, confirm, register, rename, replace, archive; operator auth | 2 days |
+| **10** | Composio publishing | Per-app Doc and draft through Composio MCP, idempotent | 1-1.5 days |
+| **11** | Scheduler | `pulse.yml` matrix workflow, backfill dispatch, isolation | 1-1.5 days |
+| **12** | Dashboard | App switcher, per-app overview, trends, health, Manage Apps | 2-3 days |
+| **13** | Acceptance and handoff | README, deploy, end-to-end run with 2+ real apps, v1 Phase 6 leftovers | 1-1.5 days |
+
+```mermaid
+flowchart LR
+    P7[Phase 7<br/>Foundations] --> P8[Phase 8<br/>Collectors]
+    P7 --> P9[Phase 9<br/>Registry]
+    P7 --> P10[Phase 10<br/>Composio]
+    P8 --> P11[Phase 11<br/>Scheduler]
+    P9 --> P11
+    P10 --> P11
+    P9 --> P12[Phase 12<br/>Dashboard]
+    P11 --> P13[Phase 13<br/>Acceptance]
+    P12 --> P13
+```
+
+Phases 8, 9 and 10 touch separate folders (`src/ingest/`, `src/registry/` + `src/api/`, `src/mcp/`) and can be built in parallel after Phase 7.
+
+---
+
+### Phase 7: Multi-App Foundations
+
+**Objective:** The existing pipeline runs unchanged for Groww, but keyed by `app_key` and on a swappable store.
+
+#### Tasks
+- [ ] **7.1 Remove the backend copy.** Delete `hf_space/src/` and its copied `config/`, `prompts/`, `tests/`; deploy builds the Space from the root `src/`. Add CI check `no_hf_space_src_copy`.
+- [ ] **7.2 Remove committed secrets.** Strip the bearer token from `config/mcp.yaml`; read MCP URL and headers from the environment. Rotate the token on the `gmail-docs-mcp` server, since it stays in git history. Add a secret scan (`gitleaks`) to CI.
+- [ ] **7.3 `PulseStore` protocol.** `src/store/base.py`; move current SQLite code to `SqliteStore`; pipeline depends only on the protocol.
+- [ ] **7.4 Supabase schema.** `supabase/migrations/` with `apps`, `reviews`, `collection_runs`, `runs`, `themes`, `review_themes`, `publish_state`; triggers `enforce_active_app_cap` and `freeze_app_identity`; partial unique indexes; RLS on with no client policies. Mirror the schema in `src/store/sqlite_schema.sql`.
+- [ ] **7.5 `SupabaseStore`.** Implements the protocol with the service-role key; selected by `PULSE_STORE`.
+- [ ] **7.6 `app_key` everywhere.** Pipeline CLI takes `--app <key>`; every table read and write is scoped by `app_key`; outputs go to `outputs/<app_key>/<week>/`.
+- [ ] **7.7 Generic prompts and titles.** Remove "Groww" and the finance theme list from `prompts/`; inject `display_name` and `category`. Doc title and email subject use the display name. Test `prompts_contain_no_app_names`.
+- [ ] **7.8 Seed Groww.** A migration inserts Groww as app #1 (`groww`, `com.nextbillion.groww`; App Store ID resolved in Phase 9). Existing SQLite data migrates with `app_key='groww'`.
+
+#### Exit Criteria
+- Full v1 test suite green on `SqliteStore` with `app_key='groww'`.
+- Migrations apply cleanly to a fresh Supabase project; cap and identity triggers proven by tests (`STO-*`, `APP-01`, `APP-05`).
+- No secrets in the working tree; secret scan green.
+
+---
+
+### Phase 8: Automated Collectors
+
+**Objective:** Reviews for any registered app arrive automatically from both stores.
+
+#### Tasks
+- [ ] **8.1 `PlayStoreSource`** (`src/ingest/play_store.py`): newest-first with continuation, stop at window start, at least 1 s between pages, field allowlist.
+- [ ] **8.2 `AppStoreSource`** (`src/ingest/app_store.py`): RSS JSON pages 1-10, stop at window start, `source_limit_hit`, field allowlist.
+- [ ] **8.3 Modes** in `src/pipeline.py`: `backfill`, `daily`, `reconcile`, each writing `collection_runs`.
+- [ ] **8.4 Retire `allow_automated`.** Replace it with per-store `enabled` kill switches (ADR-9). Rewrite `test_ING_14_*` and `test_SEC_05_*` as `test_COL_02_*`.
+- [ ] **8.5 Coverage in the note header.** The header lists per-store counts and says when a store is missing or short.
+- [ ] **8.6 Recorded fixtures.** Store responses captured once to `tests/fixtures/stores/` with identity fields stripped; tests never hit the network.
+- [ ] **8.7 Delete `scripts/download_play_reviews.py`** once 8.1 replaces it.
+
+#### Exit Criteria
+`COL-*` P0 tests green; a local `backfill --app groww` against the real stores fills both platforms and reports coverage.
+
+---
+
+### Phase 9: Registry and Resolution
+
+**Objective:** Apps are added by name and confirmed, within the 5-slot cap, by an authenticated operator.
+
+#### Tasks
+- [ ] **9.1 Search** (`src/registry/resolve.py`): iTunes Search API and `google-play-scraper` search in parallel, top 3 each, per-store timeout and error isolation.
+- [ ] **9.2 Verify** each chosen listing by ID and capture `category`.
+- [ ] **9.3 Registry service** (`src/registry/service.py`): register, rename, replace (archive + create in one transaction), archive; `app_key` slug generation.
+- [ ] **9.4 FastAPI** (`src/api/`): endpoints in `multi-app-architecture.md` §8.
+- [ ] **9.5 Operator auth:** verify the Supabase Auth JWT; its email must be in `OPERATOR_EMAILS`; every write endpoint covered by a test.
+- [ ] **9.6 Backfill dispatch:** call GitHub `workflow_dispatch` after register; on failure leave the app `pending_backfill`.
+- [ ] **9.7 CLI:** `python -m src.registry list|add|rename|archive` for the Actions `plan` job and local use.
+
+#### Exit Criteria
+`APP-*`, `RES-*`, `AUTH-*` P0 tests green; adding a 6th app fails at the database; Groww's App Store listing resolved and confirmed.
+
+---
+
+### Phase 10: Composio Publishing
+
+**Objective:** Each app's note lands in its own Doc and draft through Composio MCP.
+
+#### Tasks
+- [ ] **10.1 Connect Google Docs in Composio.** Gmail is already connected. Record both connected-account IDs as secrets.
+- [ ] **10.2 `src/mcp/composio.py`:** MCP client against `COMPOSIO_MCP_URL`; tool allowlist and denylist; required account ID on every call.
+- [ ] **10.3 Capability map** in `config/mcp.yaml` per `multi-app-architecture.md` §7.1, with no secrets.
+- [ ] **10.4 Publish flow** per `(app_key, week_start)` per §7.2, including draft-not-found recovery.
+- [ ] **10.5 Mock Composio server** for contract tests.
+- [ ] **10.6 Retire `gmail-docs-mcp`** from config and code paths.
+
+#### Exit Criteria
+`CMP-*` and v1 `MCP-*` tests green on the mock; one real Doc and one real draft created for Groww; a rerun updates both in place.
+
+---
+
+### Phase 11: Scheduler
+
+**Objective:** All collection and pulse jobs run from one workflow with no manual step.
+
+#### Tasks
+- [ ] **11.1 `.github/workflows/pulse.yml`** per `multi-app-architecture.md` §6: three crons, `workflow_dispatch`, `plan` job, matrix, `fail-fast: false`, `max-parallel: 2`, per-app concurrency.
+- [ ] **11.2 Mode resolution** from `github.event.schedule` or the inputs, as a tested Python function rather than inline shell.
+- [ ] **11.3 Pending backfill pickup** in daily mode.
+- [ ] **11.4 Secrets** set in GitHub; workflow logs carry no review text (log scan step).
+- [ ] **11.5 CI workflow** (`ci.yml`): lint, types, tests, secret scan, `no_hf_space_src_copy`.
+
+#### Exit Criteria
+`SCH-*` tests green; one manual dispatch of each mode succeeds for two apps; a forced failure for one app leaves the other green.
+
+---
+
+### Phase 12: Dashboard
+
+**Objective:** The operator picks an app and sees everything about it, and manages apps from one page.
+
+#### Tasks
+- [ ] **12.1 Routes** `/apps/:appKey`, `/apps/:appKey/weeks/:week`, `/manage`; app switcher in the header.
+- [ ] **12.2 Overview:** latest pulse, theme table, 8-week theme share trend, Doc and draft links, health card.
+- [ ] **12.3 Manage Apps:** slot counter, search → per-store choice (including "not on this store") → confirm, rename, replace, archive with confirmation.
+- [ ] **12.4 Operator sign-in** (Supabase Auth magic link) gating Manage Apps writes.
+- [ ] **12.5 States:** waking backend, empty app (backfilling), failed app, archived app, short coverage.
+- [ ] **12.6 Help explorer** entries for the new features.
+- [ ] **12.7 UI consistency** pass with the `ui-consistency` skills before and after building.
+
+#### Exit Criteria
+`DSH-*` tests green; every interactive element has an accessible name; screenshots of each route and state attached.
+
+---
+
+### Phase 13: Acceptance and Handoff
+
+#### Tasks
+- [ ] **13.1 Deploy:** backend to the HF Space from root `src/`; dashboard to Vercel; Supabase migrations applied; GitHub secrets set.
+- [ ] **13.2 End-to-end:** register a second real app from the dashboard; observe backfill, first pulse, Doc, draft and dashboard view with no manual step.
+- [ ] **13.3 README:** setup, sources and limits, Composio setup, every secret by name, running each mode locally, troubleshooting (re-enable a disabled workflow, reconnect Composio).
+- [ ] **13.4 v1 Phase 6 leftovers:** demo, sample output.
+- [ ] **13.5 Acceptance checklist:** problem statement §11, recorded with evidence.
+
+#### Exit Criteria
+All v2 acceptance criteria checked with evidence; full suite green.
+
+---
+
+### 9.2 Testing Summary (v2)
+
+| Phase | Primary tests |
+|---|---|
+| 7 | v1 suite on `SqliteStore`; `STO-*`; secret scan; prompt-name check |
+| 8 | `COL-*` with recorded fixtures |
+| 9 | `APP-*`, `RES-*`, `AUTH-*` |
+| 10 | `CMP-*`, v1 `MCP-*` on the mock |
+| 11 | `SCH-*` |
+| 12 | `DSH-*` |
+| 13 | Real-run acceptance |
+
+### 9.3 Definition of Done (v2)
+
+An operator registers an app by name from the dashboard and confirms its listings. Without any further manual step, that app receives a 12-week backfill, a first pulse, and a new pulse every Monday, each as its own Google Doc and Gmail draft through Composio MCP and visible in the dashboard. This holds within the 5-app cap, with every v1 note rule holding and zero PII in every artifact.

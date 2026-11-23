@@ -3,7 +3,9 @@
 > Companion to `problemStatement.md`. This document defines *how* the system is built: components, data flow, data model, algorithms, MCP integration, privacy controls, testing, and delivery plan.
 
 **Status:** Draft v1  |  **Scope:** Weekly pipeline that turns public Groww app-store reviews into a one-page pulse (Google Docs) and a Gmail draft, both via MCP.  
-> **Scope Note (Current):** Ingestion is focused exclusively on **Google Play Store**. Apple App Store ingestion is deferred for future iterations.
+> **Scope Note (v1):** Ingestion is focused exclusively on **Google Play Store**. Apple App Store ingestion is deferred for future iterations.
+
+> **v2 (2026-11-23):** Multi-app support is specified in [`multi-app-architecture.md`](multi-app-architecture.md). Where the two conflict, v2 wins. Superseded here: §3 (sources), §6 (storage: Supabase, `app_key` on every table), §10 (MCP: Composio), §11 (config: apps move to the registry), §12 (scheduling), §14 (layout), ADR-4, ADR-7, ADR-8. Every other section still applies, per app.
 
 ---
 

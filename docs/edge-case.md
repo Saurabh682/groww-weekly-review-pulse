@@ -2,7 +2,8 @@
 
 > Companion to `problemStatement.md`, `architecture.md`, and `implementation-plan.md`.
 > Written so a coding agent (**AG / Antigravity**) can turn each case into an automated test and verify it, phase by phase.
-> **Scope:** Google Play Store reviews only. Apple App Store is excluded for now.
+> **Scope (v1, §1-§18):** Google Play Store reviews only. Apple App Store is excluded for now.
+> **Scope (v2, §19-§28, 2026-11-23):** up to 5 apps, both stores, scheduled collection, Supabase, Composio MCP, dashboard. Every v1 case still applies, per app. Retired v1 cases: `ING-14`, `ING-15`, `SEC-05` (see §27).
 
 ---
 
@@ -441,3 +442,142 @@ def assert_pipeline_invariants(run):
 | Profanity/sensitive-claim policy in quotes | QUO-09, QUO-10 | Exclude by default |
 
 AG should update this table and the affected tests whenever a decision changes.
+
+---
+
+# v2: Multi-App Cases
+
+## 19. App Registry
+
+| ID | Scenario | Expected | Test | Type | Pri |
+|---|---|---|---|---|---|
+| APP-01 | Insert a 6th non-archived app | Database rejects it (`enforce_active_app_cap`); API returns 409 with "5 of 5 slots used"; no dispatch | `test_APP_01_sixth_app_rejected` | I | P0 |
+| APP-02 | Two concurrent adds when 4 slots are used | Exactly one succeeds; the other gets 409 | `test_APP_02_concurrent_add_cap` | I | P0 |
+| APP-03 | Register a Play package already on a non-archived app | Rejected by the partial unique index; 409 naming the existing app | `test_APP_03_duplicate_play_listing` | I | P0 |
+| APP-04 | Register an App Store ID already on a non-archived app | Same as APP-03 | `test_APP_04_duplicate_ios_listing` | I | P0 |
+| APP-05 | Update `app_key`, `play_package_id` or `app_store_id` | Rejected by `freeze_app_identity` | `test_APP_05_identity_frozen` | I | P0 |
+| APP-06 | App with neither store listing | Rejected by CHECK constraint | `test_APP_06_requires_one_store` | U | P0 |
+| APP-07 | Rename | Only `display_name` changes; past `publish_state`, Docs and runs still resolve; next Doc title uses the new name | `test_APP_07_rename_keeps_history` | I | P1 |
+| APP-08 | Replace | Old app archived and new app created in one transaction; failure leaves the old app unchanged | `test_APP_08_replace_atomic` | I | P0 |
+| APP-09 | Archive | Slot freed, no rows deleted, app absent from the next `plan` matrix | `test_APP_09_archive_frees_slot` | I | P0 |
+| APP-10 | Re-add a listing that belongs only to an archived app | Allowed; creates a new `app_key`; old history stays with the archived app | `test_APP_10_readd_archived_listing` | I | P1 |
+| APP-11 | Display names that slug to the same `app_key` | Second gets a numeric suffix (`groww-2`) | `test_APP_11_app_key_collision` | U | P1 |
+| APP-12 | Display name with emoji, non-Latin script or 200 chars | Slug is ASCII, ≤40 chars, non-empty; display name stored as given up to 80 chars | `test_APP_12_display_name_bounds` | U | P2 |
+| APP-13 | Archive while that app's job is running | The running job finishes or stops cleanly; no publish after `archived_at` | `test_APP_13_archive_during_run` | I | P1 |
+
+## 20. Resolution (name → listings)
+
+| ID | Scenario | Expected | Test | Type | Pri |
+|---|---|---|---|---|---|
+| RES-01 | Name matches several apps | Up to 3 per store returned with icon, title, developer, rating, count; nothing registered | `test_RES_01_top3_no_autoregister` | U | P0 |
+| RES-02 | Name matches nothing on one store | That store returns an empty list and offers "not on this store"; the other store still works | `test_RES_02_one_store_empty` | U | P1 |
+| RES-03 | Name matches nothing on both stores | Clear "no matches" message; nothing registered | `test_RES_03_no_matches` | U | P1 |
+| RES-04 | One store times out or errors | Results for the other store returned; failed store marked with a retry option | `test_RES_04_store_failure_isolated` | U | P1 |
+| RES-05 | Chosen ID no longer exists at verify time | Register refused with "listing not found"; nothing stored | `test_RES_05_verify_missing_listing` | U | P0 |
+| RES-06 | Client submits an ID that was not in the search results | Allowed only if verify succeeds; verify is the source of truth | `test_RES_06_verify_any_id` | U | P1 |
+| RES-07 | Search term with injection characters or 500 chars | Term trimmed to 100 chars and URL-encoded; no error leaks upstream details | `test_RES_07_search_term_sanitized` | U | P1 |
+| RES-08 | Country with no App Store storefront for the app | Empty App Store result for that country, not an error | `test_RES_08_country_without_listing` | U | P2 |
+| RES-09 | Search response contains developer email or website | Not returned to the client; only allowlisted fields | `test_RES_09_search_field_allowlist` | U | P1 |
+
+## 21. Collection
+
+| ID | Scenario | Expected | Test | Type | Pri |
+|---|---|---|---|---|---|
+| COL-01 | Store payload contains author name, URI, avatar, store review ID, thumbs-up count, developer reply | None of these reach `RawReview`, the database, logs or fixtures | `test_COL_01_identity_never_extracted` | U/I | P0 |
+| COL-02 | Store disabled by kill switch | Zero network calls to that store; `collection_runs.status='skipped_disabled'` | `test_COL_02_disabled_store_no_calls` | U | P0 |
+| COL-03 | App Store page 10 reached before window start | `source_limit_hit=true`, `covered_start` set; note header and dashboard show the shorter window | `test_COL_03_app_store_cap_flagged` | U | P0 |
+| COL-04 | Daily window overlaps previous day | Zero duplicates inserted | `test_COL_04_daily_overlap_dedup` | I | P0 |
+| COL-05 | Reconcile after daily runs covered the month | Inserts only reviews the daily runs missed | `test_COL_05_reconcile_fills_gaps` | I | P1 |
+| COL-06 | Play scraper raises or returns an unexpected shape | That store's run `failed` with a short error; other store and other apps continue | `test_COL_06_play_failure_isolated` | U | P1 |
+| COL-07 | HTTP 429 or 503 from a store | Backoff and retry up to 3 times, then `failed` | `test_COL_07_rate_limit_backoff` | U | P1 |
+| COL-08 | App with zero reviews in the window | Run `ok` with 0 inserted; pulse step reports low volume and publishes nothing below the configured minimum | `test_COL_08_zero_reviews` | I | P1 |
+| COL-09 | Listing removed from the store after registration | Collection fails with "listing not found"; app status set to `failed`; dashboard shows it | `test_COL_09_delisted_app` | I | P1 |
+| COL-10 | Same review text on both stores on the same day | Kept as two reviews (platform is in the dedupe key) | `test_COL_10_cross_store_not_merged` | U | P2 |
+| COL-11 | Backfill completes | Status `active`; first pulse generated for the latest complete week | `test_COL_11_backfill_then_pulse` | I | P0 |
+| COL-12 | Review in a non-configured language from the RSS feed | Stored with detected `lang`; v1 language rules apply | `test_COL_12_lang_from_feed` | U | P2 |
+
+## 22. Scheduler
+
+| ID | Scenario | Expected | Test | Type | Pri |
+|---|---|---|---|---|---|
+| SCH-01 | Each cron string | Maps to the right mode (`daily`, `pulse`, `reconcile`) | `test_SCH_01_cron_to_mode` | U | P0 |
+| SCH-02 | `workflow_dispatch` with `mode=backfill` and no `app_key` | Plan fails with a clear message; no jobs run | `test_SCH_02_backfill_needs_app` | U | P1 |
+| SCH-03 | No active apps | Plan emits `[]`; run job skipped; workflow green | `test_SCH_03_empty_matrix` | U | P1 |
+| SCH-04 | Daily mode with an app in `pending_backfill` | That app runs `backfill`, others run `daily` | `test_SCH_04_pending_backfill_pickup` | U | P0 |
+| SCH-05 | Backfill dispatch API fails at registration | App stays `pending_backfill`; API response says backfill is queued for the next daily run | `test_SCH_05_dispatch_failure_fallback` | I | P1 |
+| SCH-06 | Pulse run for an app whose backfill is still running | Waits on the per-app concurrency group; never runs in parallel for one app | `test_SCH_06_no_overlap_per_app` | S | P1 |
+| SCH-07 | One app's job fails | Other apps' jobs finish; workflow reports the one failure | `test_SCH_07_failure_isolation` | S | P0 |
+| SCH-08 | Workflow logs | Contain no review text, no emails, no secrets | `test_SCH_08_log_scan` | I | P0 |
+| SCH-09 | Pulse week computed on Monday 03:30 UTC | `week_start` is the previous Monday (UTC) | `test_SCH_09_week_start` | U | P1 |
+| SCH-10 | Reconcile on the 1st | Window is the full previous calendar month, including leap-year February | `test_SCH_10_reconcile_window` | U | P1 |
+
+## 23. Storage
+
+| ID | Scenario | Expected | Test | Type | Pri |
+|---|---|---|---|---|---|
+| STO-01 | Same test suite against `SqliteStore` and `SupabaseStore` | Identical results (parametrized store fixture; Supabase run against a local Postgres) | `test_STO_01_store_parity` | I | P0 |
+| STO-02 | Query for one app | Never returns another app's rows | `test_STO_02_app_scoping` | P | P0 |
+| STO-03 | Client using the anon key | Reads and writes on every table denied by RLS | `test_STO_03_rls_denies_anon` | I | P0 |
+| STO-04 | Supabase unreachable | Run fails before publish with a clear error; local Markdown kept | `test_STO_04_db_unreachable` | I | P1 |
+| STO-05 | Migrations applied twice | Second apply is a no-op | `test_STO_05_migrations_idempotent` | I | P1 |
+| STO-06 | Retention purge | Scoped per app; archived apps' rows kept | `test_STO_06_retention_per_app` | I | P1 |
+
+## 24. Composio MCP
+
+| ID | Scenario | Expected | Test | Type | Pri |
+|---|---|---|---|---|---|
+| CMP-01 | Any call to a slug outside the allowlist, or matching `SEND`, `DELETE`, `TRASH` | Client refuses before the network call | `test_CMP_01_tool_allowlist` | U | P0 |
+| CMP-02 | Call without a connected-account ID | Client refuses | `test_CMP_02_account_required` | U | P0 |
+| CMP-03 | First publish for `(app, week)` | One Doc created, one draft created, IDs stored | `test_CMP_03_first_publish` | M | P0 |
+| CMP-04 | Rerun, same content hash | No MCP calls | `test_CMP_04_same_hash_noop` | M | P0 |
+| CMP-05 | Rerun, changed content | Doc cleared and rewritten in place; draft updated; no new Doc | `test_CMP_05_update_in_place` | M | P0 |
+| CMP-06 | Stored draft was deleted by the user | Update returns not-found; new draft created; Doc untouched | `test_CMP_06_draft_recreated` | M | P1 |
+| CMP-07 | Composio connection expired | Clear "reconnect Google Docs/Gmail in Composio" error; local Markdown kept; other apps unaffected | `test_CMP_07_connection_expired` | M | P1 |
+| CMP-08 | Two apps publish in the same run | Each gets its own Doc and draft; titles carry each display name | `test_CMP_08_per_app_documents` | M | P0 |
+| CMP-09 | Draft body | `include_signature=false`; no PII; Doc link present | `test_CMP_09_draft_body_clean` | M | P0 |
+| CMP-10 | Composio API key missing | Fails at startup with the missing variable named; no partial run | `test_CMP_10_missing_key` | U | P1 |
+
+## 25. Backend Auth
+
+| ID | Scenario | Expected | Test | Type | Pri |
+|---|---|---|---|---|---|
+| AUTH-01 | Write endpoint without a JWT | 401 | `test_AUTH_01_no_token` | U | P0 |
+| AUTH-02 | Valid JWT, email not in `OPERATOR_EMAILS` | 403 | `test_AUTH_02_not_operator` | U | P0 |
+| AUTH-03 | Expired or tampered JWT | 401 | `test_AUTH_03_bad_token` | U | P0 |
+| AUTH-04 | Read endpoints | Work without a token and return no raw review text | `test_AUTH_04_public_reads_safe` | U | P0 |
+| AUTH-05 | Every route in the app | Listed in a test that asserts its auth requirement, so a new write route without auth fails CI | `test_AUTH_05_route_auth_table` | U | P0 |
+
+## 26. Dashboard
+
+| ID | Scenario | Expected | Test | Type | Pri |
+|---|---|---|---|---|---|
+| DSH-01 | Switch app in the header | URL changes to `/apps/:appKey`; all panels show that app only | `test_DSH_01_app_switch` | I | P0 |
+| DSH-02 | Unknown or archived `appKey` in the URL | Unknown: not-found state with link to the app list. Archived: read-only view with an "archived" badge | `test_DSH_02_unknown_or_archived` | I | P1 |
+| DSH-03 | App still backfilling | Progress state, no empty charts | `test_DSH_03_backfilling_state` | I | P1 |
+| DSH-04 | Backend asleep | "Waking backend" state, then data loads | `test_DSH_04_waking_backend` | I | P2 |
+| DSH-05 | 5 of 5 slots used | Add button disabled with the reason shown | `test_DSH_05_slots_full` | I | P1 |
+| DSH-06 | Add flow | Search → choose per store (or "not on this store") → confirm; register only on confirm | `test_DSH_06_add_flow` | I | P0 |
+| DSH-07 | Archive | Confirmation dialog naming the app; slot counter updates | `test_DSH_07_archive_confirm` | I | P1 |
+| DSH-08 | Short coverage or failed collection | Health card shows the covered window and the error summary | `test_DSH_08_health_flags` | I | P1 |
+| DSH-09 | Every interactive element | Has an accessible name | `test_DSH_09_accessible_names` | U | P1 |
+| DSH-10 | Not signed in | Manage Apps is read-only with a sign-in prompt | `test_DSH_10_signed_out_manage` | I | P1 |
+
+## 27. Retired v1 Cases
+
+| ID | Reason | Replaced by |
+|---|---|---|
+| ING-14 | `allow_automated` retired by ADR-9 | COL-02 |
+| ING-15 | App Store is now supported | COL-01, COL-03 |
+| SEC-05 | Same as ING-14 | COL-02 |
+
+## 28. Execution Order (v2)
+
+| Phase | Required test groups |
+|---|---|
+| **7** | STO-01..06, APP-01, APP-05, APP-06, full v1 suite on `SqliteStore` |
+| **8** | COL-* |
+| **9** | APP-*, RES-*, AUTH-* |
+| **10** | CMP-*, v1 MCP-* |
+| **11** | SCH-* |
+| **12** | DSH-* |
+| **13** | Full suite; manual smoke for SCH-06, SCH-07 and the v2 acceptance checklist |

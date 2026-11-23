@@ -1,42 +1,45 @@
-# Problem Statement: Groww Weekly Review Pulse
+# Problem Statement: Weekly Review Pulse (Multi-App)
 
-> Turn raw app-store feedback for **Groww (Stocks, Mutual Fund, IPO)** into a one-page weekly pulse that a team can scan in minutes: what users care about, what they actually said, and what to do next.
+> Turn raw app-store feedback for **up to 5 apps** into a one-page weekly pulse per app that a team can scan in minutes: what users care about, what they actually said, and what to do next.
+
+**Version:** v2 (multi-app), 2026-11-23. Supersedes v1, which covered Groww on Google Play only. v1 is kept in git history (`c4227a6`). Groww (`com.nextbillion.groww`) stays as the first registered app.
 
 ---
 
 ## 1. Overview
 
-Groww receives a constant stream of public reviews on the Google Play Store and Apple App Store. These reviews are rich with signal (bugs, friction in KYC, payment failures, withdrawal delays, UI praise or complaints) but are too voluminous and unstructured for Product, Support, and Leadership to read directly.
+Apps receive a constant stream of public reviews on the Google Play Store and the Apple App Store. These reviews carry signal about bugs, onboarding friction, payment failures, performance and UX, but are too many and too unstructured for Product, Support and Leadership to read directly.
 
-This project builds an automated pipeline that:
+The system:
 
-1. Ingests recent public reviews (last 8-12 weeks).
-2. Clusters them into a small set of themes (max 5).
-3. Distills a **one-page weekly note** (≤250 words) with top themes, verbatim user quotes, and action ideas.
-4. Publishes the note to **Google Docs**.
-5. Creates a **Gmail draft** containing the note (or a clear pointer to it) addressed to yourself or an alias.
+1. Lets an operator register **up to 5 apps** by name. The system searches both stores, shows the top matches, and the operator confirms the correct listing on each store (or marks "not on this store").
+2. Collects public reviews for every registered app on a schedule (GitHub Actions, one matrix workflow), starting with a **12-week backfill** as soon as an app is confirmed.
+3. Cleans and anonymizes reviews, and clusters each app's reviews into **at most 5 themes**.
+4. Produces a **one-page weekly note per app** (≤250 words) with top themes, verbatim quotes and action ideas.
+5. Publishes each app's note to **its own Google Doc** and creates **its own Gmail draft**, both through **MCP (Composio)**.
+6. Shows a **dashboard** where the operator picks an app and sees its latest pulse, theme trends, collection health and links to its Doc and draft.
 
-Google Docs and Gmail are accessed through **MCP (Model Context Protocol) servers**, not through hand-written Google API / OAuth / REST code.
-
-**Primary source (Play Store):** https://play.google.com/store/apps/details?id=com.nextbillion.groww&hl=en_IN
+Apps can be renamed, replaced or removed later. Removing an app frees its slot and keeps its history.
 
 ---
 
 ## 2. Goals and Non-Goals
 
 ### Goals
-- Give stakeholders a fast, trustworthy, scannable weekly health check of user sentiment.
-- Ground every claim in real reviews: quotes are verbatim, themes are traceable to review counts.
-- Produce concrete, theme-linked action ideas that Product/Growth and Support can act on.
-- Keep the integration MCP-first so auth and HTTP plumbing are not reinvented.
-- Guarantee that no PII appears in any generated artifact.
+- A fast, trustworthy, scannable weekly health check per app.
+- Adding an app takes one name and one confirmation; no store IDs typed by hand.
+- Every claim grounded in real reviews: quotes verbatim, themes traceable to counts.
+- Concrete, theme-linked action ideas per app.
+- MCP-first delivery so auth and HTTP plumbing are not reinvented.
+- No PII in any artifact.
 
 ### Non-Goals
-- Real-time review monitoring or alerting.
+- More than 5 active apps.
+- Real-time monitoring or alerting.
 - Replying to reviews on the stores.
-- Building a full analytics dashboard or historical BI system.
-- Scraping behind store logins or any ToS-violating automation.
-- Handling Google credentials or writing a bespoke OAuth/REST client as the primary integration path.
+- Sending email. Drafts only.
+- Scraping behind store logins or any collection that needs an account.
+- Handling Google credentials or writing a Google OAuth/REST client.
 
 ---
 
@@ -44,97 +47,117 @@ Google Docs and Gmail are accessed through **MCP (Model Context Protocol) server
 
 | Audience | What they get |
 |---|---|
-| **Product / Growth** | Prioritized fixes and improvements backed by real user signals |
-| **Support** | Messaging aligned with what users are actually saying; early view of recurring complaints |
-| **Leadership** | One-page health check without drowning in raw reviews |
+| **Operator** | One place to register apps, watch collection health and open each pulse |
+| **Product / Growth** | Prioritized fixes per app, backed by real user signals |
+| **Support** | Messaging aligned with what users say; early view of recurring complaints |
+| **Leadership** | One page per app, plus a dashboard to switch between apps |
 
 ---
 
 ## 4. End-to-End Flow ("What Done Looks Like")
 
 ```
-[Public review export]  -->  [Ingest + clean + anonymize]  -->  [Theme clustering (<=5)]
-        |                                                              |
-        |                                                              v
-        |                                              [Weekly note generation (<=250 words)]
-        |                                                              |
-        |                                       +----------------------+----------------------+
-        |                                       v                                             v
-        |                            [Google Docs via MCP]                         [Gmail draft via MCP]
-        |                            (pulse document)                              (note or link to doc)
+[Operator types app name] -> [Search Play + App Store] -> [Operator confirms listings] -> [App registered (slot n/5)]
+                                                                                              |
+                                                                                    [12-week backfill job]
+                                                                                              |
+[Daily collect] --> [Supabase: reviews per app] <-- [Monthly reconcile]                       |
+                                  |                                                           |
+                       [Weekly pulse job, Monday, per app (matrix)] <-------------------------+
+                                  |
+      [clean + anonymize] -> [themes (<=5)] -> [note (<=250 words)] -> [validation gate]
+                                                                              |
+                                          +-----------------------------------+--------------------+
+                                          v                                                        v
+                             [Google Doc per app via Composio MCP]                 [Gmail draft per app via Composio MCP]
+                                          |
+                                 [Dashboard: pick app -> latest pulse, trends, health]
 ```
 
-**Definition of done:** a reviewer can run the pipeline for a given week and end up with (a) a one-page pulse in Google Docs and (b) a Gmail draft in their drafts folder that contains the note or links to it, with no PII anywhere.
+**Definition of done:** an operator adds an app by name, confirms its listings, and without further manual steps that app gets (a) a 12-week backfill, (b) a first pulse as a Google Doc and a Gmail draft, (c) a new pulse every Monday, and (d) a dashboard view, with no PII anywhere.
 
 ---
 
 ## 5. Functional Requirements
 
-### 5.1 Review Ingestion
-- Import reviews from roughly the **last 8-12 weeks**.
-- Sources: Google Play Store (Groww) and Apple App Store (Groww). Use whatever public export mechanism is available for each.
-- Capture the fields the export provides, typically:
-  - `rating` (1-5)
-  - `title` (App Store usually has one; Play Store often does not)
-  - `text` (review body)
-  - `date`
-  - Optional: `app_version`, `platform`, `language` (only if non-identifying)
-- Support a configurable window (default 12 weeks, minimum 8).
-- Deduplicate reviews (same text + date + platform).
-- Store a normalized local dataset (CSV/JSON/SQLite) as the pipeline's single source of truth.
+### 5.1 App Registry
+- Holds at most **5 active apps**. The 6th add is rejected with a clear message. The cap is enforced in the database, not only in the UI.
+- Each app has an immutable internal `app_key` (slug, e.g. `groww`), a display name, a country (default `in`), a language (default `en`), and a store listing for Play and/or App Store. At least one store listing is required.
+- **Rename** changes only the display name. History, Docs and drafts keep working.
+- **Replace** (pointing an app at different store listings) is not an edit: it archives the old app and creates a new one, so one app's history never mixes two listings.
+- **Remove** archives the app: its slot is freed, its schedule stops, and its history and Docs stay readable in the dashboard.
+- Adding a store listing that is already registered to an active app is rejected.
+- Only an authenticated operator can add, rename, replace or remove apps.
 
-### 5.2 Cleaning and Privacy Scrubbing
-- **Drop** reviewer names/usernames, profile identifiers, emails, device IDs, and any other reviewer metadata at ingestion; never carry them forward.
-- Scan review text for embedded PII (phone numbers, emails, PAN/Aadhaar-like numbers, account/folio numbers, order or transaction IDs, names signed at the end of a review) and redact or exclude those reviews/snippets from quotes.
-- Normalize whitespace and encoding; detect language and handle (or explicitly filter) non-English / Hinglish reviews.
-- Filter obvious spam, empty, or one-word reviews from theme clustering (but keep them in the raw count if useful).
+### 5.2 App Resolution (name → store listings)
+- Given a name, search both stores in the app's country and return the **top 3 matches per store** with icon, title, developer, rating and rating count.
+- **App Store:** Apple's public iTunes Search API (`itunes.apple.com/search`, `entity=software`).
+- **Play Store:** the `google-play-scraper` search function (public listing data, no login).
+- The operator confirms one match per store or picks "not on this store". Nothing is registered until confirmed.
+- After confirmation, the system re-fetches each listing by ID to verify it exists, and stores its category (used as theming context).
+- If one store's search fails or times out, the operator can confirm the other store now and add the missing store later.
 
-### 5.3 Theme Clustering
-- Group reviews into **at most 5 themes**.
-- Themes should fit the Groww product. Candidate examples (pick/merge what the data supports):
-  - Onboarding / KYC / account opening
-  - Payments / UPI / add-funds failures
-  - Withdrawals / redemptions / settlement delays
-  - App performance, crashes, login issues, glitches
-  - Statements / reports / tax documents / portfolio views
-  - Charges, brokerage, and pricing transparency
-  - Customer support responsiveness
-  - Positive UX / ease of investing / mutual fund and IPO experience
-- Each theme must have: a short label, a one-line description, a review count, share of total, and average rating.
-- Each review is assigned to a primary theme (or marked "Other/unclassified").
-- Clustering approach is open (LLM-based labeling, embeddings + clustering, or keyword/rule hybrid) but must be reproducible and explainable.
+### 5.3 Review Collection
+- Collection is automated for both stores. This reverses the v1 decision; see ADR-9 in `data-source-decision.md`.
+- **App Store:** Apple's public customer-reviews RSS feed (JSON), most recent first, 10 pages of 50 reviews per country. One fetch is capped at about 500 reviews.
+- **Play Store:** `google-play-scraper` `reviews()` sorted by newest with continuation tokens, rate-limited.
+- Field allowlist at the boundary: `rating`, `title`, `text`, `date`, `app_version`. Reviewer name, avatar, user ID, the store's review ID and developer replies are dropped at extraction and never stored.
+- Modes:
 
-### 5.4 Weekly One-Page Note
-The note is **≤250 words** and must include:
+| Mode | Trigger | Window | Purpose |
+|---|---|---|---|
+| **Backfill** | App confirmed (on demand) | Last 12 weeks | Seed a new app, then generate its first pulse |
+| **Daily** | Every day | Last 3 days | Keep data fresh; stay under the App Store 500-review cap |
+| **Reconcile** | Monthly, after the month closes | Previous calendar month | Re-sweep the month and catch late or edited reviews |
 
-1. **Top 3 themes**: a subset of the (≤5) themes, ranked by volume and/or severity, each with a one-line summary and a signal strength (count or share, sentiment).
-2. **3 real user quotes**: verbatim snippets, anonymous, with no invented or paraphrased wording. Light trimming with an ellipsis is acceptable only if the meaning is unchanged and the words shown are exact.
-3. **3 action ideas**: concrete, specific next steps, each tied to a theme (e.g., owner function, what to change or investigate, what success looks like).
+- All modes upsert with the existing dedupe key, so overlapping windows add no duplicates.
+- When a fetch hits a source limit (App Store page 10 reached before the window start), the collection run records `source_limit_hit` and the dashboard shows the window actually covered.
 
-Also include a header with the review window (e.g., "Reviews from DD Mon to DD Mon") and total reviews analyzed.
+### 5.4 Cleaning and Privacy Scrubbing
+Unchanged from v1 and applied to every app: drop identity fields, scrub embedded PII (phones, emails, PAN/Aadhaar-like, UPI IDs, account/order IDs, sign-off names), normalize text, detect language, filter spam and low-info reviews from clustering.
 
-### 5.5 Google Docs Delivery (via MCP)
-- Create (or update) a Google Doc titled with the week, e.g., `Groww Weekly Review Pulse: Week of YYYY-MM-DD`.
-- The doc contains the one-page note, formatted for scanning (short headings, brief bullets, quotes visually distinct).
-- Re-running for the same week should **update** rather than duplicate the document (or clearly version it).
-- Return the document URL for use in the email.
+### 5.5 Theme Clustering
+- At most **5 themes per app per run**, including "Other".
+- Themes are derived from each app's own reviews. Prompts receive the app's display name and store category; prompt files contain no hardcoded app names or app-specific theme lists.
+- Each theme has a label, a one-line description, review count, share and average rating.
 
-### 5.6 Gmail Draft (via MCP)
-- Create a **draft** (not send) addressed to yourself or an alias.
-- Subject example: `Groww Weekly Review Pulse | Week of YYYY-MM-DD`.
-- Body contains the full note **or** a short summary plus the Google Doc link (a clear pointer).
-- No PII in subject, body, or attachments.
+### 5.6 Weekly One-Page Note (per app)
+Unchanged contract: ≤250 words, top 3 themes, exactly 3 verbatim quotes, exactly 3 action ideas, and a header with app name, window and review count. If one store's coverage is short (source limit or no listing), the header says which stores were included.
+
+### 5.7 Google Docs Delivery (Composio MCP)
+- One Doc per app per week, titled `<App> Weekly Review Pulse: Week of YYYY-MM-DD`.
+- Re-running the same app and week updates that Doc in place; it never creates a second one.
+
+### 5.8 Gmail Draft (Composio MCP)
+- One draft per app per week, addressed to the configured recipient, subject `<App> Weekly Review Pulse | Week of YYYY-MM-DD`, body with the note and the Doc link.
+- Re-running updates the same draft. The system never sends email; send tools are blocked in the MCP capability map.
+
+### 5.9 Scheduling (GitHub Actions)
+- **One workflow file** with a matrix over active apps. The app list is read from the registry at run time, so adding or removing an app never edits workflow files.
+- Schedules (cron is UTC; IST shown for reference):
+
+| Job | Cron (UTC) | IST |
+|---|---|---|
+| Daily collect | `30 20 * * *` | 02:00 daily |
+| Weekly pulse | `30 3 * * 1` | 09:00 Monday |
+| Monthly reconcile | `30 21 1 * *` | 03:00 on the 2nd, covering the previous month |
+
+- **Backfill** runs through `workflow_dispatch` with an `app_key` input. The backend triggers it right after an app is confirmed. If the trigger fails, the next daily run backfills any app still marked `pending_backfill`.
+- One failing app never fails the other apps' matrix jobs. Runs for the same app never overlap.
+
+### 5.10 Dashboard
+- App switcher listing the active apps, with an "archived" toggle.
+- Per app: latest pulse, theme table, theme share trend across weeks, links to the Doc and draft, collection health (last run, reviews per store, covered window, source-limit flags) and run history.
+- Manage Apps page: slot counter (n/5), add flow with search and confirmation, rename, replace, archive.
 
 ---
 
-## 6. Integration Requirements: MCP First
+## 6. Integration Requirements: MCP First (Composio)
 
-- Use **MCP servers/connectors** for Google Docs and Gmail. Examples of what to call: "create document", "update document content", "create draft".
-- Do **not** build a bespoke OAuth client plus REST wrapper for Google APIs as the primary path.
-- The agent/app discovers and calls MCP tools; authentication is handled by the MCP server/connector configuration.
-- Choose whichever Docs and Gmail MCP servers your environment provides; the requirement is **MCP-first**, not a specific vendor.
-- Document in the README: which MCP servers were used, how they are configured (without secrets), and which tools are called.
-- Handle MCP failures gracefully: retry with backoff, surface a clear error, and fall back to saving the note locally (Markdown) if Docs/Gmail is unavailable.
+- Google Docs and Gmail go through **Composio's MCP server**. Google auth lives in Composio connected accounts; the pipeline holds only a Composio API key and the connected-account IDs.
+- Tools used: `GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN`, `GOOGLEDOCS_GET_DOCUMENT_BY_ID`, `GOOGLEDOCS_UPDATE_EXISTING_DOCUMENT`, `GOOGLEDOCS_UPDATE_DOCUMENT_SECTION_MARKDOWN`, `GMAIL_CREATE_EMAIL_DRAFT`, `GMAIL_UPDATE_DRAFT`.
+- Blocked tools: `GMAIL_SEND_EMAIL`, `GMAIL_SEND_DRAFT`, and any other send tool.
+- Failures: retry with backoff, clear error, local Markdown fallback (unchanged from v1).
 
 ---
 
@@ -142,59 +165,41 @@ Also include a header with the review window (e.g., "Reviews from DD Mon to DD M
 
 | Constraint | Requirement |
 |---|---|
-| **Data source** | Public review exports only. No scraping behind store logins, no ToS-violating automation. |
-| **Time window** | Roughly the last 8-12 weeks of reviews |
-| **Themes** | Maximum **5** themes for clustering; the note highlights the top **3** |
-| **Length** | Weekly note ≤ **250 words**, scannable |
-| **Quotes** | Verbatim from real reviews, exactly 3 in the note, never fabricated |
-| **Actions** | Exactly 3 concrete, theme-grounded action ideas |
-| **Privacy** | No PII: no usernames, emails, device IDs, or other identifiable reviewer data in **any** artifact (datasets shared, Docs, emails, logs, screenshots) |
-| **Credentials** | The pipeline does not handle Google credentials directly; auth lives in the MCP layer |
-
-> **Compliance note:** Confirm the chosen collection method for each store complies with that store's terms. Prefer official/public export mechanisms (for example, Apple's public customer-reviews feed for the App Store, and a permitted public export for Google Play). Document the method and its limits in the README. Where a compliant automated export is unavailable, a manually exported public dataset is acceptable.
+| **Apps** | At most 5 active apps |
+| **Data source** | Public, login-free store data only; identity fields dropped at extraction |
+| **Time window** | 12-week window per pulse; App Store backfill may be shorter and must be reported |
+| **Themes** | ≤5 per app per run; note shows top 3 |
+| **Length** | ≤250 words per note |
+| **Quotes** | Exactly 3, verbatim, never fabricated |
+| **Actions** | Exactly 3, theme-grounded |
+| **Privacy** | No PII in any artifact: database, Docs, drafts, logs, Actions logs, dashboard, screenshots |
+| **Credentials** | No Google credentials in the pipeline; all secrets in GitHub/HF secret stores, never in the repo |
+| **Delivery** | Drafts only, never send |
 
 ---
 
-## 8. Data Model (Suggested)
+## 8. Data Model (Summary)
 
-**Raw / normalized review record**
+Full schema in `multi-app-architecture.md` §5.
 
-| Field | Type | Notes |
-|---|---|---|
-| `review_id` | string | Internal hash, not the store's reviewer ID |
-| `platform` | enum | `play_store` / `app_store` |
-| `rating` | int (1-5) | |
-| `title` | string \| null | |
-| `text` | string | PII-scrubbed |
-| `date` | date | |
-| `app_version` | string \| null | Optional |
-| `theme_id` | string \| null | Assigned after clustering |
-| `sentiment` | enum \| null | Optional: positive / neutral / negative |
-
-**Theme record**
-
-| Field | Type |
+| Entity | Key fields |
 |---|---|
-| `theme_id` | string |
-| `label` | string |
-| `description` | string |
-| `review_count` | int |
-| `share_pct` | float |
-| `avg_rating` | float |
-| `candidate_quotes` | list of review_ids |
+| `apps` | `app_key`, `display_name`, `play_package_id`, `app_store_id`, `country`, `lang`, `category`, `status` (`pending_backfill` / `backfilling` / `active` / `archived` / `failed`), `created_at`, `archived_at` |
+| `reviews` | `app_key`, `review_id`, `platform`, `rating`, `title`, `text`, `review_date`, `app_version`, flags |
+| `collection_runs` | `app_key`, `platform`, `mode`, window, fetched, inserted, `source_limit_hit`, status |
+| `runs`, `themes`, `review_themes` | As v1, plus `app_key` |
+| `publish_state` | `(app_key, week_start)` → `doc_id`, `doc_url`, `draft_id`, `content_hash` |
 
 ---
 
 ## 9. Weekly Note Template
 
-Target: **≤250 words total.**
-
 ```markdown
-# Groww Weekly Review Pulse | Week of <YYYY-MM-DD>
-Window: <start> to <end> | Reviews analyzed: <N> | Avg rating: <x.x>
+# <App> Weekly Review Pulse | Week of <YYYY-MM-DD>
+Window: <start> to <end> | Reviews analyzed: <N> (Play <p>, App Store <a>) | Avg rating: <x.x>
 
 ## Top 3 Themes
-1. **<Theme A>** (<xx% of reviews>, avg <x.x>★): <one-line summary>
+1. **<Theme A>** (<xx%>, avg <x.x>★): <one-line summary>
 2. **<Theme B>** (<xx%>, avg <x.x>★): <one-line summary>
 3. **<Theme C>** (<xx%>, avg <x.x>★): <one-line summary>
 
@@ -213,118 +218,56 @@ Window: <start> to <end> | Reviews analyzed: <N> | Avg rating: <x.x>
 
 ## 10. Quality Rules for the Note
 
-- **Traceable:** every theme count and quote can be traced back to the dataset.
-- **Verbatim quotes:** copied exactly from source text; no rewording, no merging of multiple reviews into one quote.
-- **Diverse quotes:** ideally cover different top themes rather than three quotes about the same issue.
-- **Actionable:** each action names a concrete change or investigation, a likely owner (Product, Engineering, Support, Growth), and a measurable signal.
-- **Balanced:** include a positive theme when it genuinely ranks in the top 3; don't only report complaints.
-- **No overreach:** don't claim causes the reviews don't support; phrase as "users report..." not "the app is broken because...".
-- **Concise:** if the draft exceeds 250 words, trim rather than shrink fonts or hide content.
+Unchanged from v1: traceable, verbatim quotes, diverse quotes, actionable, balanced, no overreach, concise.
 
 ---
 
 ## 11. Acceptance Criteria
 
-- [ ] Reviews from roughly the last 8-12 weeks are imported from public exports for the Groww app.
-- [ ] Reviews are clustered into **≤ 5** themes with label, count, share, and avg rating.
-- [ ] The weekly note contains **top 3 themes**, **3 verbatim quotes**, and **3 action ideas**.
-- [ ] The note is **≤ 250 words** and scannable.
-- [ ] The note is created (or updated) as a **Google Doc via MCP**.
-- [ ] A **Gmail draft via MCP** exists addressed to self/alias, containing the note or a clear link to it.
-- [ ] A spot-check confirms every quote appears verbatim in the source dataset.
-- [ ] A PII check on the dataset, Doc, and draft finds no usernames, emails, phone numbers, device IDs, or other identifiable data.
-- [ ] No direct Google OAuth/REST client code is used as the primary integration path.
-- [ ] Re-running for the same window does not create duplicate docs/drafts uncontrollably (idempotent or clearly versioned).
-- [ ] README documents setup, data source method, MCP servers used, and how to run the pipeline.
+- [ ] An app can be added by name; top 3 matches per store are shown; nothing registers without confirmation.
+- [ ] A 6th active app is rejected by the database.
+- [ ] Rename keeps history; replace archives and creates a new app; remove archives and frees the slot.
+- [ ] Confirming an app triggers a 12-week backfill and a first pulse with no manual step.
+- [ ] Daily, weekly and monthly jobs run from **one** workflow file with a matrix over active apps.
+- [ ] One app's failure does not fail other apps' jobs.
+- [ ] Each app's note: ≤5 themes clustered, top 3 shown, 3 verbatim quotes, 3 actions, ≤250 words.
+- [ ] Each app gets its own Google Doc and Gmail draft via Composio MCP; reruns update in place.
+- [ ] No send tool is callable.
+- [ ] The dashboard switches between apps and shows latest pulse, trends, links and collection health.
+- [ ] A PII check on the database, Docs, drafts, logs and dashboard finds nothing.
+- [ ] No secrets in the repository.
+- [ ] README documents setup, sources and their limits, Composio setup, secrets, and how to run each job locally.
 
 ---
 
 ## 12. Edge Cases to Handle
 
-- Fewer reviews than expected in the window (low-volume week): still produce the note and flag low sample size.
-- Highly skewed week (e.g., an outage causing a spike in one theme): note the spike and its share.
-- Reviews in Hindi, Hinglish, or mixed scripts: translate for theme assignment if needed, but quote only in the original verbatim text, or skip non-English quotes.
-- Reviews containing PII in the body: exclude from quote candidates and redact in stored text.
-- Very short or generic reviews ("good", "nice app") dominating counts: handle so they don't crowd out actionable themes.
-- Duplicate or bot-like reviews: deduplicate/filter.
-- MCP tool failures or auth expiry: clear error and local Markdown fallback.
-- Ratings and text mismatch (5 stars with a complaint): rely on text for theme assignment, report rating separately.
+All v1 cases still apply per app. New cases, with IDs, are in `edge-case.md` §19-§28:
+
+- A name matches several apps, none, or only one store.
+- The same listing registered twice; a 6th app; adding while another app is backfilling.
+- An app delisted or renamed on the store after registration.
+- App Store backfill shorter than 12 weeks (500-review cap).
+- A new app with almost no reviews.
+- Backfill dispatch fails; a scheduled run overlaps a backfill for the same app.
+- Composio connection expired for Docs or Gmail; wrong connected account selected.
+- The operator archives an app while its job is running.
 
 ---
 
-## 13. Suggested Architecture and Project Layout
+## 13. Open Questions
 
-```
-groww-review-pulse/
-├── README.md
-├── data/
-│   ├── raw/                  # public review exports (PII-stripped on ingest)
-│   └── processed/            # normalized reviews + theme assignments
-├── src/
-│   ├── ingest/               # play store + app store importers
-│   ├── clean/                # normalization, dedupe, PII scrubbing
-│   ├── themes/               # clustering + labeling
-│   ├── note/                 # note generation (word-count enforced)
-│   ├── mcp/                  # MCP client wrappers: docs + gmail tool calls
-│   └── pipeline.py|ts        # orchestrates the full weekly run
-├── prompts/                  # LLM prompts for theming + note writing
-├── tests/                    # PII, quote-verbatim, word-count, theme-cap tests
-└── outputs/                  # local copy of weekly notes (Markdown)
-```
-
-**Pipeline stages:** `ingest → clean/anonymize → cluster (≤5) → select top 3 + quotes → generate note (≤250 words) → validate → publish to Docs (MCP) → create Gmail draft (MCP)`.
-
-**Validation gate before publishing:**
-1. Word count ≤ 250
-2. Exactly 3 themes, 3 quotes, 3 actions
-3. Every quote found verbatim in the dataset
-4. PII scan passes on the final note
-
-If any check fails, regenerate or fail loudly; do not publish.
+- Draft recipient: one address for all apps, or per app? Default: one address.
+- Operator sign-in for the Manage Apps page. Default: Supabase Auth magic link, one allowed email.
+- Should archived apps ever be hard-deleted? Default: no; out of scope.
 
 ---
 
-## 14. Deliverables
+## 14. Glossary
 
-1. **Working pipeline** (code/agent workflow) that runs the end-to-end flow.
-2. **Normalized review dataset** (PII-free) covering the 8-12 week window.
-3. **Theme summary** (≤5 themes with counts, shares, avg ratings).
-4. **Weekly one-page pulse** (≤250 words) as a Google Doc.
-5. **Gmail draft** containing the note or a pointer to the Doc.
-6. **README** covering data-source method, MCP servers/tools used, how to run, and the privacy approach.
-7. *(Optional)* Sample output Markdown and a short demo recording or screenshots (PII-free).
-
----
-
-## 15. Evaluation Rubric (Suggested)
-
-| Area | What good looks like |
-|---|---|
-| **Data ingestion** | Correct window, public/compliant source, clean normalized fields |
-| **Theming** | ≤5 coherent, non-overlapping, product-relevant themes with metrics |
-| **Note quality** | ≤250 words, scannable, top 3 themes, 3 verbatim quotes, 3 specific actions |
-| **MCP integration** | Docs and Gmail handled through MCP tools; no custom OAuth/REST as primary path |
-| **Privacy** | Zero PII across all artifacts; automated check present |
-| **Reliability** | Idempotent reruns, error handling, validation gate |
-| **Communication** | Clear README and rationale for design choices |
-
----
-
-## 16. Open Questions / Decisions to Make
-
-- Which compliant public export method will be used for Google Play reviews, and what are its rate/volume limits?
-- Which App Store region(s) to include (e.g., India only) and how to handle multiple languages?
-- Clustering approach: LLM labeling, embeddings plus clustering, or a hybrid?
-- Ranking rule for "top 3": by volume, by negative-sentiment weight, or a combined severity score?
-- Which Docs and Gmail MCP servers will be used, and how is auth configured on the MCP side?
-- Draft recipient: personal address or a team alias?
-- Run cadence: manual trigger or scheduled weekly job?
-
----
-
-## 17. Glossary
-
-- **MCP (Model Context Protocol):** a standard for exposing tools (e.g., Docs, Gmail actions) to an agent or app so it can call them without bespoke API integration.
-- **Pulse:** the short weekly summary of user feedback.
-- **PII:** personally identifiable information, such as names, usernames, emails, phone numbers, device IDs, or financial identifiers.
-- **Theme:** a cluster of reviews sharing a common topic (e.g., KYC, payments, withdrawals).
+- **MCP:** Model Context Protocol, a standard for exposing tools to an agent or app.
+- **Composio:** hosted tool platform that exposes Gmail and Google Docs as MCP tools and holds the Google auth.
+- **Pulse:** the one-page weekly note for one app.
+- **Slot:** one of the 5 active-app places in the registry.
+- **Backfill / Daily / Reconcile:** the three collection modes in §5.3.
+- **PII:** personally identifiable information.
