@@ -51,6 +51,7 @@ class WeeklyPulseNote:
     week_start: str
     window_start: str
     window_end: str
+    app_name: str
     platform: str = "Google Play"
     total_reviews: int = 0
     analyzed_reviews: int = 0
@@ -69,6 +70,7 @@ class WeeklyPulseNote:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "week_start": self.week_start,
+            "app_name": self.app_name,
             "window_start": self.window_start,
             "window_end": self.window_end,
             "platform": self.platform,

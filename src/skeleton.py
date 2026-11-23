@@ -15,6 +15,7 @@ from typing import Any, Dict, List
 
 from src.config import load_pulse_config, PulseConfig, get_project_root, resolve_project_path
 from src.mcp.capabilities import load_mcp_config, resolve_capability, MCPConfigData
+from src.note.titles import pulse_doc_title, pulse_email_subject
 
 
 def count_words(markdown_text: str) -> int:
@@ -106,12 +107,12 @@ def run_skeleton(
     # Run MCP tools via contract adapter
     runner = SkeletonMCPRunner(mcp_cfg)
     doc_res = runner.create_doc(
-        title=f"Groww Weekly Review Pulse: Week of {week_str}",
+        title=pulse_doc_title("Groww", week_str),
         content=note_text
     )
     draft_res = runner.create_draft(
         to=pulse_cfg.email.to,
-        subject=f"Groww Weekly Review Pulse | Week of {week_str}",
+        subject=pulse_email_subject("Groww", week_str),
         body=note_text,
         doc_url=doc_res["doc_url"]
     )

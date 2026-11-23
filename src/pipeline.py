@@ -30,22 +30,22 @@ from src.clean.window import (
 )
 from src.config import load_pulse_config, PulseConfig, get_project_root, resolve_project_path
 from src.ingest.play_csv import PlayStoreImportSource
-from src.store.db import Database
+from src.store.factory import open_store
+from src.store.store import AppStore
 from src.store.models import ReviewRecord
 
 
 def process_and_ingest_reviews(
+    store: AppStore,
+    week_str: str,
     config: Optional[PulseConfig] = None,
-    week_str: str = "2026-11-10",
     csv_path: Optional[Path | str] = None,
-    db: Optional[Database] = None
 ) -> Dict[str, any]:
     """Execute Phase 1 Ingestion, Scrubbing, and Persistence."""
     if not config:
         config = load_pulse_config()
 
     root = get_project_root()
-    database = db or Database(root / "data" / "pulse.db")
 
     # 1. Window bounds (WIN-04, WIN-06, WIN-08)
     week_start = normalize_to_week_start(week_str)
@@ -63,7 +63,7 @@ def process_and_ingest_reviews(
     deduped_records, dedupe_dropped = deduplicate_reviews(raw_records)
 
     # 4. Save allowlisted PII-free raw copy in data/raw/ (PII-38)
-    raw_archive_dir = root / "data" / "raw"
+    raw_archive_dir = root / "data" / "raw" / store.app_key
     raw_archive_dir.mkdir(parents=True, exist_ok=True)
     raw_archive_file = raw_archive_dir / f"play_reviews_{window_start}_{window_end}.csv"
 
@@ -126,7 +126,7 @@ def process_and_ingest_reviews(
         raise ValueError("All ingested reviews are low-info / emoji-only (LOW-01). Pipeline halted.")
 
     # 7. Persist to SQLite (ING-16)
-    newly_inserted = database.upsert_reviews(processed_records)
+    newly_inserted = store.upsert_reviews(processed_records)
 
     # 8. Compute Coverage (WIN-01)
     coverage_weeks = compute_coverage_weeks(processed_records)
@@ -159,22 +159,19 @@ from src.themes.engine import run_theme_pipeline
 
 
 def run_themes_stage(
+    store: AppStore,
+    week_str: str,
     config: Optional[PulseConfig] = None,
-    week_str: str = "2026-11-10",
-    db: Optional[Database] = None
 ) -> Dict[str, any]:
-    """Execute Phase 2 Theme Engine on reviews stored in SQLite."""
+    """Execute Phase 2 Theme Engine on reviews stored for one app."""
     if not config:
         config = load_pulse_config()
-
-    root = get_project_root()
-    database = db or Database(root / "data" / "pulse.db")
 
     week_start = normalize_to_week_start(week_str)
     window_start, window_end = calculate_window_bounds(week_start, weeks=config.window.weeks)
 
     # Fetch stored reviews within window
-    reviews = database.get_reviews_in_window(window_start, window_end, include_low_info=False)
+    reviews = store.get_reviews_in_window(window_start, window_end, include_low_info=False)
     if not reviews:
         raise ValueError(
             f"No reviews found in database for window {window_start} to {window_end}. "
@@ -183,9 +180,9 @@ def run_themes_stage(
 
     theme_result = run_theme_pipeline(
         reviews=reviews,
+        store=store,
+        week_str=week_str,
         config=config,
-        db=database,
-        week_str=week_str
     )
     return theme_result
 
@@ -205,12 +202,12 @@ def validate_week_parameter(week_str: str):
 
 
 def run_full_pipeline(
-    week_str: str = "2026-11-10",
+    store: AppStore,
+    week_str: str,
     csv_path: Optional[Path | str] = None,
     dry_run: bool = False,
     stage_limit: Optional[str] = None,
     retries: int = 3,
-    db: Optional[Database] = None,
     config: Optional[PulseConfig] = None,
     mcp_client=None,
 ) -> Dict[str, any]:
@@ -231,12 +228,10 @@ def run_full_pipeline(
         config = load_pulse_config()
 
     root = get_project_root()
-    database = db or Database(root / "data" / "pulse.db")
-
     window_start, window_end = calculate_window_bounds(week_start_dt, weeks=config.window.weeks)
     run_id = f"run_{norm_week}_{int(start_time.timestamp() * 1000)}"
 
-    database.record_run_start(
+    store.record_run_start(
         run_id=run_id,
         week_start=norm_week,
         window_start=window_start,
@@ -249,13 +244,13 @@ def run_full_pipeline(
     # Stage 1: Ingestion
     t0 = datetime.now(timezone.utc)
     try:
-        reviews_in_window = database.get_reviews_in_window(window_start, window_end)
+        reviews_in_window = store.get_reviews_in_window(window_start, window_end)
         if not reviews_in_window or stage_limit == "ingest" or csv_path is not None:
             ingest_summary = process_and_ingest_reviews(
-                config=config,
+                store=store,
                 week_str=norm_week,
+                config=config,
                 csv_path=csv_path,
-                db=database
             )
             stage_statuses["ingest"] = "done"
         else:
@@ -269,7 +264,7 @@ def run_full_pipeline(
                 "short_coverage_flag": compute_coverage_weeks(reviews_in_window) < 8.0,
             }
 
-        database.update_run(
+        store.update_run(
             run_id=run_id,
             status="ingest_completed" if stage_limit == "ingest" else "running",
             total_reviews=ingest_summary.get("total_analyzed", 0),
@@ -279,7 +274,7 @@ def run_full_pipeline(
             finished=(stage_limit == "ingest")
         )
     except Exception as e:
-        database.update_run(run_id=run_id, status="failed", error=str(e), finished=True)
+        store.update_run(run_id=run_id, status="failed", error=str(e), finished=True)
         raise
 
     stage_timings["ingest"] = (datetime.now(timezone.utc) - t0).total_seconds()
@@ -295,16 +290,16 @@ def run_full_pipeline(
     # Stage 2: Themes Clustering
     t0 = datetime.now(timezone.utc)
     try:
-        theme_summary = run_themes_stage(config=config, week_str=norm_week, db=database)
+        theme_summary = run_themes_stage(store=store, week_str=norm_week, config=config)
         stage_statuses["themes"] = "done"
         has_spike = any(t.get("is_spike", False) for t in theme_summary.get("themes", []))
-        database.update_run(
+        store.update_run(
             run_id=run_id,
             status="themes_completed" if stage_limit == "themes" else "running",
             finished=(stage_limit == "themes")
         )
     except Exception as e:
-        database.update_run(run_id=run_id, status="failed", error=str(e), finished=True)
+        store.update_run(run_id=run_id, status="failed", error=str(e), finished=True)
         raise
 
     stage_timings["themes"] = (datetime.now(timezone.utc) - t0).total_seconds()
@@ -332,7 +327,7 @@ def run_full_pipeline(
     while attempt < max(1, retries):
         attempt += 1
         note, rendered_md, val_result, out_folder = build_and_validate_pulse_note(
-            database=database,
+            store=store,
             week_start=norm_week,
             dry_run=dry_run
         )
@@ -343,7 +338,7 @@ def run_full_pipeline(
 
     if not val_result.is_valid:
         # Validation Gate Failed (INV-02: NEVER CALL PUBLISH!)
-        database.update_run(
+        store.update_run(
             run_id=run_id,
             status="validation_failed",
             error="; ".join(val_result.errors),
@@ -352,7 +347,7 @@ def run_full_pipeline(
         stage_statuses["note"] = "validation_failed"
         stage_statuses["publish"] = "skipped"
 
-        out_dir = root / "outputs" / norm_week
+        out_dir = root / "outputs" / store.app_key / norm_week
         out_dir.mkdir(parents=True, exist_ok=True)
         failed_report = {
             "run_id": run_id,
@@ -384,7 +379,7 @@ def run_full_pipeline(
 
     stage_statuses["note"] = "done"
     if stage_limit == "note":
-        database.update_run(run_id=run_id, status="validated", finished=True)
+        store.update_run(run_id=run_id, status="validated", finished=True)
         return {
             "run_id": run_id,
             "status": "validated",
@@ -404,9 +399,9 @@ def run_full_pipeline(
 
         mcp_cfg = load_mcp_config(config.mcp.config)
         client = mcp_client or MockMCPClient()
-        publisher = PulsePublisher(database=database, mcp_config=mcp_cfg, client=client)
+        publisher = PulsePublisher(store=store, mcp_config=mcp_cfg, client=client)
 
-        recipient_to = config.email.to if config.email.to else "product-leadership@groww.in"
+        recipient_to = require_recipient(config)
         pub_result = publisher.publish_pulse(
             week_start=norm_week,
             note_markdown=rendered_md,
@@ -414,17 +409,17 @@ def run_full_pipeline(
         )
 
         final_status = "published" if pub_result.status in ["published", "created", "updated", "no_change", "noop"] else "publish_failed"
-        database.update_run(run_id=run_id, status=final_status, finished=True)
+        store.update_run(run_id=run_id, status=final_status, finished=True)
         stage_statuses["publish"] = "done" if final_status == "published" else "failed"
     else:
         # Dry-run: NO MCP calls, NO publish_state modifications (ORC-01)
-        database.update_run(run_id=run_id, status="validated", finished=True)
+        store.update_run(run_id=run_id, status="validated", finished=True)
         stage_statuses["publish"] = "skipped_dry_run"
 
     stage_timings["publish"] = (datetime.now(timezone.utc) - t0).total_seconds()
 
     # Stage 5: Observability & Run Report Generation (Task 5.4, ORC-10)
-    out_dir = root / "outputs" / norm_week
+    out_dir = root / "outputs" / store.app_key / norm_week
     out_dir.mkdir(parents=True, exist_ok=True)
 
     report_data = {
@@ -489,40 +484,80 @@ def run_full_pipeline(
     }
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Groww Weekly Review Pulse Pipeline")
-    subparsers = parser.add_subparsers(dest="command", help="Pipeline commands")
+def require_recipient(config: PulseConfig) -> str:
+    recipient = (config.email.to or "").strip()
+    if not recipient:
+        raise ValueError("Draft recipient is not configured. Set the PULSE_EMAIL_TO environment variable.")
+    return recipient
 
-    run_parser = subparsers.add_parser("run", help="Execute complete weekly pulse pipeline (Phase 5)")
-    run_parser.add_argument("--week", default="2026-11-10", help="Run week (YYYY-MM-DD)")
+
+def _print_theme_summary(theme_summary: Dict[str, any]) -> None:
+    display_summary = {
+        "week": theme_summary["week"],
+        "total_input_reviews": theme_summary["total_input_reviews"],
+        "analyzable_reviews": theme_summary["analyzable_reviews"],
+        "filter_metrics": theme_summary["filter_metrics"],
+        "themes_count": theme_summary["themes_count"],
+        "themes": [
+            {
+                "rank": t["rank"],
+                "label": t["label"],
+                "review_count": t["review_count"],
+                "share_pct": f"{t['share_pct']:.1%}",
+                "avg_rating": f"{t['avg_rating']}★",
+                "neg_share": f"{t['neg_share']:.1%}",
+                "priority_score": t["priority_score"],
+                "is_top3": bool(t["is_top3"]),
+            }
+            for t in theme_summary["themes"]
+        ]
+    }
+    print(json.dumps(display_summary, indent=2))
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Weekly Review Pulse Pipeline")
+    subparsers = parser.add_subparsers(dest="command", required=True, help="Pipeline commands")
+
+    def add_common(sub: argparse.ArgumentParser) -> None:
+        sub.add_argument("--app", required=True, help="Registered app_key, e.g. groww")
+        sub.add_argument("--week", required=True, help="Run week (YYYY-MM-DD)")
+
+    run_parser = subparsers.add_parser("run", help="Execute complete weekly pulse pipeline")
+    add_common(run_parser)
     run_parser.add_argument("--file", default=None, help="Path to input CSV file")
     run_parser.add_argument("--dry-run", action="store_true", help="Stop after validation without publishing")
-    run_parser.add_argument("--stage", choices=["ingest", "themes", "note", "publish"], default=None, help="Stop after specified stage or resume")
+    run_parser.add_argument("--stage", choices=["ingest", "themes", "note", "publish"], default=None)
     run_parser.add_argument("--retries", type=int, default=3, help="Max regeneration attempts on validation failure")
 
-    ingest_parser = subparsers.add_parser("ingest", help="Ingest, clean, and scrub Play reviews")
-    ingest_parser.add_argument("--week", default="2026-11-10", help="Run week (YYYY-MM-DD)")
+    ingest_parser = subparsers.add_parser("ingest", help="Ingest, clean, and scrub reviews from a CSV import")
+    add_common(ingest_parser)
     ingest_parser.add_argument("--file", default=None, help="Path to input CSV file")
 
     themes_parser = subparsers.add_parser("themes", help="Cluster reviews into <=5 ranked themes")
-    themes_parser.add_argument("--week", default="2026-11-10", help="Run week (YYYY-MM-DD)")
+    add_common(themes_parser)
 
-    note_parser = subparsers.add_parser("note", help="Generate and validate weekly note (Phase 3)")
-    note_parser.add_argument("--week", default="2026-11-10", help="Run week (YYYY-MM-DD)")
+    note_parser = subparsers.add_parser("note", help="Generate and validate weekly note")
+    add_common(note_parser)
     note_parser.add_argument("--dry-run", action="store_true", help="Stop after validation without publishing")
 
-    pub_parser = subparsers.add_parser("publish", help="Publish validated note to Google Docs and Gmail draft via MCP (Phase 4)")
-    pub_parser.add_argument("--week", default="2026-11-10", help="Run week (YYYY-MM-DD)")
-    pub_parser.add_argument("--dry-run", action="store_true", help="Execute with mock MCP client without live side effects")
+    pub_parser = subparsers.add_parser("publish", help="Publish validated note to Google Docs and Gmail draft via MCP")
+    add_common(pub_parser)
+    pub_parser.add_argument("--dry-run", action="store_true", help="Execute with mock MCP client")
 
-    purge_parser = subparsers.add_parser("purge", help="Retention purge for old reviews and raw files (Task 5.5)")
-    purge_parser.add_argument("--week", default="2026-11-10", help="Current week to anchor retention window")
-    purge_parser.add_argument("--weeks", type=int, default=18, help="Total retention window in weeks (default: 18)")
+    purge_parser = subparsers.add_parser("purge", help="Retention purge for old reviews and raw files")
+    add_common(purge_parser)
+    purge_parser.add_argument("--weeks", type=int, default=18, help="Total retention window in weeks")
+    return parser
 
-    args = parser.parse_args()
+
+def main(argv: Optional[List[str]] = None) -> None:
+    args = build_parser().parse_args(argv)
+    store = open_store().for_app(args.app)
 
     if args.command == "run":
         res = run_full_pipeline(
+            store=store,
             week_str=args.week,
             csv_path=args.file,
             dry_run=args.dry_run,
@@ -532,53 +567,29 @@ def main():
         print("Weekly pulse run complete:")
         print(json.dumps(res, indent=2))
         if res.get("status") == "validation_failed":
-            sys.exit(2)  # distinct code for validation failure (ORC-11)
+            sys.exit(2)
         elif res.get("status") == "failed":
             sys.exit(1)
         sys.exit(0)
     elif args.command == "purge":
         from src.store.retention import calculate_retention_cutoff, purge_retention
-        db = Database()
         cutoff = calculate_retention_cutoff(week_str=args.week, window_weeks=args.weeks // 2)
-        purge_res = purge_retention(database=db, cutoff_date=cutoff)
+        purge_res = purge_retention(store=store, cutoff_date=cutoff)
         print("Retention purge complete:")
         print(json.dumps(purge_res, indent=2))
         sys.exit(0)
     elif args.command == "ingest":
-        summary = process_and_ingest_reviews(week_str=args.week, csv_path=args.file)
+        summary = process_and_ingest_reviews(store=store, week_str=args.week, csv_path=args.file)
         print("Ingestion complete:")
         print(json.dumps(summary, indent=2))
     elif args.command == "themes":
-        theme_summary = run_themes_stage(week_str=args.week)
         print("Theme clustering complete:")
-        # Print summary without huge review id lists
-        display_summary = {
-            "week": theme_summary["week"],
-            "total_input_reviews": theme_summary["total_input_reviews"],
-            "analyzable_reviews": theme_summary["analyzable_reviews"],
-            "filter_metrics": theme_summary["filter_metrics"],
-            "themes_count": theme_summary["themes_count"],
-            "themes": [
-                {
-                    "rank": t["rank"],
-                    "label": t["label"],
-                    "review_count": t["review_count"],
-                    "share_pct": f"{t['share_pct']:.1%}",
-                    "avg_rating": f"{t['avg_rating']}★",
-                    "neg_share": f"{t['neg_share']:.1%}",
-                    "priority_score": t["priority_score"],
-                    "is_top3": bool(t["is_top3"]),
-                }
-                for t in theme_summary["themes"]
-            ]
-        }
-        print(json.dumps(display_summary, indent=2))
+        _print_theme_summary(run_themes_stage(store=store, week_str=args.week))
     elif args.command == "note":
         from src.note.engine import build_and_validate_pulse_note
-        db = Database()
         week_start = normalize_to_week_start(args.week)
         note, rendered_md, val_result, out_folder = build_and_validate_pulse_note(
-            database=db,
+            store=store,
             week_start=week_start,
             dry_run=args.dry_run
         )
@@ -593,19 +604,16 @@ def main():
             print("Errors detected:")
             for err in val_result.errors:
                 print(f"  - {err}")
-            sys.exit(2)  # distinct exit code for validation failure (ORC-11)
+            sys.exit(2)
     elif args.command == "publish":
         from src.note.engine import build_and_validate_pulse_note
         from src.mcp.capabilities import load_mcp_config
         from src.mcp.client import MockMCPClient
         from src.mcp.publisher import PulsePublisher
 
-        db = Database()
         week_start = str(normalize_to_week_start(args.week))
-        
-        # 1. Build and validate note first (INV-02: never publish on validation failure)
         note, rendered_md, val_result, out_folder = build_and_validate_pulse_note(
-            database=db,
+            store=store,
             week_start=week_start,
             dry_run=args.dry_run
         )
@@ -617,16 +625,11 @@ def main():
 
         cfg = load_pulse_config()
         mcp_cfg = load_mcp_config(cfg.mcp.config)
-        
-        # In dry-run mode or sandbox environment, use MockMCPClient
-        client = MockMCPClient() if args.dry_run else MockMCPClient() # Default to MockMCPClient for local sandbox unless live stdio server active
-        publisher = PulsePublisher(database=db, mcp_config=mcp_cfg, client=client)
-
-        recipient_to = cfg.email.to if cfg.email.to else "self@groww-pulse.local"
+        publisher = PulsePublisher(store=store, mcp_config=mcp_cfg, client=MockMCPClient())
         pub_result = publisher.publish_pulse(
             week_start=week_start,
             note_markdown=rendered_md,
-            recipient_email=recipient_to
+            recipient_email=require_recipient(cfg)
         )
 
         print(f"Publish status: {pub_result.status.upper()}")
@@ -637,8 +640,6 @@ def main():
         print(f"Content Hash: {pub_result.content_hash}")
         if pub_result.message:
             print(f"Message: {pub_result.message}")
-    else:
-        parser.print_help()
 
 
 if __name__ == "__main__":

@@ -144,7 +144,7 @@ def test_CFG_07_unknown_keys():
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             cfg = load_pulse_config(cfg_file)
-            assert cfg.app.name == "Groww"
+            assert cfg.window.weeks == 12
             assert len(w) >= 1
             assert "Unknown configuration keys found" in str(w[-1].message)
 

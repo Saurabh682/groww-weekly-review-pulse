@@ -1,4 +1,4 @@
-"""Rendering templates for Groww Weekly Review Pulse notes (Phase 3: NOT-14..17, MCP-19..21).
+"""Rendering templates for weekly review pulse notes (Phase 3: NOT-14..17, MCP-19..21).
 
 Produces:
 - Deterministic Markdown output (<= 250 words total)
@@ -10,6 +10,7 @@ import html
 from typing import Optional
 from src.note.models import WeeklyPulseNote
 from src.note.words import count_note_words
+from src.note.titles import pulse_doc_title
 
 
 def render_markdown(note: WeeklyPulseNote) -> str:
@@ -17,7 +18,7 @@ def render_markdown(note: WeeklyPulseNote) -> str:
     sections = []
     
     # Title
-    sections.append(f"# Groww Weekly Review Pulse: Week of {note.week_start}")
+    sections.append(f"# {pulse_doc_title(note.app_name, note.week_start)}")
     
     # Metadata / Scope line (NOT-14)
     meta = f"Google Play reviews ({note.window_start} to {note.window_end}) • Total: {note.total_reviews} • Analyzed: {note.analyzed_reviews} • Avg Rating: {note.avg_rating:.1f}★"
@@ -51,7 +52,7 @@ def render_markdown(note: WeeklyPulseNote) -> str:
 
 def render_html(note: WeeklyPulseNote) -> str:
     """Render WeeklyPulseNote into clean HTML for email body (MCP-20)."""
-    h_title = html.escape(f"Groww Weekly Review Pulse: Week of {note.week_start}")
+    h_title = html.escape(pulse_doc_title(note.app_name, note.week_start))
     h_meta = html.escape(f"Google Play reviews ({note.window_start} to {note.window_end}) • Analyzed: {note.analyzed_reviews} • Rating: {note.avg_rating:.1f}★")
     
     items_themes = "".join(
@@ -92,7 +93,7 @@ def render_html(note: WeeklyPulseNote) -> str:
 def render_plain_text(note: WeeklyPulseNote) -> str:
     """Render clean plain text fallback without markdown syntax (MCP-20)."""
     lines = [
-        f"Groww Weekly Review Pulse: Week of {note.week_start}",
+        pulse_doc_title(note.app_name, note.week_start),
         f"Google Play reviews ({note.window_start} to {note.window_end}) | Total: {note.total_reviews} | Rating: {note.avg_rating:.1f}★",
         "",
         "TOP THEMES:"

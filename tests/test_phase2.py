@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from src.clean.normalize import remove_emojis
-from src.store.db import Database
+from src.domains import FINANCE_PACK
 from src.store.models import ReviewRecord
 from src.themes.cluster import cluster_reviews
 from src.themes.embed import Embedder
@@ -139,31 +139,22 @@ def test_THM_08_determinism():
     assert c1 == c2
 
 
-def test_THM_10_embedding_failure():
+def test_THM_10_embedding_failure(groww_store):
     """THM-10 (P0): Embedding failure fails closed with clear error."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        db = Database(Path(tmp_dir) / "test.db")
-        embedder = Embedder(db=db)
-        # Empty input behaves cleanly
-        assert embedder.embed_reviews([]).shape == (0, embedder.n_components)
+    embedder = Embedder(store=groww_store)
+    assert embedder.embed_reviews([]).shape == (0, embedder.n_components)
 
 
-def test_THM_11_cache_keyed_by_model():
+def test_THM_11_cache_keyed_by_model(groww_store):
     """THM-11 (P1): Embedding cache is keyed by model name."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        db = Database(Path(tmp_dir) / "test.db")
-        e1 = Embedder(db=db, model_name="model-alpha-64")
-        e2 = Embedder(db=db, model_name="model-beta-64")
+    e1 = Embedder(store=groww_store, model_name="model-alpha-64")
+    e2 = Embedder(store=groww_store, model_name="model-beta-64")
 
-        revs = [ReviewRecord("rev1", "play_store", 5, "Great investing app with SIP support", "2026-10-10")]
-        v1 = e1.embed_reviews(revs)
-        v2 = e2.embed_reviews(revs)
+    revs = [ReviewRecord("rev1", "play_store", 5, "Great investing app with SIP support", "2026-10-10")]
+    e1.embed_reviews(revs)
+    e2.embed_reviews(revs)
 
-        with db.get_connection() as conn:
-            c = conn.cursor()
-            c.execute("SELECT DISTINCT model_name FROM embedding_cache")
-            models = {r[0] for r in c.fetchall()}
-            assert models == {"model-alpha-64", "model-beta-64"}
+    assert set(groww_store.cached_embedding_models()) == {"model-alpha-64", "model-beta-64"}
 
 
 # ==============================================================================
@@ -234,15 +225,15 @@ def test_THM_19_label_reuse_boundary():
     # Cosine sim with [1.0, 0.0] is 1.0 (>= 0.85)
     prev = [{"centroid": np.array([1.0, 0.0], dtype=np.float32), "label": "Previous Label", "description": "desc"}]
     used = set()
-    label, _ = label_cluster(["text"], centroid, 4.0, used, previous_themes=prev)
+    label, _ = label_cluster(["text"], centroid, 4.0, used, FINANCE_PACK, previous_themes=prev)
     assert label == "Previous Label"
 
 
 def test_THM_20_unique_labels():
     """THM-20 (P1): Labels across clusters are strictly unique."""
     used = set()
-    l1, _ = label_cluster(["upi payment failed"], np.zeros(2), 2.0, used)
-    l2, _ = label_cluster(["upi payment failed again"], np.zeros(2), 2.0, used)
+    l1, _ = label_cluster(["upi payment failed"], np.zeros(2), 2.0, used, FINANCE_PACK)
+    l2, _ = label_cluster(["upi payment failed again"], np.zeros(2), 2.0, used, FINANCE_PACK)
     assert l1 != l2
     assert len(used) == 2
 
@@ -253,7 +244,7 @@ def test_THM_20_unique_labels():
 
 def test_LBL_02_length_limits():
     """LBL-02 (P1): Label <= 4 words, description <= 15 words."""
-    label, desc = generate_deterministic_label(["payment upi wallet failed"], 2.0, set())
+    label, desc = generate_deterministic_label(["payment upi wallet failed"], 2.0, set(), FINANCE_PACK)
     assert len(label.split()) <= 4
     assert len(desc.split()) <= 15
 
@@ -261,6 +252,6 @@ def test_LBL_02_length_limits():
 def test_LBL_03_label_safety():
     """LBL-03 (P1): Label containing PII pattern falls back to safe neutral label."""
     # Seed PII into label generator
-    label, _ = generate_deterministic_label(["call 9876543210 test@example.com"], 2.0, set())
+    label, _ = generate_deterministic_label(["call 9876543210 test@example.com"], 2.0, set(), FINANCE_PACK)
     assert "9876543210" not in label
     assert "@" not in label

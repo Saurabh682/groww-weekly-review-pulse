@@ -8,60 +8,23 @@ Generates:
 
 import os
 from typing import Dict, List, Optional
+from src.domains.pack import DomainPack
 from src.note.models import ActionItem, Quote, ThemeSummary
 from src.note.words import count_note_words
 from src.store.models import ThemeRecord
 
 
-# Domain action blueprints for Groww operational areas
-DOMAIN_ACTIONS = {
-    "Charges & Pricing": (
-        "Core Brokerage Team",
-        "Deploy in-app fee breakdown calculator and display itemized DP charges on order confirmation screens."
-    ),
-    "App Performance & Bugs": (
-        "Mobile Reliability Team",
-        "Conduct load testing on morning market-open websocket channels and patch chart rendering memory leaks."
-    ),
-    "Customer Support": (
-        "Customer Operations",
-        "Implement priority escalation routing for unresolved payment tickets older than 48 hours."
-    ),
-    "Onboarding & KYC": (
-        "Identity Verification Team",
-        "Extend video KYC session timeout to 15 minutes and integrate automated DigiLocker retry webhooks."
-    ),
-    "Payments & Withdrawals": (
-        "Banking Integrations Team",
-        "Implement real-time UPI transaction reconciliation with partner bank gateways to prevent debit/credit lag."
-    ),
-    "Trading & Order Execution": (
-        "Order Engine Team",
-        "Optimize stop-loss order trigger latency during high market volatility at 9:15 AM opening."
-    ),
-    "Positive UX & Simplicity": (
-        "Product Design Team",
-        "Maintain current simplified mutual fund dashboard layout while streamlining advanced equity analytics."
-    )
-}
-
-
-def synthesize_theme_one_liner(theme: ThemeRecord, sample_quote: Optional[Quote] = None) -> str:
+def synthesize_theme_one_liner(theme: ThemeRecord, pack: DomainPack) -> str:
     """Generate a concise one-liner for a theme (<= 22 words, NOT-12)."""
     lbl = theme.label.lower()
-    if "charge" in lbl or "pricing" in lbl or "fee" in lbl:
-        one_liner = "Users report unexpected charges and request transparent fee breakdowns on equity and DP deductions."
-    elif "bug" in lbl or "performance" in lbl or "lag" in lbl:
-        one_liner = "Frequent app lag and freezing reported during peak trading hours, impacting order execution."
-    elif "support" in lbl or "service" in lbl or "help" in lbl:
-        one_liner = "Customer service tickets experience delayed response times and automated bot reply loops."
-    elif "kyc" in lbl or "verification" in lbl or "onboard" in lbl:
-        one_liner = "Delays in bank account verification and repeated video KYC link expiries during onboarding."
-    elif "payment" in lbl or "transfer" in lbl or "wallet" in lbl or "deposit" in lbl or "withdraw" in lbl:
-        one_liner = "UPI transfers debited from banks fail to reflect in Groww wallet immediately during market hours."
-    elif "positive" in lbl or "simplicity" in lbl or "ux" in lbl or theme.avg_rating >= 3.8:
-        one_liner = "Users praise intuitive navigation, clean interface design, and straightforward mutual fund investing."
-    else:
+    one_liner = next(
+        (rule.text for rule in pack.one_liners if any(trigger in lbl for trigger in rule.label_triggers)),
+        "",
+    )
+    is_positive = "positive" in lbl or "simplicity" in lbl or "ux" in lbl or theme.avg_rating >= 3.8
+    if not one_liner and is_positive and pack.positive_one_liner:
+        one_liner = pack.positive_one_liner
+    if not one_liner:
         pct = theme.share_pct * 100 if theme.share_pct <= 1.0 else theme.share_pct
         one_liner = f"{theme.label} accounts for {pct:.1f}% of reviews with an average rating of {theme.avg_rating:.1f}★."
 
@@ -75,16 +38,16 @@ def synthesize_theme_one_liner(theme: ThemeRecord, sample_quote: Optional[Quote]
     return one_liner
 
 
-def synthesize_action_items(top_themes: List[ThemeRecord]) -> List[ActionItem]:
+def synthesize_action_items(top_themes: List[ThemeRecord], pack: DomainPack) -> List[ActionItem]:
     """Generate exactly 3 grounded action items tied to top themes (NOT-06, NOT-07, NOT-08)."""
     actions: List[ActionItem] = []
     
     for theme in top_themes[:3]:
         # Match domain action blueprint or generate specific action
         matched = None
-        for key, (owner, action_text) in DOMAIN_ACTIONS.items():
+        for key, blueprint in pack.actions.items():
             if key.lower() in theme.label.lower() or theme.label.lower() in key.lower():
-                matched = (owner, action_text)
+                matched = (blueprint.owner, blueprint.text)
                 break
                 
         if matched:

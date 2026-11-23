@@ -32,6 +32,7 @@ from src.note.validate import (
 )
 from src.note.words import count_note_words, strip_markdown
 from src.store.models import ReviewRecord, ThemeRecord
+from src.domains import FINANCE_PACK
 
 
 # ==============================================================================
@@ -128,6 +129,7 @@ def test_QUO_05_distinct_reviews_required():
     bad_quotes = [q1, q1, note.quotes[2]]
     bad_note = WeeklyPulseNote(
         week_start=note.week_start,
+        app_name=note.app_name,
         window_start=note.window_start,
         window_end=note.window_end,
         top_themes=note.top_themes,
@@ -173,6 +175,7 @@ def test_NOT_06_action_count_invariants():
     # 2 actions
     bad_note = WeeklyPulseNote(
         week_start=note.week_start,
+        app_name=note.app_name,
         window_start=note.window_start,
         window_end=note.window_end,
         top_themes=note.top_themes,
@@ -191,6 +194,7 @@ def test_NOT_07_action_theme_grounding():
     ] + note.actions[1:]
     bad_note = WeeklyPulseNote(
         week_start=note.week_start,
+        app_name=note.app_name,
         window_start=note.window_start,
         window_end=note.window_end,
         top_themes=note.top_themes,
@@ -209,6 +213,7 @@ def test_NOT_08_generic_action_rejected():
     ] + note.actions[1:]
     bad_note = WeeklyPulseNote(
         week_start=note.week_start,
+        app_name=note.app_name,
         window_start=note.window_start,
         window_end=note.window_end,
         top_themes=note.top_themes,
@@ -222,7 +227,7 @@ def test_NOT_08_generic_action_rejected():
 def test_NOT_12_theme_one_liner_length():
     """NOT-12 (P1): Theme one-liner must be <= 22 words."""
     t = ThemeRecord("t1", "r1", "Charges & Pricing", "desc", 100, 0.25, 2.0)
-    one_liner = synthesize_theme_one_liner(t)
+    one_liner = synthesize_theme_one_liner(t, FINANCE_PACK)
     assert count_note_words(one_liner) <= 22
 
 
@@ -296,6 +301,7 @@ def _create_mock_note() -> WeeklyPulseNote:
 
     return WeeklyPulseNote(
         week_start="2026-11-10",
+        app_name="Groww",
         window_start="2026-09-07",
         window_end="2026-11-10",
         platform="Google Play",

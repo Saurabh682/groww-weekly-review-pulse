@@ -18,7 +18,9 @@ from typing import Any, Dict, Optional, Tuple
 from src.clean.pii import scrub_pii
 from src.mcp.capabilities import MCPConfigData, resolve_capability
 from src.mcp.client import MCPClient, MCPError, MCPToolNotFoundError
-from src.store.db import Database
+from src.note.titles import pulse_doc_title, pulse_email_subject
+from src.store.models import PublishStateRecord
+from src.store.store import AppStore
 
 
 @dataclass
@@ -53,6 +55,7 @@ class DocsPublisher:
 
     def upsert_pulse(
         self,
+        app_name: str,
         week_start: str,
         note_markdown: str,
         existing_doc_id: Optional[str] = None,
@@ -60,7 +63,7 @@ class DocsPublisher:
         version: int = 1
     ) -> Tuple[str, str]:
         """Create or update Google Doc. Returns (doc_id, doc_url)."""
-        base_title = f"Groww Weekly Review Pulse: Week of {week_start}"
+        base_title = pulse_doc_title(app_name, week_start)
         
         # Check if update tool is supported and existing_doc_id is valid
         if existing_doc_id:
@@ -76,6 +79,7 @@ class DocsPublisher:
             except (MCPToolNotFoundError, KeyError, PermissionError):
                 # MCP-02: docs.update unsupported -> fall back to versioned create
                 return self.upsert_pulse(
+                    app_name=app_name,
                     week_start=week_start,
                     note_markdown=note_markdown,
                     existing_doc_id=None,
@@ -85,6 +89,7 @@ class DocsPublisher:
                 # MCP-10: doc deleted externally
                 if "not found" in str(exc).lower():
                     return self.upsert_pulse(
+                        app_name=app_name,
                         week_start=week_start,
                         note_markdown=note_markdown,
                         existing_doc_id=None,
@@ -129,6 +134,7 @@ class DraftPublisher:
 
     def upsert_draft(
         self,
+        app_name: str,
         week_start: str,
         to_address: str,
         note_markdown: str,
@@ -140,7 +146,7 @@ class DraftPublisher:
         self._validate_recipient(to_address)
 
         # Subject line (MCP-26)
-        subject = f"Groww Weekly Review Pulse | Week of {week_start}"
+        subject = pulse_email_subject(app_name, week_start)
         if revision > 1:
             subject += f" [Rev {revision}]"
 
@@ -177,6 +183,7 @@ class DraftPublisher:
             except (MCPToolNotFoundError, KeyError, PermissionError):
                 # MCP-03: update_draft unsupported -> fall back to revision draft
                 return self.upsert_draft(
+                    app_name=app_name,
                     week_start=week_start,
                     to_address=to_address,
                     note_markdown=note_markdown,
@@ -188,6 +195,7 @@ class DraftPublisher:
                 # MCP-11: draft deleted or already sent
                 if "not found" in str(exc).lower() or "sent" in str(exc).lower():
                     return self.upsert_draft(
+                        app_name=app_name,
                         week_start=week_start,
                         to_address=to_address,
                         note_markdown=note_markdown,
@@ -218,11 +226,11 @@ class PulsePublisher:
 
     def __init__(
         self,
-        database: Database,
+        store: AppStore,
         mcp_config: MCPConfigData,
         client: Optional[MCPClient] = None
     ):
-        self.database = database
+        self.store = store
         self.mcp_config = mcp_config
         self.client = client or MCPClient(
             max_retries=mcp_config.policy.max_retries,
@@ -235,7 +243,7 @@ class PulsePublisher:
         self,
         week_start: str,
         note_markdown: str,
-        recipient_email: str = "self@groww-pulse.local"
+        recipient_email: str
     ) -> PublishResult:
         """Publish weekly review pulse note idempotently (MCP-01..26)."""
         content_hash = hashlib.sha256(note_markdown.encode("utf-8")).hexdigest()
@@ -246,15 +254,12 @@ class PulsePublisher:
         existing_draft_id: Optional[str] = None
         existing_hash: Optional[str] = None
 
-        with self.database.get_connection() as conn:
-            c = conn.cursor()
-            c.execute("SELECT * FROM publish_state WHERE week_start = ?", (week_start,))
-            row = c.fetchone()
-            if row:
-                existing_doc_id = row["doc_id"]
-                existing_doc_url = row["doc_url"]
-                existing_draft_id = row["draft_id"]
-                existing_hash = row["content_hash"]
+        existing_state = self.store.get_publish_state(week_start)
+        if existing_state is not None:
+            existing_doc_id = existing_state.doc_id
+            existing_doc_url = existing_state.doc_url
+            existing_draft_id = existing_state.draft_id
+            existing_hash = existing_state.content_hash
 
         # MCP-08: Same hash no-op
         if existing_hash == content_hash and existing_doc_id and existing_draft_id:
@@ -271,25 +276,23 @@ class PulsePublisher:
         # 2. Upsert Google Doc
         # Note: If existing_doc_id exists from a previous run where Gmail failed,
         # we reuse it (MCP-06: Partial failure resume).
+        app_name = self.store.app.display_name
         doc_id, doc_url = self.docs_pub.upsert_pulse(
+            app_name=app_name,
             week_start=week_start,
             note_markdown=note_markdown,
             existing_doc_id=existing_doc_id,
             existing_doc_url=existing_doc_url
         )
 
-        # Save intermediate doc state so partial failure can resume cleanly
-        now_iso = datetime.now(timezone.utc).isoformat()
-        with self.database.get_connection() as conn:
-            c = conn.cursor()
-            c.execute("""
-                INSERT OR REPLACE INTO publish_state (
-                    week_start, doc_id, doc_url, draft_id, content_hash, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?)
-            """, (week_start, doc_id, doc_url, existing_draft_id, content_hash, now_iso))
+        self.store.save_publish_state(PublishStateRecord(
+            week_start=week_start, doc_id=doc_id, doc_url=doc_url,
+            draft_id=existing_draft_id, content_hash=content_hash,
+        ))
 
         # 3. Upsert Gmail Draft (MCP-25: includes doc_url; MCP-24: PII gate)
         draft_id = self.draft_pub.upsert_draft(
+            app_name=app_name,
             week_start=week_start,
             to_address=recipient_email,
             note_markdown=note_markdown,
@@ -297,15 +300,10 @@ class PulsePublisher:
             existing_draft_id=existing_draft_id
         )
 
-        # 4. Save final completed publish state
-        now_iso = datetime.now(timezone.utc).isoformat()
-        with self.database.get_connection() as conn:
-            c = conn.cursor()
-            c.execute("""
-                INSERT OR REPLACE INTO publish_state (
-                    week_start, doc_id, doc_url, draft_id, content_hash, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?)
-            """, (week_start, doc_id, doc_url, draft_id, content_hash, now_iso))
+        self.store.save_publish_state(PublishStateRecord(
+            week_start=week_start, doc_id=doc_id, doc_url=doc_url,
+            draft_id=draft_id, content_hash=content_hash,
+        ))
 
         return PublishResult(
             status="published",

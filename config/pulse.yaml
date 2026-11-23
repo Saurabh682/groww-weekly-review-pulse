@@ -1,8 +1,3 @@
-app:
-  name: Groww
-  play_store_id: com.nextbillion.groww
-  region: in
-
 window:
   weeks: 12                           # min 8, max 12
 

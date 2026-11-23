@@ -1,4 +1,4 @@
-"""Configuration models and loader for Groww Weekly Review Pulse.
+"""Configuration models and loader for the weekly review pulse.
 
 Enforces hard architectural constraints at startup:
 - max_themes <= 5 (CFG-01)
@@ -16,12 +16,6 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
-
-class AppConfig(BaseModel):
-    name: str = "Groww"
-    play_store_id: str = "com.nextbillion.groww"
-    region: str = "in"
 
 
 class WindowConfig(BaseModel):
@@ -115,7 +109,7 @@ class LLMConfig(BaseModel):
 
 
 class EmailConfig(BaseModel):
-    to: str = "self@groww-pulse.local"
+    to: str = ""
 
 
 class MCPConfig(BaseModel):
@@ -123,7 +117,6 @@ class MCPConfig(BaseModel):
 
 
 class PulseConfig(BaseModel):
-    app: AppConfig = Field(default_factory=AppConfig)
     window: WindowConfig = Field(default_factory=WindowConfig)
     sources: SourcesConfig = Field(default_factory=SourcesConfig)
     themes: ThemesConfig = Field(default_factory=ThemesConfig)
@@ -194,7 +187,7 @@ def load_pulse_config(config_path: Path | str = "config/pulse.yaml") -> PulseCon
     # Expand environment variables
     expanded_data = _expand_env_vars(raw_data)
 
-    known_keys = {"app", "window", "sources", "themes", "note", "llm", "email", "mcp"}
+    known_keys = {"window", "sources", "themes", "note", "llm", "email", "mcp"}
     unknown_keys = set(expanded_data.keys()) - known_keys
     if unknown_keys:
         warnings.warn(

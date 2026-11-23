@@ -168,9 +168,9 @@ CREATE TABLE reviews (
   review_date    DATE NOT NULL,
   app_version    TEXT,
   lang           TEXT,
-  low_info       BOOLEAN NOT NULL DEFAULT false,
-  pii_found      BOOLEAN NOT NULL DEFAULT false,
-  quote_eligible BOOLEAN NOT NULL DEFAULT true,
+  low_info       INTEGER NOT NULL DEFAULT 0,
+  pii_found      INTEGER NOT NULL DEFAULT 0,
+  quote_eligible INTEGER NOT NULL DEFAULT 1,
   ingested_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (app_key, review_id)
 );
@@ -185,7 +185,7 @@ CREATE TABLE collection_runs (
   covered_start    DATE,
   fetched          INTEGER NOT NULL DEFAULT 0,
   inserted         INTEGER NOT NULL DEFAULT 0,
-  source_limit_hit BOOLEAN NOT NULL DEFAULT false,
+  source_limit_hit INTEGER NOT NULL DEFAULT 0,
   status           TEXT NOT NULL CHECK (status IN ('running','ok','failed','skipped_disabled')),
   error            TEXT,
   started_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -210,7 +210,7 @@ CREATE TABLE publish_state (
 
 **Row-level security:** enabled on every table with no policies for `anon` or `authenticated`. Only the service role (backend and Actions) can read or write.
 
-**Store interface:** `src/store/base.py` defines `PulseStore` (a `Protocol`). `SqliteStore` and `SupabaseStore` implement it. Pipeline code depends on `PulseStore` only. `PULSE_STORE=sqlite|supabase` selects the implementation.
+**Store interface:** `src/store/store.py` holds one SQL implementation, `PulseStore`, for app management. `PulseStore.for_app(key)` returns an `AppStore`, and every per-app read and write goes through it, so pipeline code cannot mix apps. `src/store/connectors.py` has two connectors, `SqliteConnector` (tests, local) and `PostgresConnector` (Supabase via `SUPABASE_DB_URL`); both run the same SQL with `?` placeholders. `PULSE_STORE=sqlite|supabase` selects the connector (`src/store/factory.py`). Flags are INTEGER 0/1 and dates are ISO TEXT on both backends so the schemas match column for column (test STO-01). Postgres tests run when `PULSE_TEST_POSTGRES_DSN` is set.
 
 **Retention:** as v1, per app. Archived apps keep their rows.
 

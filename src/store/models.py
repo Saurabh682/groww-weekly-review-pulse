@@ -66,3 +66,23 @@ class ThemeRecord:
     is_top3: int = 0
     neg_share: float = 0.0
     priority_score: float = 0.0
+
+
+APP_STATUSES = ("pending_backfill", "backfilling", "active", "archived", "failed")
+LIVE_APP_STATUSES = ("pending_backfill", "backfilling", "active", "failed")
+
+
+@dataclass
+class AppRecord:
+    app_key: str
+    display_name: str
+    status: str
+    play_package_id: Optional[str] = None
+    app_store_id: Optional[str] = None
+    country: str = "in"
+    lang: str = "en"
+    category: Optional[str] = None
+    created_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+    archived_at: Optional[str] = None

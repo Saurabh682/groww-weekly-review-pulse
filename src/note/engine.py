@@ -1,77 +1,53 @@
-"""Full note generation and validation workflow for Groww Weekly Review Pulse (Phase 3)."""
+"""Full note generation and validation workflow for weekly review pulse notes (Phase 3)."""
 
 import json
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from src.config import resolve_project_path
+from src.config import get_project_root, resolve_project_path
+from src.domains import domain_pack_for
 from src.note.generate import enforce_word_budget, synthesize_action_items, synthesize_theme_one_liner
 from src.note.models import ThemeSummary, WeeklyPulseNote
 from src.note.render import render_html, render_markdown, render_plain_text
 from src.note.select import select_quotes_for_themes
 from src.note.validate import ValidationResult, validate_note
 from src.note.words import count_note_words
-from src.store.db import Database
-from src.store.models import ReviewRecord, RunRecord, ThemeRecord
+from src.store.models import ReviewRecord
+from src.store.store import AppStore
 
 
 def build_and_validate_pulse_note(
-    database: Database,
+    store: AppStore,
     week_start: str | date,
     output_dir: Optional[Path | str] = None,
     dry_run: bool = False
 ) -> Tuple[WeeklyPulseNote, str, ValidationResult, Path]:
     """Build, render, and validate a weekly pulse note for the specified week.
-    
+
     Returns:
     (note_object, rendered_markdown, validation_result, output_folder)
     """
     week_start = str(week_start)
-    # 1. Fetch run record
-    with database.get_connection() as conn:
-        c = conn.cursor()
-        c.execute("""
-            SELECT * FROM runs 
-            WHERE week_start = ? OR week_start LIKE ? OR run_id LIKE ?
-            ORDER BY created_at DESC LIMIT 1
-        """, (week_start, f"{week_start[:7]}%", f"%{week_start}%"))
-        row = c.fetchone()
-        if not row:
-            # Fallback to latest run if any
-            c.execute("SELECT * FROM runs ORDER BY created_at DESC LIMIT 1")
-            row = c.fetchone()
-        if not row:
-            raise ValueError(f"No run record found in database for week {week_start}. Run 'pulse themes' first.")
-        run_record = RunRecord(**dict(row))
+    run_record = store.latest_themed_run_for_week(week_start)
+    if run_record is None:
+        raise ValueError(
+            f"No themed run found for app {store.app_key!r} and week {week_start}. Run 'pulse themes' first."
+        )
 
-        # 2. Fetch themes for this run
-        c.execute("SELECT * FROM themes WHERE run_id = ? ORDER BY is_top3 DESC, share_pct DESC", (run_record.run_id,))
-        themes = [ThemeRecord(**dict(r)) for r in c.fetchall()]
-        if not themes:
-            raise ValueError(f"No themes found for run {run_record.run_id}.")
+    themes = store.get_themes(run_record.run_id)
+    if not themes:
+        raise ValueError(f"No themes found for run {run_record.run_id}.")
 
-        top_themes = [t for t in themes if t.is_top3]
-        if not top_themes:
-            top_themes = themes[:3]
+    top_themes = [t for t in themes if t.is_top3]
+    if not top_themes:
+        top_themes = themes[:3]
 
-        # 3. Fetch reviews assigned to themes
-        c.execute("""
-            SELECT r.*, rt.theme_id
-            FROM reviews r
-            JOIN review_themes rt ON r.review_id = rt.review_id
-            JOIN themes t ON rt.theme_id = t.theme_id
-            WHERE t.run_id = ?
-        """, (run_record.run_id,))
-        
-        theme_reviews: Dict[str, List[ReviewRecord]] = {}
-        all_assigned_reviews: Dict[str, ReviewRecord] = {}
-        for r in c.fetchall():
-            d = dict(r)
-            tid = d.pop("theme_id")
-            rev = ReviewRecord(**d)
-            all_assigned_reviews[rev.review_id] = rev
-            theme_reviews.setdefault(tid, []).append(rev)
+    theme_reviews: Dict[str, List[ReviewRecord]] = store.get_theme_reviews(run_record.run_id)
+    all_assigned_reviews: Dict[str, ReviewRecord] = {
+        rev.review_id: rev for revs in theme_reviews.values() for rev in revs
+    }
+    pack = domain_pack_for(store.app.category)
 
     # 4. Extract verbatim quotes
     selected_quotes = select_quotes_for_themes(
@@ -83,7 +59,7 @@ def build_and_validate_pulse_note(
     # 5. Synthesize theme summaries with one-liners
     theme_summaries: List[ThemeSummary] = []
     for t in top_themes:
-        one_liner = synthesize_theme_one_liner(t)
+        one_liner = synthesize_theme_one_liner(t, pack)
         theme_summaries.append(ThemeSummary(
             theme_id=t.theme_id,
             label=t.label,
@@ -97,7 +73,7 @@ def build_and_validate_pulse_note(
         ))
 
     # 6. Synthesize grounded action items
-    action_items = synthesize_action_items(top_themes)
+    action_items = synthesize_action_items(top_themes, pack)
 
     # Compute window dates from week_start
     # Note covers week_start backwards ~9 weeks
@@ -111,6 +87,7 @@ def build_and_validate_pulse_note(
         week_start=week_start,
         window_start=window_start_str,
         window_end=week_start,
+        app_name=store.app.display_name,
         platform="Google Play",
         total_reviews=run_record.total_reviews,
         analyzed_reviews=run_record.analyzed_reviews,
@@ -137,9 +114,7 @@ def build_and_validate_pulse_note(
     if output_dir:
         out_folder = resolve_project_path(output_dir)
     else:
-        out_folder = resolve_project_path(f"outputs/{week_start}")
-        from src.config import get_project_root
-        out_folder = get_project_root() / f"outputs/{week_start}"
+        out_folder = get_project_root() / "outputs" / store.app_key / week_start
     out_folder.mkdir(parents=True, exist_ok=True)
 
     note_path = out_folder / "note.md"
