@@ -69,8 +69,8 @@ class RemoteMCPClient(MCPClient):
 
     def __init__(
         self,
-        server_url: str = "https://gmail-docs-mcp-five.vercel.app/api/mcp",
-        auth_token: str = "0f3780ce835e5a48f746104f6be69f6e57d373c79490e340",
+        server_url: str,
+        auth_token: str,
         **kwargs
     ):
         super().__init__(**kwargs)

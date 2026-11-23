@@ -5,9 +5,9 @@ version: "1.0"
 
 servers:
   gmail-docs-mcp:
-    url: "https://gmail-docs-mcp-five.vercel.app/api/mcp"
+    url: "${GMAIL_DOCS_MCP_URL}"
     headers:
-      Authorization: "Bearer 0f3780ce835e5a48f746104f6be69f6e57d373c79490e340"
+      Authorization: "Bearer ${GMAIL_DOCS_MCP_TOKEN}"
 
 # Allowed capabilities for this application.
 # IMPORTANT: Send email capabilities are strictly FORBIDDEN. This application is DRAFT-ONLY.
