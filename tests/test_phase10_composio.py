@@ -170,14 +170,14 @@ def test_CMP_07_connection_expired(groww_store, composio, tmp_path):
 
 
 def test_CMP_07_pipeline_keeps_markdown_and_reports(groww_store, composio):
-    from src.config import get_project_root
+    from src.config import get_project_root, outputs_root
 
     composio.expired_accounts.add(GMAIL_ACCOUNT)
     csv = get_project_root() / "tests" / "fixtures" / "reviews_baseline.csv"
     res = run_full_pipeline(store=groww_store, week_str="2026-11-10", csv_path=csv, mcp_client=composio.client())
     assert res["status"] == "failed"
     assert "Reconnect Gmail in Composio" in res["publish_error"]
-    assert (get_project_root() / "outputs" / "groww" / "2026-11-09" / "note.md").is_file()
+    assert (outputs_root() / "groww" / "2026-11-09" / "note.md").is_file()
 
 
 def test_CMP_07_bad_api_key(groww_store, composio):

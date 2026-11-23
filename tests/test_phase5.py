@@ -36,7 +36,7 @@ import pytest
 
 from src.clean.pii import scrub_pii
 from src.clean.window import normalize_to_week_start
-from src.config import get_project_root, load_pulse_config
+from src.config import get_project_root, load_pulse_config, outputs_root
 from src.pipeline import run_full_pipeline, validate_week_parameter
 from src.store.factory import sqlite_store
 from src.store.models import ReviewRecord
@@ -159,7 +159,7 @@ def test_ORC_05_disk_full(tmp_pipeline_env, composio):
     db = tmp_pipeline_env["db"]
     mock_mcp = composio.client()
 
-    with patch("src.note.engine.get_project_root", side_effect=OSError("Disk full")):
+    with patch("src.note.engine.outputs_root", side_effect=OSError("Disk full")):
         with pytest.raises(Exception):
             run_full_pipeline(
                 week_str="2026-11-10",
@@ -397,7 +397,7 @@ def test_INV_04_canary_strings_absent(tmp_pipeline_env):
     )
 
     report_text = Path(res["report_path"]).read_text(encoding="utf-8")
-    note_text = (get_project_root() / "outputs" / "groww" / res["week"] / "note.md").read_text(encoding="utf-8")
+    note_text = (outputs_root() / "groww" / res["week"] / "note.md").read_text(encoding="utf-8")
 
     for canary in all_canaries:
         assert canary not in report_text, f"Canary leaked into report: {canary}"

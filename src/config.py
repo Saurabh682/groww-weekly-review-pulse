@@ -123,6 +123,7 @@ def _expand_env_vars(data: Any) -> Any:
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RUNTIME_ROOT_ENV = "PULSE_HOME"
 
 
 def load_project_env(env_path: Path | None = None) -> bool:
@@ -132,6 +133,23 @@ def load_project_env(env_path: Path | None = None) -> bool:
 def get_project_root() -> Path:
     """Return the absolute path to the groww-weekly-review-pulse root directory."""
     return PROJECT_ROOT
+
+
+def runtime_root() -> Path:
+    configured = os.getenv(RUNTIME_ROOT_ENV, "").strip()
+    return Path(configured).resolve() if configured else PROJECT_ROOT
+
+
+def outputs_root() -> Path:
+    return runtime_root() / "outputs"
+
+
+def raw_reviews_dir(app_key: str) -> Path:
+    return runtime_root() / "data" / "raw" / app_key
+
+
+def default_sqlite_path() -> Path:
+    return runtime_root() / "data" / "pulse.db"
 
 
 def resolve_project_path(path_input: Path | str) -> Path:

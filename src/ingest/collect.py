@@ -3,9 +3,9 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Tuple
 
-from src.config import PulseConfig, load_pulse_config
+from src.config import PulseConfig, load_pulse_config, raw_reviews_dir
 from src.ingest.app_store import AppStoreSource
-from src.ingest.persist import clean_raw_reviews, default_raw_dir
+from src.ingest.persist import clean_raw_reviews
 from src.ingest.play_store import PlayStoreSource
 from src.ingest.sources import ListingNotFound, ReviewSource
 from src.store.models import PLATFORMS, CollectionRunRecord
@@ -123,7 +123,7 @@ def collect_app(
     config = config or load_pulse_config()
     window = collection_window(mode, today, config.window.weeks)
     sources = default_sources(store) if sources is None else sources
-    raw_dir = raw_dir or default_raw_dir(store.app_key)
+    raw_dir = raw_dir or raw_reviews_dir(store.app_key)
     if mode == "backfill":
         store.set_status("backfilling")
 

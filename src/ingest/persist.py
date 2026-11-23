@@ -8,7 +8,6 @@ from src.clean.dedupe import deduplicate_reviews
 from src.clean.lang import detect_language
 from src.clean.low_info import check_low_info_distribution, is_low_info
 from src.clean.pii import scrub_pii
-from src.config import get_project_root
 from src.store.models import ReviewRecord
 
 RAW_ARCHIVE_FIELDS = ("platform", "rating", "title", "text", "date", "app_version")
@@ -27,10 +26,6 @@ class CleanBatch:
 
 def review_id_for(platform: str, date: str, cleaned_text: str) -> str:
     return hashlib.sha256(f"{platform}|{date}|{cleaned_text}".encode("utf-8")).hexdigest()[:16]
-
-
-def default_raw_dir(app_key: str) -> Path:
-    return get_project_root() / "data" / "raw" / app_key
 
 
 def archive_raw_records(raw_records: List[dict], archive_path: Path) -> None:

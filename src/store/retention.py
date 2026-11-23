@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from src.clean.window import normalize_to_week_start
-from src.config import get_project_root, resolve_project_path
+from src.config import raw_reviews_dir, resolve_project_path
 from src.store.store import AppStore
 
 
@@ -57,8 +57,7 @@ def purge_retention(
     )
 
     # 3. Purge old raw CSV files outside retention scope (ORC-09)
-    root = get_project_root()
-    raw_path = resolve_project_path(raw_dir or (root / "data" / "raw" / store.app_key))
+    raw_path = resolve_project_path(raw_dir or raw_reviews_dir(store.app_key))
     files_purged = 0
 
     if raw_path.exists() and raw_path.is_dir():

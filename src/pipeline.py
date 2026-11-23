@@ -21,8 +21,15 @@ from src.clean.window import (
     compute_coverage_weeks,
     normalize_to_week_start,
 )
-from src.config import load_project_env, load_pulse_config, PulseConfig, get_project_root, resolve_project_path
-from src.ingest.persist import clean_raw_reviews, default_raw_dir
+from src.config import (
+    PulseConfig,
+    load_project_env,
+    load_pulse_config,
+    outputs_root,
+    raw_reviews_dir,
+    resolve_project_path,
+)
+from src.ingest.persist import clean_raw_reviews
 from src.ingest.play_csv import PlayStoreImportSource
 from src.store.factory import open_store
 from src.mcp.capabilities import load_mcp_config
@@ -55,7 +62,7 @@ def process_and_ingest_reviews(
         raise ValueError(f"Zero reviews found within window {window_start} to {window_end} in {source_path}")
 
     persisted = clean_raw_reviews(
-        raw_records, default_raw_dir(store.app_key) / f"play_reviews_{window_start}_{window_end}.csv"
+        raw_records, raw_reviews_dir(store.app_key) / f"play_reviews_{window_start}_{window_end}.csv"
     )
     if persisted.all_low_info:
         raise ValueError("All ingested reviews are low-info / emoji-only (LOW-01). Pipeline halted.")
@@ -163,7 +170,6 @@ def run_full_pipeline(
     if not dry_run and mcp_client is None:
         mcp_client = ComposioClient.from_env(load_mcp_config(config.mcp.config))
 
-    root = get_project_root()
     window_start, window_end = calculate_window_bounds(week_start_dt, weeks=config.window.weeks)
     run_id = f"run_{norm_week}_{int(start_time.timestamp() * 1000)}"
 
@@ -283,7 +289,7 @@ def run_full_pipeline(
         stage_statuses["note"] = "validation_failed"
         stage_statuses["publish"] = "skipped"
 
-        out_dir = root / "outputs" / store.app_key / norm_week
+        out_dir = outputs_root() / store.app_key / norm_week
         out_dir.mkdir(parents=True, exist_ok=True)
         failed_report = {
             "run_id": run_id,
@@ -351,7 +357,7 @@ def run_full_pipeline(
     stage_timings["publish"] = (datetime.now(timezone.utc) - t0).total_seconds()
 
     # Stage 5: Observability & Run Report Generation (Task 5.4, ORC-10)
-    out_dir = root / "outputs" / store.app_key / norm_week
+    out_dir = outputs_root() / store.app_key / norm_week
     out_dir.mkdir(parents=True, exist_ok=True)
 
     report_data = {

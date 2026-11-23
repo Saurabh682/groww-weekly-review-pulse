@@ -2,11 +2,10 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from src.config import get_project_root
+from src.config import default_sqlite_path
 from src.store.connectors import PostgresConnector, SqliteConnector
 from src.store.store import PulseStore
 
-DEFAULT_SQLITE_PATH = Path("data") / "pulse.db"
 STORE_BACKENDS = ("sqlite", "supabase")
 
 
@@ -21,7 +20,7 @@ def postgres_store(dsn: str) -> PulseStore:
 def open_store(backend: Optional[str] = None) -> PulseStore:
     selected = backend or os.getenv("PULSE_STORE", "sqlite")
     if selected == "sqlite":
-        return sqlite_store(get_project_root() / DEFAULT_SQLITE_PATH)
+        return sqlite_store(default_sqlite_path())
     if selected == "supabase":
         dsn = os.getenv("SUPABASE_DB_URL")
         if not dsn:

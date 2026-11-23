@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
 
-from src.config import load_pulse_config, get_project_root
+from src.config import load_pulse_config, outputs_root, runtime_root
 from src.mcp.capabilities import load_mcp_config, resolve_capability, MCPConfigData
 from src.note.titles import pulse_doc_title, pulse_email_subject
 
@@ -89,7 +89,7 @@ class SkeletonMCPRunner:
 def run_skeleton(
     config_path: Path | str = "config/pulse.yaml",
     week_str: str = "2026-11-10",
-    output_base: Path | str = "outputs"
+    output_base: Path | str | None = None
 ) -> Dict[str, Any]:
     """Execute the Phase 0 walking skeleton run."""
     pulse_cfg = load_pulse_config(config_path)
@@ -118,9 +118,7 @@ def run_skeleton(
     )
 
     # Write local fallback and report
-    base_dir = Path(output_base)
-    if not base_dir.is_absolute():
-        base_dir = get_project_root() / base_dir
+    base_dir = runtime_root() / output_base if output_base else outputs_root()
     week_output_dir = base_dir / week_str
     week_output_dir.mkdir(parents=True, exist_ok=True)
 

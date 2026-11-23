@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from src.config import get_project_root, resolve_project_path
+from src.config import outputs_root, resolve_project_path
 from src.domains import domain_pack_for
 from src.note.coverage import build_store_coverage
 from src.note.generate import enforce_word_budget, synthesize_action_items, synthesize_theme_one_liner
@@ -117,7 +117,7 @@ def build_and_validate_pulse_note(
     if output_dir:
         out_folder = resolve_project_path(output_dir)
     else:
-        out_folder = get_project_root() / "outputs" / store.app_key / week_start
+        out_folder = outputs_root() / store.app_key / week_start
     out_folder.mkdir(parents=True, exist_ok=True)
 
     note_path = out_folder / "note.md"
