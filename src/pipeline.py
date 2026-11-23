@@ -10,13 +10,11 @@ Implements stages:
 """
 
 import argparse
-import csv
 import json
-import os
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from src.clean.window import (
     calculate_window_bounds,
@@ -27,6 +25,10 @@ from src.config import load_pulse_config, PulseConfig, get_project_root, resolve
 from src.ingest.persist import clean_raw_reviews, default_raw_dir
 from src.ingest.play_csv import PlayStoreImportSource
 from src.store.factory import open_store
+from src.mcp.capabilities import load_mcp_config
+from src.mcp.composio import ComposioClient, ToolCaller
+from src.mcp.errors import MCPError
+from src.mcp.publisher import PublishResult, PulsePublisher
 from src.store.store import AppStore
 
 
@@ -141,7 +143,7 @@ def run_full_pipeline(
     stage_limit: Optional[str] = None,
     retries: int = 3,
     config: Optional[PulseConfig] = None,
-    mcp_client=None,
+    mcp_client: Optional[ToolCaller] = None,
 ) -> Dict[str, any]:
     """Execute complete weekly pulse pipeline (Phase 5 Orchestrator).
     
@@ -158,6 +160,8 @@ def run_full_pipeline(
 
     if not config:
         config = load_pulse_config()
+    if not dry_run and mcp_client is None:
+        mcp_client = ComposioClient.from_env(load_mcp_config(config.mcp.config))
 
     root = get_project_root()
     window_start, window_end = calculate_window_bounds(week_start_dt, weeks=config.window.weeks)
@@ -325,24 +329,20 @@ def run_full_pipeline(
     pub_result = None
 
     if not dry_run:
-        from src.mcp.capabilities import load_mcp_config
-        from src.mcp.client import MockMCPClient
-        from src.mcp.publisher import PulsePublisher
-
-        mcp_cfg = load_mcp_config(config.mcp.config)
-        client = mcp_client or MockMCPClient()
-        publisher = PulsePublisher(store=store, mcp_config=mcp_cfg, client=client)
-
-        recipient_to = require_recipient(config)
-        pub_result = publisher.publish_pulse(
-            week_start=norm_week,
-            note_markdown=rendered_md,
-            recipient_email=recipient_to
-        )
-
-        final_status = "published" if pub_result.status in ["published", "created", "updated", "no_change", "noop"] else "publish_failed"
-        store.update_run(run_id=run_id, status=final_status, finished=True)
-        stage_statuses["publish"] = "done" if final_status == "published" else "failed"
+        publisher = PulsePublisher(store=store, client=mcp_client)
+        try:
+            pub_result = publisher.publish_pulse(
+                week_start=norm_week,
+                note_markdown=rendered_md,
+                recipient_email=require_recipient(config),
+            )
+        except MCPError as exc:
+            pub_result = PublishResult(status="failed", week_start=norm_week, message=str(exc))
+            store.update_run(run_id=run_id, status="publish_failed", error=str(exc), finished=True)
+            stage_statuses["publish"] = "failed"
+        else:
+            store.update_run(run_id=run_id, status="published", finished=True)
+            stage_statuses["publish"] = "done"
     else:
         # Dry-run: NO MCP calls, NO publish_state modifications (ORC-01)
         store.update_run(run_id=run_id, status="validated", finished=True)
@@ -359,7 +359,7 @@ def run_full_pipeline(
         "week_start": norm_week,
         "window_start": window_start,
         "window_end": window_end,
-        "status": "published" if (not dry_run and pub_result and pub_result.status in ["published", "created", "updated", "no_change", "noop"]) else ("validated" if dry_run else "failed"),
+        "status": "published" if (not dry_run and pub_result and pub_result.status in ("published", "noop")) else ("validated" if dry_run else "failed"),
         "dry_run": dry_run,
         "total_reviews": ingest_summary.get("total_analyzed", 0),
         "analyzed_reviews": theme_summary.get("analyzable_reviews", 0),
@@ -388,6 +388,7 @@ def run_full_pipeline(
             "doc_id": pub_result.doc_id if pub_result else None,
             "doc_url": pub_result.doc_url if pub_result else None,
             "draft_id": pub_result.draft_id if pub_result else None,
+            "error": pub_result.message if pub_result.status == "failed" else None,
         } if pub_result else None,
         "stage_statuses": stage_statuses,
         "timings": stage_timings,
@@ -411,6 +412,7 @@ def run_full_pipeline(
         "word_count": val_result.word_count,
         "doc_url": pub_result.doc_url if pub_result else None,
         "draft_id": pub_result.draft_id if pub_result else None,
+        "publish_error": pub_result.message if pub_result and pub_result.status == "failed" else None,
         "report_path": str(report_path),
         "timings": stage_timings,
     }
@@ -475,7 +477,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     pub_parser = subparsers.add_parser("publish", help="Publish validated note to Google Docs and Gmail draft via MCP")
     add_common(pub_parser)
-    pub_parser.add_argument("--dry-run", action="store_true", help="Execute with mock MCP client")
+    pub_parser.add_argument("--dry-run", action="store_true", help="Validate the note without calling Composio")
 
     collect_parser = subparsers.add_parser("collect", help="Collect reviews from the Play Store and App Store")
     collect_parser.add_argument("--app", required=True, help="Registered app_key, e.g. groww")
@@ -551,10 +553,9 @@ def main(argv: Optional[List[str]] = None) -> None:
             sys.exit(2)
     elif args.command == "publish":
         from src.note.engine import build_and_validate_pulse_note
-        from src.mcp.capabilities import load_mcp_config
-        from src.mcp.client import MockMCPClient
-        from src.mcp.publisher import PulsePublisher
 
+        cfg = load_pulse_config()
+        client = None if args.dry_run else ComposioClient.from_env(load_mcp_config(cfg.mcp.config))
         week_start = str(normalize_to_week_start(args.week))
         note, rendered_md, val_result, out_folder = build_and_validate_pulse_note(
             store=store,
@@ -567,9 +568,10 @@ def main(argv: Optional[List[str]] = None) -> None:
                 print(f"  - {err}")
             sys.exit(2)
 
-        cfg = load_pulse_config()
-        mcp_cfg = load_mcp_config(cfg.mcp.config)
-        publisher = PulsePublisher(store=store, mcp_config=mcp_cfg, client=MockMCPClient())
+        if client is None:
+            print("DRY RUN: note validated; nothing was sent to Composio.")
+            sys.exit(0)
+        publisher = PulsePublisher(store=store, client=client)
         pub_result = publisher.publish_pulse(
             week_start=week_start,
             note_markdown=rendered_md,

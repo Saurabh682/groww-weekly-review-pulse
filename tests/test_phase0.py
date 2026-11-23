@@ -198,25 +198,15 @@ def test_MCP_17_no_send_capability():
     assert mcp_cfg.policy.draft_only is True
     assert mcp_cfg.policy.allow_send_email is False
 
-    # Attempting to load a config with send capability must raise ValueError
-    invalid_mcp_dict = {
-        "version": "1.0",
-        "allowed_capabilities": ["docs.create", "gmail.send_email"],
-        "capabilities": {
-            "docs.create": {
-                "server": "google_docs",
-                "tool": "create_document",
-                "description": "test",
-            },
-            "gmail.send_email": {
-                "server": "gmail",
-                "tool": "send_email",
-                "description": "send",
-            },
-        },
-        "policy": {"draft_only": False, "allow_send_email": True},
+    invalid_mcp_dict = mcp_cfg.model_dump()
+    invalid_mcp_dict["capabilities"]["gmail.send_email"] = {
+        "tool": "GMAIL_SEND_EMAIL", "toolkit": "gmail", "description": "send",
     }
     with pytest.raises(ValueError, match="Forbidden capability"):
+        MCPConfigData.model_validate(invalid_mcp_dict)
+    invalid_mcp_dict["capabilities"].pop("gmail.send_email")
+    invalid_mcp_dict["policy"]["allow_send_email"] = True
+    with pytest.raises(ValueError, match="Policy violation"):
         MCPConfigData.model_validate(invalid_mcp_dict)
 
 

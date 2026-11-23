@@ -477,11 +477,11 @@ Phases 8, 9 and 10 touch separate folders (`src/ingest/`, `src/registry/` + `src
 
 #### Tasks
 - [ ] **10.1 Connect Google Docs in Composio.** Gmail is already connected. Record both connected-account IDs as secrets.
-- [ ] **10.2 `src/mcp/composio.py`:** MCP client against `COMPOSIO_MCP_URL`; tool allowlist and denylist; required account ID on every call.
-- [ ] **10.3 Capability map** in `config/mcp.yaml` per `multi-app-architecture.md` §7.1, with no secrets.
-- [ ] **10.4 Publish flow** per `(app_key, week_start)` per §7.2, including draft-not-found recovery.
-- [ ] **10.5 Mock Composio server** for contract tests.
-- [ ] **10.6 Retire `gmail-docs-mcp`** from config and code paths.
+- [x] **10.2 `src/mcp/composio.py`:** MCP client against `COMPOSIO_MCP_URL`; tool allowlist and denylist; required account ID on every call.
+- [x] **10.3 Capability map** in `config/mcp.yaml` per `multi-app-architecture.md` §7.1, with no secrets.
+- [x] **10.4 Publish flow** per `(app_key, week_start)` per §7.2, including draft-not-found recovery.
+- [x] **10.5 Mock Composio server** for contract tests.
+- [x] **10.6 Retire `gmail-docs-mcp`** from config and code paths.
 
 #### Exit Criteria
 `CMP-*` and v1 `MCP-*` tests green on the mock; one real Doc and one real draft created for Groww; a rerun updates both in place.

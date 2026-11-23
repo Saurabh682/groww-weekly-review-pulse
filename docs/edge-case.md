@@ -268,8 +268,8 @@
 | ID | Scenario | Expected | Test | Type | Pri |
 |---|---|---|---|---|---|
 | MCP-01 | Required capability missing (`docs.create` or `gmail.create_draft`) | Fail before any publish step; message names the missing capability | `test_MCP_01_missing_capability_fails_fast` | M | P0 |
-| MCP-02 | `docs.update` unsupported | Falls back to versioned doc creation; draft mentions the version | `test_MCP_02_update_unsupported_fallback` | M | P1 |
-| MCP-03 | `gmail.update_draft` unsupported | Creates a new draft with a revision suffix; state updated | `test_MCP_03_draft_update_unsupported` | M | P1 |
+| MCP-02 | *Retired in v2: Composio offers in-place update; covered by CMP-05.* `docs.update` unsupported | Falls back to versioned doc creation; draft mentions the version | `test_MCP_02_update_unsupported_fallback` | M | P1 |
+| MCP-03 | *Retired in v2: covered by CMP-06.* `gmail.update_draft` unsupported | Creates a new draft with a revision suffix; state updated | `test_MCP_03_draft_update_unsupported` | M | P1 |
 | MCP-04 | MCP server unreachable / timeout | 3 retries with backoff; then run `failed`; local Markdown saved; actionable message | `test_MCP_04_unreachable_retries_then_fails` | M | P0 |
 | MCP-05 | Auth expired/revoked at the MCP host | Clear message ("re-authorize the connector"); no credential prompts in app; no crash loop | `test_MCP_05_auth_expired_message` | M | P1 |
 | MCP-06 | Docs succeeds, Gmail fails | State saved with `doc_id`; rerun resumes at Gmail only; no second Doc | `test_MCP_06_partial_failure_resume` | M | P0 |

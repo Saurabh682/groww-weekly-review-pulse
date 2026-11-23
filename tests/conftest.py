@@ -19,3 +19,12 @@ def pulse_store(tmp_path) -> PulseStore:
 @pytest.fixture
 def groww_store(pulse_store) -> AppStore:
     return pulse_store.for_app("groww")
+
+
+@pytest.fixture
+def composio():
+    from tests.support.composio_server import FakeComposio
+
+    server = FakeComposio().start()
+    yield server
+    server.stop()

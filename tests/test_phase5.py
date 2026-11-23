@@ -37,7 +37,6 @@ import pytest
 from src.clean.pii import scrub_pii
 from src.clean.window import normalize_to_week_start
 from src.config import get_project_root, load_pulse_config
-from src.mcp.client import MockMCPClient
 from src.pipeline import run_full_pipeline, validate_week_parameter
 from src.store.factory import sqlite_store
 from src.store.models import ReviewRecord
@@ -45,8 +44,13 @@ from src.store.retention import calculate_retention_cutoff, purge_retention
 
 
 @pytest.fixture
-def tmp_pipeline_env(tmp_path):
+def tmp_pipeline_env(tmp_path, composio, monkeypatch):
     """Sets up an isolated database and outputs directory for pipeline testing."""
+    settings = composio.settings()
+    monkeypatch.setenv("COMPOSIO_MCP_URL", settings.url)
+    monkeypatch.setenv("COMPOSIO_API_KEY", settings.api_key)
+    monkeypatch.setenv("COMPOSIO_GOOGLEDOCS_ACCOUNT_ID", settings.accounts["googledocs"])
+    monkeypatch.setenv("COMPOSIO_GMAIL_ACCOUNT_ID", settings.accounts["gmail"])
     db_file = tmp_path / "test_pulse.db"
     db = sqlite_store(db_file).for_app("groww")
     fixture_csv = get_project_root() / "tests" / "fixtures" / "reviews_baseline.csv"
@@ -58,10 +62,10 @@ def tmp_pipeline_env(tmp_path):
     }
 
 
-def test_ORC_01_dry_run_no_side_effects(tmp_pipeline_env):
+def test_ORC_01_dry_run_no_side_effects(tmp_pipeline_env, composio):
     """ORC-01: --dry-run runs through validation, makes no MCP calls, and modifies no publish_state."""
     db = tmp_pipeline_env["db"]
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
 
     res = run_full_pipeline(
         week_str="2026-11-10",
@@ -74,7 +78,7 @@ def test_ORC_01_dry_run_no_side_effects(tmp_pipeline_env):
     assert res["status"] == "validated"
     assert res["is_valid"] is True
     assert res["dry_run"] is True
-    assert len(mock_mcp.call_history) == 0
+    assert len(composio.calls) == 0
 
     assert db.count_publish_states() == 0
 
@@ -133,27 +137,27 @@ def test_ORC_03_crash_recovery(tmp_pipeline_env):
     assert res["is_valid"] is True
 
 
-def test_ORC_04_db_failure(tmp_path):
+def test_ORC_04_db_failure(tmp_path, composio):
     """ORC-04: Database failure surfaces clear error and avoids partial publish."""
     bad_db = sqlite_store(tmp_path / "corrupt.db").for_app("groww")
     with bad_db.connector.session() as s:
         s.execute("DROP TABLE review_themes")
         s.execute("DROP TABLE reviews")
 
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
     with pytest.raises(Exception):
         run_full_pipeline(
             week_str="2026-11-10",
             store=bad_db,
             mcp_client=mock_mcp
         )
-    assert len(mock_mcp.call_history) == 0
+    assert len(composio.calls) == 0
 
 
-def test_ORC_05_disk_full(tmp_pipeline_env):
+def test_ORC_05_disk_full(tmp_pipeline_env, composio):
     """ORC-05: Output write failure surfaces clear error and stops before publishing."""
     db = tmp_pipeline_env["db"]
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
 
     with patch("src.note.engine.get_project_root", side_effect=OSError("Disk full")):
         with pytest.raises(Exception):
@@ -163,13 +167,13 @@ def test_ORC_05_disk_full(tmp_pipeline_env):
                 store=db,
                 mcp_client=mock_mcp
             )
-    assert len(mock_mcp.call_history) == 0
+    assert len(composio.calls) == 0
 
 
-def test_ORC_06_double_trigger(tmp_pipeline_env):
+def test_ORC_06_double_trigger(tmp_pipeline_env, composio):
     """ORC-06: Triggering twice for same week is idempotent and no-ops second publish."""
     db = tmp_pipeline_env["db"]
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
     week = "2026-11-10"
 
     # First run: publishes
@@ -181,7 +185,7 @@ def test_ORC_06_double_trigger(tmp_pipeline_env):
         mcp_client=mock_mcp
     )
     assert res1["status"] in ["published", "created"]
-    calls_after_run1 = len(mock_mcp.call_history)
+    calls_after_run1 = len(composio.calls)
     assert calls_after_run1 >= 2  # create/upsert doc and draft
 
     # Second run: identical inputs no-op
@@ -333,10 +337,10 @@ def test_INV_01_note_invariants_randomized(tmp_pipeline_env):
     assert res["word_count"] <= 250
 
 
-def test_INV_02_no_mcp_on_failure(tmp_pipeline_env):
+def test_INV_02_no_mcp_on_failure(tmp_pipeline_env, composio):
     """INV-02: Pipeline never calls MCP when validation fails (fails closed)."""
     db = tmp_pipeline_env["db"]
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
 
     # Force a validation failure by mocking validate_note to return invalid
     from src.note.validate import ValidationResult
@@ -359,13 +363,13 @@ def test_INV_02_no_mcp_on_failure(tmp_pipeline_env):
         assert res["status"] == "validation_failed"
         assert res["is_valid"] is False
         # MCP publisher was NEVER called
-        assert len(mock_mcp.call_history) == 0
+        assert len(composio.calls) == 0
 
 
-def test_INV_03_idempotent_rerun(tmp_pipeline_env):
+def test_INV_03_idempotent_rerun(tmp_pipeline_env, composio):
     """INV-03: Rerun with identical inputs produces exactly one doc and one draft."""
     db = tmp_pipeline_env["db"]
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
     week = "2026-11-10"
 
     res1 = run_full_pipeline(week_str=week, csv_path=tmp_pipeline_env["csv_path"], store=db, mcp_client=mock_mcp)

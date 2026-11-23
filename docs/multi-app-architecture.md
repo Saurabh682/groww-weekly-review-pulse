@@ -303,6 +303,15 @@ save draft_id, content_hash
 
 Failure handling is unchanged from v1 §10.5, per app.
 
+### 7.2.1 Implementation notes (Phase 10)
+- `src/mcp/composio.py` speaks Streamable HTTP JSON-RPC: `initialize`, `notifications/initialized`, then `tools/call`, with `x-api-key` and the `Mcp-Session-Id` the server returns. Replies may be JSON or SSE.
+- One MCP session per toolkit, because the endpoint carries that toolkit's `connected_account_id`. A 404 on a stored session starts a new one.
+- The client only accepts a capability name, never a raw slug. `config/mcp.yaml` fails to load if a mapped slug matches `denied_tool_patterns`, and those patterns must include `SEND`, `DELETE` and `TRASH`.
+- Tool results are read from the Composio envelope `{successful, data, error}` in `structuredContent` or the first text block. Errors are sorted into connection-expired (CMP-07), not-found (drives MCP-10 and CMP-06) and generic.
+- After the Doc step the publisher saves `doc_id` with `content_hash = NULL`; the hash is written only after the draft step succeeds, so a failed draft never freezes a stale draft or Doc.
+- The pipeline builds the client before the run starts, so missing variables fail with no run row (CMP-10). Publish errors mark the run `publish_failed`, keep `note.md`, and put the message in `run_report.json`.
+- Limit: a Doc the user moved to Drive trash is still readable through the Docs API, so it is updated in place rather than recreated. Detecting trash would need a Drive tool.
+
 ### 7.3 Retiring `gmail-docs-mcp`
 
 The v1 `config/mcp.yaml` contains a committed bearer token for the `gmail-docs-mcp` server. Phase 7 removes it from the file, and the token must be rotated on that server, since it stays in git history.

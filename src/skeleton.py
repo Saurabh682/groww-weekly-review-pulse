@@ -11,9 +11,9 @@ import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-from src.config import load_pulse_config, PulseConfig, get_project_root, resolve_project_path
+from src.config import load_pulse_config, get_project_root
 from src.mcp.capabilities import load_mcp_config, resolve_capability, MCPConfigData
 from src.note.titles import pulse_doc_title, pulse_email_subject
 
@@ -63,7 +63,7 @@ class SkeletonMCPRunner:
         target = resolve_capability(self.mcp_config, "docs.create")
         return {
             "status": "success",
-            "server": target.server,
+            "toolkit": target.toolkit,
             "tool": target.tool,
             "doc_id": "doc_skeleton_mock_12345",
             "doc_url": "https://docs.google.com/document/d/doc_skeleton_mock_12345/edit",
@@ -76,7 +76,7 @@ class SkeletonMCPRunner:
         full_body = f"{body}\n\n---\nGoogle Doc: {doc_url}"
         return {
             "status": "success",
-            "server": target.server,
+            "toolkit": target.toolkit,
             "tool": target.tool,
             "draft_id": "draft_skeleton_mock_67890",
             "to": to,
