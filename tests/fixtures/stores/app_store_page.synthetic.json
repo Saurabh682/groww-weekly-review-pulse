@@ -1,0 +1,47 @@
+{
+ "feed": {
+  "author": {"name": {"label": "iTunes Store"}, "uri": {"label": "http://www.apple.com/itunes/"}},
+  "updated": {"label": "2026-11-22T20:00:11-07:00"},
+  "entry": [
+   {
+    "author": {"name": {"label": "Fixture Reviewer"}, "uri": {"label": "https://example.invalid/reviewer/1"}},
+    "updated": {"label": "2026-11-20T09:15:00-07:00"},
+    "im:rating": {"label": "2"},
+    "im:version": {"label": "18.20.0"},
+    "id": {"label": "fixture-review-id-1"},
+    "title": {"label": "Withdrawal stuck"},
+    "content": {"label": "My withdrawal has been pending for three days and support keeps sending the same reply.", "attributes": {"type": "text"}},
+    "link": {"attributes": {"rel": "related", "href": "https://example.invalid/review/1"}},
+    "im:voteSum": {"label": "7"},
+    "im:voteCount": {"label": "9"},
+    "im:contentType": {"attributes": {"term": "Application", "label": "Application"}}
+   },
+   {
+    "author": {"name": {"label": "Fixture Reviewer Two"}, "uri": {"label": "https://example.invalid/reviewer/2"}},
+    "updated": {"label": "2026-11-18T22:40:00-07:00"},
+    "im:rating": {"label": "5"},
+    "im:version": {"label": "18.20.0"},
+    "id": {"label": "fixture-review-id-2"},
+    "title": {"label": "Clean and simple"},
+    "content": {"label": "The interface is clean and investing in index funds takes two taps.", "attributes": {"type": "text"}},
+    "link": {"attributes": {"rel": "related", "href": "https://example.invalid/review/2"}},
+    "im:voteSum": {"label": "1"},
+    "im:voteCount": {"label": "1"},
+    "im:contentType": {"attributes": {"term": "Application", "label": "Application"}}
+   },
+   {
+    "author": {"name": {"label": "Fixture Reviewer Three"}, "uri": {"label": "https://example.invalid/reviewer/3"}},
+    "updated": {"label": "2026-08-02T08:00:00-07:00"},
+    "im:rating": {"label": "4"},
+    "im:version": {"label": "18.10.0"},
+    "id": {"label": "fixture-review-id-3"},
+    "title": {"label": "Good overall"},
+    "content": {"label": "Good overall but charts load slowly on older phones during market open.", "attributes": {"type": "text"}},
+    "link": {"attributes": {"rel": "related", "href": "https://example.invalid/review/3"}},
+    "im:voteSum": {"label": "0"},
+    "im:voteCount": {"label": "0"},
+    "im:contentType": {"attributes": {"term": "Application", "label": "Application"}}
+   }
+  ]
+ }
+}

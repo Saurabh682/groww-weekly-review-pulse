@@ -13,6 +13,7 @@ from src.store.errors import (
     InvalidAppRecord,
     UnknownApp,
 )
+from src.store.connectors import SQLITE_SCHEMA_VERSION
 from src.store.factory import postgres_store, sqlite_store
 from src.store.models import AppRecord, ReviewRecord
 
@@ -57,6 +58,7 @@ def test_groww_seeded(store):
     assert groww.status == "active"
     assert groww.category == "Finance"
     assert groww.play_package_id == "com.nextbillion.groww"
+    assert groww.app_store_id == "1404871703"
 
 
 def test_app01_sixth_active_app_rejected(store):
@@ -190,7 +192,7 @@ def test_legacy_v1_database_migrates_into_groww(tmp_path):
     version = conn.execute("PRAGMA user_version").fetchone()[0]
     conn.close()
     assert leftovers == []
-    assert version == 2
+    assert version == SQLITE_SCHEMA_VERSION
 
 
 APP_NAME_PATTERN = re.compile(r"\b(groww|zerodha|swiggy|zomato|phonepe|paytm)\b", re.IGNORECASE)

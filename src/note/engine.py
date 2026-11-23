@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Tuple
 
 from src.config import get_project_root, resolve_project_path
 from src.domains import domain_pack_for
+from src.note.coverage import build_store_coverage
 from src.note.generate import enforce_word_budget, synthesize_action_items, synthesize_theme_one_liner
 from src.note.models import ThemeSummary, WeeklyPulseNote
 from src.note.render import render_html, render_markdown, render_plain_text
@@ -88,7 +89,9 @@ def build_and_validate_pulse_note(
         window_start=window_start_str,
         window_end=week_start,
         app_name=store.app.display_name,
-        platform="Google Play",
+        store_coverage=build_store_coverage(
+            store, run_record.window_start or window_start_str, run_record.window_end or week_start
+        ),
         total_reviews=run_record.total_reviews,
         analyzed_reviews=run_record.analyzed_reviews,
         avg_rating=run_record.avg_rating,

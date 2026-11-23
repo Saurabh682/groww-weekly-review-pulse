@@ -4,8 +4,7 @@ Enforces hard architectural constraints at startup:
 - max_themes <= 5 (CFG-01)
 - max_words <= 250 (CFG-02)
 - quotes == 3 and actions == 3 (CFG-03)
-- automated collection blocked by default (ING-14, SEC-05)
-- App Store source rejected (ING-15)
+- per-store collection kill switches (COL-02)
 - safe secret handling without leaking values (CFG-05, CFG-06)
 """
 
@@ -15,7 +14,7 @@ import warnings
 from pathlib import Path
 from typing import Any, Dict, Optional
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class WindowConfig(BaseModel):
@@ -23,34 +22,12 @@ class WindowConfig(BaseModel):
 
 
 class AppStoreSourceConfig(BaseModel):
-    enabled: bool = False
-
-    @field_validator("enabled")
-    @classmethod
-    def reject_app_store_enabled(cls, v: bool) -> bool:
-        if v:
-            raise ValueError(
-                "App Store source is not supported in this build. "
-                "Only Google Play Store is active."
-            )
-        return v
+    enabled: bool = True
 
 
 class PlayStoreSourceConfig(BaseModel):
-    mode: str = "csv_import"
+    enabled: bool = True
     path: Path = Path("data/imports/play_reviews.csv")
-    allow_automated: bool = False
-
-    @model_validator(mode="after")
-    def validate_automated_guard(self) -> "PlayStoreSourceConfig":
-        env_allowed = os.getenv("ALLOW_AUTOMATED_PLAY_COLLECTION", "false").lower() == "true"
-        if self.mode == "automated" or self.allow_automated:
-            if not env_allowed:
-                raise ValueError(
-                    "Automated Google Play collection is disabled by default. "
-                    "A recorded compliance approval and ALLOW_AUTOMATED_PLAY_COLLECTION=true are required."
-                )
-        return self
 
 
 class SourcesConfig(BaseModel):

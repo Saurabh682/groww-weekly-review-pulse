@@ -8,7 +8,7 @@ from src.store.errors import translate_integrity_error
 SCHEMA_DIR = Path(__file__).resolve().parent / "schema"
 SQLITE_SCHEMA_FILE = SCHEMA_DIR / "sqlite.sql"
 POSTGRES_MIGRATIONS_DIR = Path(__file__).resolve().parents[2] / "supabase" / "migrations"
-SQLITE_SCHEMA_VERSION = 2
+SQLITE_SCHEMA_VERSION = 3
 
 
 class SqlSession:
@@ -71,6 +71,8 @@ class SqliteConnector:
             legacy = _sqlite_has_legacy_v1_schema(conn)
             if legacy:
                 _sqlite_rename_legacy_tables(conn)
+            if "collection_runs" in _sqlite_tables(conn) and "feed_gaps" not in _sqlite_columns(conn, "collection_runs"):
+                conn.execute("ALTER TABLE collection_runs ADD COLUMN feed_gaps INTEGER NOT NULL DEFAULT 0")
             conn.executescript(SQLITE_SCHEMA_FILE.read_text(encoding="utf-8"))
             if legacy:
                 _sqlite_copy_legacy_rows(conn)
@@ -121,6 +123,10 @@ class PostgresConnector:
 
 
 LEGACY_TABLES = ("reviews", "runs", "themes", "review_themes", "publish_state", "embedding_cache")
+
+
+def _sqlite_tables(conn: sqlite3.Connection) -> List[str]:
+    return [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")]
 
 
 def _sqlite_columns(conn: sqlite3.Connection, table: str) -> List[str]:

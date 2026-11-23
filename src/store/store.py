@@ -3,10 +3,11 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from src.store.connectors import PostgresConnector, SqliteConnector
-from src.store.errors import UnknownApp
+from src.store.errors import AppIdentityFrozen, InvalidAppRecord, UnknownApp
 from src.store.models import (
     APP_STATUSES,
     AppRecord,
+    CollectionRunRecord,
     PublishStateRecord,
     ReviewRecord,
     RunRecord,
@@ -26,6 +27,11 @@ RUN_COLUMNS = (
 APP_COLUMNS = (
     "app_key", "display_name", "play_package_id", "app_store_id", "country", "lang",
     "category", "status", "created_at", "archived_at",
+)
+LISTING_COLUMNS = {"play_store": "play_package_id", "app_store": "app_store_id"}
+COLLECTION_COLUMNS = (
+    "collection_id", "platform", "mode", "window_start", "window_end", "status", "started_at",
+    "covered_start", "fetched", "inserted", "source_limit_hit", "feed_gaps", "error", "finished_at",
 )
 THEME_COLUMNS = (
     "theme_id", "run_id", "label", "description", "review_count", "share_pct", "avg_rating", "is_top3",
@@ -108,6 +114,19 @@ class PulseStore:
             raise UnknownApp(f"No app registered with app_key {app_key!r}.")
         return self.get_app(app_key)
 
+    def attach_listing(self, app_key: str, platform: str, listing_id: str) -> AppRecord:
+        column = LISTING_COLUMNS.get(platform)
+        if column is None:
+            raise InvalidAppRecord(f"Unknown platform {platform!r}. Use one of {sorted(LISTING_COLUMNS)}.")
+        with self.connector.session() as s:
+            changed = s.execute(
+                f"UPDATE apps SET {column} = ? WHERE app_key = ? AND {column} IS NULL", (listing_id, app_key)
+            )
+        app = self.get_app(app_key)
+        if changed == 0 and getattr(app, column) != listing_id:
+            raise AppIdentityFrozen(f"{app_key} already has {column}={getattr(app, column)!r}. Use replace instead.")
+        return app
+
     def for_app(self, app_key: str) -> "AppStore":
         return AppStore(self, self.get_app(app_key))
 
@@ -124,6 +143,10 @@ class AppStore:
     @property
     def connector(self) -> Connector:
         return self._store.connector
+
+    def set_status(self, status: str) -> AppRecord:
+        self.app = self._store.set_app_status(self.app_key, status)
+        return self.app
 
     def _session(self):
         return self._store.connector.session()
@@ -372,3 +395,73 @@ class AppStore:
                 f"DELETE FROM reviews WHERE app_key = ? AND date < ?{protected_clause}", params
             )
         return deleted
+
+    def start_collection(self, platform: str, mode: str, window_start: str, window_end: str) -> int:
+        with self._session() as s:
+            row = s.fetchone(
+                "INSERT INTO collection_runs (app_key, platform, mode, window_start, window_end, status, started_at) "
+                "VALUES (?, ?, ?, ?, ?, 'running', ?) RETURNING collection_id",
+                (self.app_key, platform, mode, window_start, window_end, _now()),
+            )
+        return int(row["collection_id"])
+
+    def finish_collection(
+        self,
+        collection_id: int,
+        status: str,
+        fetched: int = 0,
+        inserted: int = 0,
+        covered_start: Optional[str] = None,
+        source_limit_hit: bool = False,
+        feed_gaps: int = 0,
+        error: Optional[str] = None,
+    ) -> CollectionRunRecord:
+        with self._session() as s:
+            changed = s.execute(
+                "UPDATE collection_runs SET status = ?, fetched = ?, inserted = ?, covered_start = ?, "
+                "source_limit_hit = ?, feed_gaps = ?, error = ?, finished_at = ? "
+                "WHERE app_key = ? AND collection_id = ?",
+                (status, fetched, inserted, covered_start, int(source_limit_hit), feed_gaps, error, _now(),
+                 self.app_key, collection_id),
+            )
+        if changed == 0:
+            raise KeyError(f"No collection run {collection_id} for app {self.app_key!r}.")
+        return self.get_collection(collection_id)
+
+    def record_skipped_collection(self, platform: str, mode: str, window_start: str, window_end: str) -> CollectionRunRecord:
+        collection_id = self.start_collection(platform, mode, window_start, window_end)
+        return self.finish_collection(collection_id, "skipped_disabled")
+
+    def get_collection(self, collection_id: int) -> CollectionRunRecord:
+        with self._session() as s:
+            row = s.fetchone(
+                "SELECT * FROM collection_runs WHERE app_key = ? AND collection_id = ?",
+                (self.app_key, collection_id),
+            )
+        return CollectionRunRecord(**_pick(row, COLLECTION_COLUMNS))
+
+    def list_collections(self) -> List[CollectionRunRecord]:
+        with self._session() as s:
+            rows = s.fetchall(
+                "SELECT * FROM collection_runs WHERE app_key = ? ORDER BY collection_id",
+                (self.app_key,),
+            )
+        return [CollectionRunRecord(**_pick(r, COLLECTION_COLUMNS)) for r in rows]
+
+    def latest_finished_collection(self, platform: str) -> Optional[CollectionRunRecord]:
+        with self._session() as s:
+            row = s.fetchone(
+                "SELECT * FROM collection_runs WHERE app_key = ? AND platform = ? AND status <> 'running' "
+                "ORDER BY collection_id DESC LIMIT 1",
+                (self.app_key, platform),
+            )
+        return None if row is None else CollectionRunRecord(**_pick(row, COLLECTION_COLUMNS))
+
+    def platform_counts(self, window_start: str, window_end: str) -> Dict[str, int]:
+        with self._session() as s:
+            rows = s.fetchall(
+                "SELECT platform, COUNT(*) AS n FROM reviews WHERE app_key = ? AND date >= ? AND date <= ? "
+                "GROUP BY platform",
+                (self.app_key, window_start, window_end),
+            )
+        return {r["platform"]: int(r["n"]) for r in rows}

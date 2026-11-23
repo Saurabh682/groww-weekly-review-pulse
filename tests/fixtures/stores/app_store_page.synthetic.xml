@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns:im="http://itunes.apple.com/rss" xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+  <id>https://example.invalid/feed</id>
+  <title>iTunes Store: Customer Reviews</title>
+  <updated>2026-11-22T20:01:07-07:00</updated>
+  <entry>
+    <id>fixture-review-id-4</id>
+    <title>Order rejected</title>
+    <content type="text">My limit order was rejected twice at market open with no reason shown.</content>
+    <im:contentType term="Application" label="Application"/>
+    <im:voteSum>3</im:voteSum>
+    <im:voteCount>4</im:voteCount>
+    <im:rating>1</im:rating>
+    <updated>2026-11-19T10:32:48-07:00</updated>
+    <im:version>18.20.0</im:version>
+    <author><name>Fixture Reviewer Four</name><uri>https://example.invalid/reviewer/4</uri></author>
+    <link rel="related" href="https://example.invalid/review/4"/>
+    <content type="html">&lt;p&gt;My limit order was rejected twice at market open with no reason shown.&lt;/p&gt;</content>
+  </entry>
+</feed>

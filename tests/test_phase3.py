@@ -304,7 +304,6 @@ def _create_mock_note() -> WeeklyPulseNote:
         app_name="Groww",
         window_start="2026-09-07",
         window_end="2026-11-10",
-        platform="Google Play",
         total_reviews=1435,
         analyzed_reviews=662,
         avg_rating=2.7,

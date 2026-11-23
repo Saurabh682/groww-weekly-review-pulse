@@ -419,14 +419,14 @@ Phases 8, 9 and 10 touch separate folders (`src/ingest/`, `src/registry/` + `src
 **Objective:** The existing pipeline runs unchanged for Groww, but keyed by `app_key` and on a swappable store.
 
 #### Tasks
-- [ ] **7.1 Remove the backend copy.** Delete `hf_space/src/` and its copied `config/`, `prompts/`, `tests/`; deploy builds the Space from the root `src/`. Add CI check `no_hf_space_src_copy`.
+- [x] **7.1 Remove the backend copy.** Delete `hf_space/src/` and its copied `config/`, `prompts/`, `tests/`; deploy builds the Space from the root `src/`. Add CI check `no_hf_space_src_copy`.
 - [ ] **7.2 Remove committed secrets.** Strip the bearer token from `config/mcp.yaml`; read MCP URL and headers from the environment. Rotate the token on the `gmail-docs-mcp` server, since it stays in git history. Add a secret scan (`gitleaks`) to CI.
-- [ ] **7.3 `PulseStore` protocol.** `src/store/base.py`; move current SQLite code to `SqliteStore`; pipeline depends only on the protocol.
-- [ ] **7.4 Supabase schema.** `supabase/migrations/` with `apps`, `reviews`, `collection_runs`, `runs`, `themes`, `review_themes`, `publish_state`; triggers `enforce_active_app_cap` and `freeze_app_identity`; partial unique indexes; RLS on with no client policies. Mirror the schema in `src/store/sqlite_schema.sql`.
-- [ ] **7.5 `SupabaseStore`.** Implements the protocol with the service-role key; selected by `PULSE_STORE`.
-- [ ] **7.6 `app_key` everywhere.** Pipeline CLI takes `--app <key>`; every table read and write is scoped by `app_key`; outputs go to `outputs/<app_key>/<week>/`.
-- [ ] **7.7 Generic prompts and titles.** Remove "Groww" and the finance theme list from `prompts/`; inject `display_name` and `category`. Doc title and email subject use the display name. Test `prompts_contain_no_app_names`.
-- [ ] **7.8 Seed Groww.** A migration inserts Groww as app #1 (`groww`, `com.nextbillion.groww`; App Store ID resolved in Phase 9). Existing SQLite data migrates with `app_key='groww'`.
+- [x] **7.3 `PulseStore` protocol.** `src/store/base.py`; move current SQLite code to `SqliteStore`; pipeline depends only on the protocol.
+- [x] **7.4 Supabase schema.** `supabase/migrations/` with `apps`, `reviews`, `collection_runs`, `runs`, `themes`, `review_themes`, `publish_state`; triggers `enforce_active_app_cap` and `freeze_app_identity`; partial unique indexes; RLS on with no client policies. Mirror the schema in `src/store/sqlite_schema.sql`.
+- [x] **7.5 `SupabaseStore`.** Implements the protocol with the service-role key; selected by `PULSE_STORE`.
+- [x] **7.6 `app_key` everywhere.** Pipeline CLI takes `--app <key>`; every table read and write is scoped by `app_key`; outputs go to `outputs/<app_key>/<week>/`.
+- [x] **7.7 Generic prompts and titles.** Remove "Groww" and the finance theme list from `prompts/`; inject `display_name` and `category`. Doc title and email subject use the display name. Test `prompts_contain_no_app_names`.
+- [x] **7.8 Seed Groww.** A migration inserts Groww as app #1 (`groww`, `com.nextbillion.groww`; App Store ID resolved in Phase 9). Existing SQLite data migrates with `app_key='groww'`.
 
 #### Exit Criteria
 - Full v1 test suite green on `SqliteStore` with `app_key='groww'`.
@@ -440,13 +440,13 @@ Phases 8, 9 and 10 touch separate folders (`src/ingest/`, `src/registry/` + `src
 **Objective:** Reviews for any registered app arrive automatically from both stores.
 
 #### Tasks
-- [ ] **8.1 `PlayStoreSource`** (`src/ingest/play_store.py`): newest-first with continuation, stop at window start, at least 1 s between pages, field allowlist.
-- [ ] **8.2 `AppStoreSource`** (`src/ingest/app_store.py`): RSS JSON pages 1-10, stop at window start, `source_limit_hit`, field allowlist.
-- [ ] **8.3 Modes** in `src/pipeline.py`: `backfill`, `daily`, `reconcile`, each writing `collection_runs`.
-- [ ] **8.4 Retire `allow_automated`.** Replace it with per-store `enabled` kill switches (ADR-9). Rewrite `test_ING_14_*` and `test_SEC_05_*` as `test_COL_02_*`.
-- [ ] **8.5 Coverage in the note header.** The header lists per-store counts and says when a store is missing or short.
-- [ ] **8.6 Recorded fixtures.** Store responses captured once to `tests/fixtures/stores/` with identity fields stripped; tests never hit the network.
-- [ ] **8.7 Delete `scripts/download_play_reviews.py`** once 8.1 replaces it.
+- [x] **8.1 `PlayStoreSource`** (`src/ingest/play_store.py`): newest-first with continuation, stop at window start, at least 1 s between pages, field allowlist.
+- [x] **8.2 `AppStoreSource`** (`src/ingest/app_store.py`): RSS JSON pages 1-10, stop at window start, `source_limit_hit`, field allowlist.
+- [x] **8.3 Modes** in `src/pipeline.py`: `backfill`, `daily`, `reconcile`, each writing `collection_runs`.
+- [x] **8.4 Retire `allow_automated`.** Replace it with per-store `enabled` kill switches (ADR-9). Rewrite `test_ING_14_*` and `test_SEC_05_*` as `test_COL_02_*`.
+- [x] **8.5 Coverage in the note header.** The header lists per-store counts and says when a store is missing or short.
+- [x] **8.6 Recorded fixtures.** Store responses captured once to `tests/fixtures/stores/` with identity fields stripped; tests never hit the network. The Play page is recorded (`scripts/record_store_fixtures.py`); the App Store feed was empty at recording time, so its fixtures are hand-built from the documented shape and named `*.synthetic.*`.
+- [x] **8.7 Delete `scripts/download_play_reviews.py`** once 8.1 replaces it.
 
 #### Exit Criteria
 `COL-*` P0 tests green; a local `backfill --app groww` against the real stores fills both platforms and reports coverage.

@@ -240,7 +240,7 @@
 | NOT-11 | Over-budget after max retries | Deterministic trim of the lowest-priority sentence; re-validate; if still over, fail | `test_NOT_11_trim_fallback` | I | P0 |
 | NOT-12 | Theme one-liner exceeds 22 words | Field-level retry | `test_NOT_12_field_budget_enforced` | U | P1 |
 | NOT-13 | Note contains non-printing characters or odd Unicode | Normalized; word count stable | `test_NOT_13_unicode_stability` | U | P2 |
-| NOT-14 | Window line states wrong store (mentions App Store) | Blocked; note must say "Google Play" only | `test_NOT_14_store_wording_play_only` | U | P1 |
+| NOT-14 | Note names a store it has no coverage for, or omits one it covers (v2) | Blocked; the header names exactly the stores in `store_coverage`, with per-store counts and caveats | `test_NOT_14_note_names_exactly_its_stores` | U | P1 |
 | NOT-15 | Locale/number formatting (percentages, decimals) | Consistent formatting (`12%`, `4.1★`); no locale-dependent output | `test_NOT_15_number_formatting` | U | P2 |
 | NOT-16 | Low sample size or short coverage | Note includes a short caveat inside the word budget | `test_NOT_16_caveat_within_budget` | I | P1 |
 | NOT-17 | LLM output contains Markdown headings or HTML injection | Rendered through a safe template; unexpected tags stripped | `test_NOT_17_output_sanitized` | U | P1 |
@@ -495,6 +495,7 @@ AG should update this table and the affected tests whenever a decision changes.
 | COL-10 | Same review text on both stores on the same day | Kept as two reviews (platform is in the dedupe key) | `test_COL_10_cross_store_not_merged` | U | P2 |
 | COL-11 | Backfill completes | Status `active`; first pulse generated for the latest complete week | `test_COL_11_backfill_then_pulse` | I | P0 |
 | COL-12 | Review in a non-configured language from the RSS feed | Stored with detected `lang`; v1 language rules apply | `test_COL_12_lang_from_feed` | U | P2 |
+| COL-13 | App Store RSS page returns 200 with no reviews (a feed gap), in JSON and in XML | All 10 pages are swept; an empty page is never treated as end of feed; XML is tried when JSON is empty; `feed_gaps` counted, `source_limit_hit=true`; note header says "partial, store feed had gaps" | `test_COL_13_feed_gaps_flagged_and_xml_fallback` | U | P0 |
 
 ## 22. Scheduler
 

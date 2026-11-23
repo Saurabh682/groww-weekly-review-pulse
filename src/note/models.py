@@ -45,6 +45,27 @@ class ActionItem:
         return asdict(self)
 
 
+STORE_LABELS = {"play_store": "Google Play", "app_store": "App Store"}
+
+
+@dataclass
+class StoreCoverage:
+    platform: str
+    reviews: int
+    caveat: Optional[str] = None
+
+    @property
+    def label(self) -> str:
+        return STORE_LABELS[self.platform]
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"platform": self.platform, "reviews": self.reviews, "caveat": self.caveat}
+
+
+def default_store_coverage() -> List[StoreCoverage]:
+    return [StoreCoverage("play_store", 0)]
+
+
 @dataclass
 class WeeklyPulseNote:
     """The complete structured weekly review pulse note."""
@@ -52,7 +73,7 @@ class WeeklyPulseNote:
     window_start: str
     window_end: str
     app_name: str
-    platform: str = "Google Play"
+    store_coverage: List[StoreCoverage] = field(default_factory=default_store_coverage)
     total_reviews: int = 0
     analyzed_reviews: int = 0
     avg_rating: float = 0.0
@@ -73,7 +94,7 @@ class WeeklyPulseNote:
             "app_name": self.app_name,
             "window_start": self.window_start,
             "window_end": self.window_end,
-            "platform": self.platform,
+            "store_coverage": [c.to_dict() for c in self.store_coverage],
             "total_reviews": self.total_reviews,
             "analyzed_reviews": self.analyzed_reviews,
             "avg_rating": round(self.avg_rating, 2),

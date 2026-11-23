@@ -30,10 +30,11 @@ BEGIN
     SELECT RAISE(ABORT, 'active_app_cap_reached');
 END;
 
-CREATE TRIGGER IF NOT EXISTS apps_identity_frozen BEFORE UPDATE OF app_key, play_package_id, app_store_id ON apps
+DROP TRIGGER IF EXISTS apps_identity_frozen;
+CREATE TRIGGER apps_identity_frozen BEFORE UPDATE OF app_key, play_package_id, app_store_id ON apps
 WHEN NEW.app_key IS NOT OLD.app_key
-    OR NEW.play_package_id IS NOT OLD.play_package_id
-    OR NEW.app_store_id IS NOT OLD.app_store_id
+    OR (OLD.play_package_id IS NOT NULL AND NEW.play_package_id IS NOT OLD.play_package_id)
+    OR (OLD.app_store_id IS NOT NULL AND NEW.app_store_id IS NOT OLD.app_store_id)
 BEGIN
     SELECT RAISE(ABORT, 'app_identity_frozen');
 END;
@@ -69,6 +70,7 @@ CREATE TABLE IF NOT EXISTS collection_runs (
     fetched INTEGER NOT NULL DEFAULT 0,
     inserted INTEGER NOT NULL DEFAULT 0,
     source_limit_hit INTEGER NOT NULL DEFAULT 0,
+    feed_gaps INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL CHECK (status IN ('running', 'ok', 'failed', 'skipped_disabled')),
     error TEXT,
     started_at TEXT NOT NULL,
@@ -138,3 +140,6 @@ CREATE TABLE IF NOT EXISTS embedding_cache (
 INSERT INTO apps (app_key, display_name, play_package_id, app_store_id, country, lang, category, status, created_at)
 SELECT 'groww', 'Groww', 'com.nextbillion.groww', NULL, 'in', 'en', 'Finance', 'active', '2026-11-23T00:00:00+00:00'
 WHERE NOT EXISTS (SELECT 1 FROM apps WHERE app_key = 'groww');
+
+UPDATE apps SET app_store_id = '1404871703'
+WHERE app_key = 'groww' AND app_store_id IS NULL;

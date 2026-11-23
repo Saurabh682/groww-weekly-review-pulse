@@ -42,6 +42,29 @@ class RunRecord:
     finished_at: Optional[str] = None
 
 
+PLATFORMS = ("play_store", "app_store")
+COLLECTION_MODES = ("backfill", "daily", "reconcile", "csv_import")
+COLLECTION_STATUSES = ("running", "ok", "failed", "skipped_disabled")
+
+
+@dataclass
+class CollectionRunRecord:
+    collection_id: int
+    platform: str
+    mode: str
+    window_start: str
+    window_end: str
+    status: str
+    started_at: str
+    covered_start: Optional[str] = None
+    fetched: int = 0
+    inserted: int = 0
+    source_limit_hit: int = 0
+    feed_gaps: int = 0
+    error: Optional[str] = None
+    finished_at: Optional[str] = None
+
+
 @dataclass
 class PublishStateRecord:
     week_start: str

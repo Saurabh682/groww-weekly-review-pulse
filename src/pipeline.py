@@ -11,28 +11,23 @@ Implements stages:
 
 import argparse
 import csv
-import hashlib
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from src.clean.dedupe import deduplicate_reviews
-from src.clean.lang import detect_language
-from src.clean.low_info import is_low_info, check_low_info_distribution
-from src.clean.pii import scrub_pii
 from src.clean.window import (
     calculate_window_bounds,
     compute_coverage_weeks,
     normalize_to_week_start,
 )
 from src.config import load_pulse_config, PulseConfig, get_project_root, resolve_project_path
+from src.ingest.persist import clean_raw_reviews, default_raw_dir
 from src.ingest.play_csv import PlayStoreImportSource
 from src.store.factory import open_store
 from src.store.store import AppStore
-from src.store.models import ReviewRecord
 
 
 def process_and_ingest_reviews(
@@ -44,8 +39,6 @@ def process_and_ingest_reviews(
     """Execute Phase 1 Ingestion, Scrubbing, and Persistence."""
     if not config:
         config = load_pulse_config()
-
-    root = get_project_root()
 
     # 1. Window bounds (WIN-04, WIN-06, WIN-08)
     week_start = normalize_to_week_start(week_str)
@@ -59,73 +52,12 @@ def process_and_ingest_reviews(
     if not raw_records:
         raise ValueError(f"Zero reviews found within window {window_start} to {window_end} in {source_path}")
 
-    # 3. Deduplication (DUP-01, DUP-03, DUP-04)
-    deduped_records, dedupe_dropped = deduplicate_reviews(raw_records)
-
-    # 4. Save allowlisted PII-free raw copy in data/raw/ (PII-38)
-    raw_archive_dir = root / "data" / "raw" / store.app_key
-    raw_archive_dir.mkdir(parents=True, exist_ok=True)
-    raw_archive_file = raw_archive_dir / f"play_reviews_{window_start}_{window_end}.csv"
-
-    fieldnames = ["rating", "title", "text", "date", "app_version"]
-    with open(raw_archive_file, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        for r in deduped_records:
-            writer.writerow({k: r.get(k) for k in fieldnames})
-
-    # 5. Clean, Scrub PII, Language Tag, Low-Info Filter
-    processed_records: List[ReviewRecord] = []
-    pii_redacted_count = 0
-    total_tokens_scrubbed = 0
-
-    for r in deduped_records:
-        # Scrub Title (PII-20)
-        title_res = scrub_pii(r.get("title") or "", is_title=True)
-        # Scrub Body (PII-01..19)
-        text_res = scrub_pii(r.get("text") or "")
-
-        pii_found = 1 if (title_res.pii_found or text_res.pii_found) else 0
-        if pii_found:
-            pii_redacted_count += 1
-            total_tokens_scrubbed += (title_res.redaction_count + text_res.redaction_count)
-
-        # Detect Language (LNG-01..04)
-        lang_res = detect_language(text_res.cleaned_text)
-
-        # Determine quote eligibility (must be en, no pii, clean)
-        quote_eligible = 1 if (lang_res.quote_eligible and text_res.quote_eligible and not pii_found) else 0
-
-        # Check Low Info (NRM-01)
-        low_info = 1 if is_low_info(text_res.cleaned_text) else 0
-
-        # Review ID hash
-        review_id = hashlib.sha256(
-            f"play_store|{r['date']}|{text_res.cleaned_text}".encode("utf-8")
-        ).hexdigest()[:16]
-
-        record = ReviewRecord(
-            review_id=review_id,
-            platform="play_store",
-            rating=r["rating"],
-            title=title_res.cleaned_text or None,
-            text=text_res.cleaned_text,
-            date=r["date"],
-            app_version=r.get("app_version"),
-            lang=lang_res.lang,
-            low_info=low_info,
-            pii_found=pii_found,
-            quote_eligible=quote_eligible,
-            raw_hash=hashlib.sha256(r["text"].encode("utf-8")).hexdigest()[:16],
-        )
-        processed_records.append(record)
-
-    # 6. Check low info distribution (LOW-01, LOW-02)
-    low_info_dist = check_low_info_distribution(processed_records)
-    if low_info_dist["all_low_info"]:
+    persisted = clean_raw_reviews(
+        raw_records, default_raw_dir(store.app_key) / f"play_reviews_{window_start}_{window_end}.csv"
+    )
+    if persisted.all_low_info:
         raise ValueError("All ingested reviews are low-info / emoji-only (LOW-01). Pipeline halted.")
-
-    # 7. Persist to SQLite (ING-16)
+    processed_records = persisted.records
     newly_inserted = store.upsert_reviews(processed_records)
 
     # 8. Compute Coverage (WIN-01)
@@ -139,16 +71,16 @@ def process_and_ingest_reviews(
         "window_start": window_start,
         "window_end": window_end,
         "raw_imported": len(raw_records),
-        "dedupe_dropped": dedupe_dropped,
+        "dedupe_dropped": persisted.dedupe_dropped,
         "total_analyzed": len(processed_records),
         "newly_inserted": newly_inserted,
         "coverage_weeks": coverage_weeks,
         "short_coverage_flag": coverage_weeks < 8.0,
         "avg_rating": avg_rating,
-        "pii_redacted_reviews": pii_redacted_count,
-        "pii_tokens_scrubbed": total_tokens_scrubbed,
-        "low_info_reviews": low_info_dist["low_info_count"],
-        "low_info_share": low_info_dist["low_info_share"],
+        "pii_redacted_reviews": persisted.pii_redacted_reviews,
+        "pii_tokens_scrubbed": persisted.pii_tokens_scrubbed,
+        "low_info_reviews": persisted.low_info_count,
+        "low_info_share": persisted.low_info_share,
         "quote_eligible_reviews": sum(1 for r in processed_records if r.quote_eligible == 1),
     }
 
@@ -545,6 +477,11 @@ def build_parser() -> argparse.ArgumentParser:
     add_common(pub_parser)
     pub_parser.add_argument("--dry-run", action="store_true", help="Execute with mock MCP client")
 
+    collect_parser = subparsers.add_parser("collect", help="Collect reviews from the Play Store and App Store")
+    collect_parser.add_argument("--app", required=True, help="Registered app_key, e.g. groww")
+    collect_parser.add_argument("--mode", required=True, choices=["backfill", "daily", "reconcile"])
+    collect_parser.add_argument("--today", default=None, help="Override today's date (YYYY-MM-DD)")
+
     purge_parser = subparsers.add_parser("purge", help="Retention purge for old reviews and raw files")
     add_common(purge_parser)
     purge_parser.add_argument("--weeks", type=int, default=18, help="Total retention window in weeks")
@@ -555,6 +492,13 @@ def main(argv: Optional[List[str]] = None) -> None:
     args = build_parser().parse_args(argv)
     store = open_store().for_app(args.app)
 
+    if args.command == "collect":
+        from src.ingest.collect import collect_app
+
+        today = date.fromisoformat(args.today) if args.today else datetime.now(timezone.utc).date()
+        report = collect_app(store, args.mode, today)
+        print(json.dumps(report.to_dict(), indent=2))
+        sys.exit(1 if report.failed else 0)
     if args.command == "run":
         res = run_full_pipeline(
             store=store,

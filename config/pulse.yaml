@@ -3,11 +3,10 @@ window:
 
 sources:
   app_store:
-    enabled: false                    # Deferred for this build; must remain disabled
+    enabled: true                     # Kill switch for Apple RSS collection (COL-02)
   play_store:
-    mode: csv_import                  # csv_import | automated (disabled by default)
+    enabled: true                     # Kill switch for Play Store collection (COL-02)
     path: data/imports/play_reviews.csv
-    allow_automated: false
 
 themes:
   max_themes: 5                       # Hard cap: maximum 5 themes

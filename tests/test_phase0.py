@@ -179,36 +179,14 @@ def test_CFG_09_cross_platform_paths():
 
 
 # ==============================================================================
-# ING-14 & SEC-05: Automated Play Collection Guard (P0)
+# COL-02: Per-store kill switches replace the v1 automation guard (ADR-9)
 # ==============================================================================
-def test_ING_14_automated_source_blocked(monkeypatch):
-    """ING-14 / SEC-05: Automated Play collection without approval record is blocked."""
-    monkeypatch.setenv("ALLOW_AUTOMATED_PLAY_COLLECTION", "false")
-
-    with pytest.raises(ValueError, match="Automated Google Play collection is disabled"):
-        PlayStoreSourceConfig(mode="automated")
-
-    with pytest.raises(ValueError, match="Automated Google Play collection is disabled"):
-        PlayStoreSourceConfig(allow_automated=True)
-
-
-def test_SEC_05_automation_guard(monkeypatch):
-    """SEC-05: Verification that default config has automated collection off."""
+def test_COL_02_both_stores_enabled_by_default():
     cfg = load_pulse_config("config/pulse.yaml")
-    assert cfg.sources.play_store.mode == "csv_import"
-    assert cfg.sources.play_store.allow_automated is False
-
-
-# ==============================================================================
-# ING-15: App Store Source Rejected in this Build (P1)
-# ==============================================================================
-def test_ING_15_app_store_not_supported():
-    """ING-15: Enabling App Store source is rejected as unsupported."""
-    with pytest.raises(ValueError, match="App Store source is not supported in this build"):
-        AppStoreSourceConfig(enabled=True)
-
-    disabled_cfg = AppStoreSourceConfig(enabled=False)
-    assert disabled_cfg.enabled is False
+    assert cfg.sources.play_store.enabled is True
+    assert cfg.sources.app_store.enabled is True
+    assert AppStoreSourceConfig(enabled=False).enabled is False
+    assert PlayStoreSourceConfig(enabled=False).enabled is False
 
 
 # ==============================================================================
