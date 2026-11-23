@@ -1,6 +1,5 @@
 """Full note generation and validation workflow for weekly review pulse notes (Phase 3)."""
 
-import json
 from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -13,6 +12,7 @@ from src.note.models import ThemeSummary, WeeklyPulseNote
 from src.note.render import render_html, render_markdown, render_plain_text
 from src.note.select import select_quotes_for_themes
 from src.note.validate import ValidationResult, validate_note
+from src.run_report import write_run_report
 from src.store.models import ReviewRecord
 from src.store.store import AppStore
 
@@ -137,6 +137,6 @@ def build_and_validate_pulse_note(
         "actions_count": len(action_items),
         "dry_run": dry_run
     }
-    (out_folder / "run_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    write_run_report(out_folder, report)
 
     return note, rendered_md, validation, out_folder

@@ -33,6 +33,7 @@ from src.clean.pii import scrub_pii
 from src.clean.window import normalize_to_week_start
 from src.config import get_project_root, outputs_root
 from src.pipeline import run_full_pipeline, validate_week_parameter
+from src.run_report import SYSTEM_FIELDS
 from src.store.factory import sqlite_store
 from src.store.models import ReviewRecord
 from src.store.retention import purge_retention
@@ -294,8 +295,8 @@ def test_ORC_10_run_report_clean(tmp_pipeline_env):
     assert data["word_count"] <= 250
 
     # Strict PII scan on full report JSON
-    pii_check = scrub_pii(report_content)
-    assert pii_check.pii_found == 0
+    free_text = json.dumps({k: v for k, v in data.items() if k not in SYSTEM_FIELDS})
+    assert not scrub_pii(free_text).pii_found
 
 
 def test_ORC_11_exit_codes(tmp_pipeline_env):

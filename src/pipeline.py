@@ -31,6 +31,7 @@ from src.config import (
 )
 from src.ingest.persist import clean_raw_reviews
 from src.ingest.play_csv import PlayStoreImportSource
+from src.run_report import write_run_report
 from src.store.factory import open_store
 from src.store.models import ReviewRecord
 from src.mcp.capabilities import load_mcp_config
@@ -110,8 +111,8 @@ def run_themes_stage(
     week_start = normalize_to_week_start(week_str)
     window_start, window_end = calculate_window_bounds(week_start, weeks=config.window.weeks)
 
-    # Fetch stored reviews within window
-    reviews = store.get_reviews_in_window(window_start, window_end, include_low_info=False)
+    stored = store.get_reviews_in_window(window_start, window_end)
+    reviews = [r for r in stored if not r.low_info]
     if not reviews:
         raise ValueError(
             f"No reviews found in database for window {window_start} to {window_end}. "
@@ -124,6 +125,7 @@ def run_themes_stage(
         week_str=week_str,
         window_start=window_start,
         window_end=window_end,
+        coverage_weeks=compute_coverage_weeks(stored),
         config=config,
     )
     return theme_result
@@ -265,10 +267,7 @@ def run_full_pipeline(
             "stage_statuses": stage_statuses,
             "timings": stage_timings,
         }
-        low_volume_dir = outputs_root() / store.app_key / norm_week
-        low_volume_dir.mkdir(parents=True, exist_ok=True)
-        low_volume_path = low_volume_dir / "run_report.json"
-        low_volume_path.write_text(json.dumps(low_volume_report, indent=2), encoding="utf-8")
+        low_volume_path = write_run_report(outputs_root() / store.app_key / norm_week, low_volume_report)
         return {
             "run_id": run_id,
             "week": norm_week,
@@ -308,7 +307,6 @@ def run_full_pipeline(
     # Stage 3: Note Generation & Validation Gate (Multi-attempt regeneration Task 5.2)
     t0 = datetime.now(timezone.utc)
     from src.note.engine import build_and_validate_pulse_note
-    from src.clean.pii import scrub_pii
 
     for attempt in range(1, max(1, retries) + 1):
         note, rendered_md, val_result, out_folder = build_and_validate_pulse_note(
@@ -332,8 +330,6 @@ def run_full_pipeline(
         stage_statuses["note"] = "validation_failed"
         stage_statuses["publish"] = "skipped"
 
-        out_dir = outputs_root() / store.app_key / norm_week
-        out_dir.mkdir(parents=True, exist_ok=True)
         failed_report = {
             "run_id": run_id,
             "week_start": norm_week,
@@ -349,7 +345,7 @@ def run_full_pipeline(
             "stage_statuses": stage_statuses,
             "timings": stage_timings
         }
-        (out_dir / "run_report.json").write_text(json.dumps(failed_report, indent=2), encoding="utf-8")
+        failed_path = write_run_report(outputs_root() / store.app_key / norm_week, failed_report)
 
         return {
             "run_id": run_id,
@@ -358,7 +354,7 @@ def run_full_pipeline(
             "is_valid": False,
             "errors": val_result.errors,
             "attempts": attempt,
-            "report_path": str(out_dir / "run_report.json"),
+            "report_path": str(failed_path),
             "timings": stage_timings
         }
 
@@ -404,9 +400,6 @@ def run_full_pipeline(
     stage_timings["publish"] = (datetime.now(timezone.utc) - t0).total_seconds()
 
     # Stage 5: Observability & Run Report Generation (Task 5.4, ORC-10)
-    out_dir = outputs_root() / store.app_key / norm_week
-    out_dir.mkdir(parents=True, exist_ok=True)
-
     report_data = {
         "run_id": run_id,
         "week_start": norm_week,
@@ -448,13 +441,7 @@ def run_full_pipeline(
         "finished_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    report_json = json.dumps(report_data, indent=2)
-    pii_check = scrub_pii(report_json)
-    if pii_check.pii_found:
-        report_json = pii_check.cleaned_text
-
-    report_path = out_dir / "run_report.json"
-    report_path.write_text(report_json, encoding="utf-8")
+    report_path = write_run_report(outputs_root() / store.app_key / norm_week, report_data)
 
     return {
         "run_id": run_id,

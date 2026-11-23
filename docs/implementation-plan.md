@@ -515,6 +515,8 @@ Fixed on the way:
 - A short App Store backfill stays marked "partial" in the note after later daily runs.
 - `deploy/hf_space/` is tracked, and its `app.py` imports again.
 - The note header's review dates and per-store counts come from the stored analysis window; they were guessed from a hardcoded 12 weeks. A run with no stored window is refused.
+- `run_report.json` is written only by `src/run_report.py`, which scrubs values before encoding, so the file stays valid JSON and keeps its Doc link.
+- Coverage weeks are measured from the stored reviews instead of hardcoded to 12, so the short-coverage notice can appear.
 
 ---
 

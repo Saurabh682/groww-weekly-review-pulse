@@ -20,6 +20,7 @@ def run_theme_pipeline(
     week_str: str,
     window_start: str,
     window_end: str,
+    coverage_weeks: float,
     config: Optional[PulseConfig] = None,
     run_id: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -103,7 +104,7 @@ def run_theme_pipeline(
         total_reviews=len(reviews),
         analyzed_reviews=len(filtered_reviews),
         avg_rating=overall_avg_rating,
-        coverage_weeks=12.0,
+        coverage_weeks=coverage_weeks,
         themes=ranked_themes,
     )
 

@@ -16,6 +16,7 @@ from typing import Any, Dict
 from src.config import load_pulse_config, outputs_root, runtime_root
 from src.mcp.capabilities import load_mcp_config, resolve_capability, MCPConfigData
 from src.note.titles import pulse_doc_title, pulse_email_subject
+from src.run_report import write_run_report
 
 
 def count_words(markdown_text: str) -> int:
@@ -139,9 +140,7 @@ def run_skeleton(
         "local_fallback": str(note_file),
     }
 
-    report_file = week_output_dir / "run_report.json"
-    with open(report_file, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2)
+    write_run_report(week_output_dir, report)
 
     return report
 
