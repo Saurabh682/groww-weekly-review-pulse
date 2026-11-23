@@ -12,13 +12,11 @@ Covers all test requirements from docs/edge-case.md §16:
 """
 
 import json
-import sqlite3
-import tempfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import date
 from pathlib import Path
 import pytest
 
-from src.clean.dedupe import deduplicate_reviews, compute_exact_hash
+from src.clean.dedupe import deduplicate_reviews
 from src.clean.lang import detect_language
 from src.clean.low_info import is_low_info, check_low_info_distribution
 from src.clean.normalize import (
@@ -26,13 +24,13 @@ from src.clean.normalize import (
     parse_review_date,
     validate_and_coerce_rating,
 )
-from src.clean.pii import scrub_pii, normalize_unicode_digits
+from src.clean.pii import scrub_pii
 from src.clean.window import (
     calculate_window_bounds,
     compute_coverage_weeks,
     normalize_to_week_start,
 )
-from src.config import get_project_root, load_pulse_config
+from src.config import get_project_root
 from src.ingest.play_csv import PlayStoreImportSource
 from src.pipeline import process_and_ingest_reviews
 from src.store.models import ReviewRecord

@@ -240,32 +240,41 @@ on:
 
 jobs:
   plan:
-    outputs: { mode: ..., apps: ... }   # mode from github.event.schedule or input; apps = JSON list from Supabase
+    outputs: { jobs: ... }   # JSON list of {app_key, mode}, from `python -m src.scheduler plan`
   run:
     needs: plan
-    if: needs.plan.outputs.apps != '[]'
+    if: needs.plan.outputs.jobs != '[]'
     strategy:
       fail-fast: false
       max-parallel: 2
       matrix:
-        app_key: ${{ fromJSON(needs.plan.outputs.apps) }}
+        include: ${{ fromJSON(needs.plan.outputs.jobs) }}
     concurrency:
       group: pulse-${{ matrix.app_key }}
       cancel-in-progress: false
-    steps: [checkout, setup-python, install, "python -m src.pipeline ${{ needs.plan.outputs.mode }} --app ${{ matrix.app_key }}"]
+    steps:
+      - checkout, setup-python, install
+      - python -m src.scheduler run --app "$APP_KEY" --mode "$JOB_MODE" > job.log 2>&1
+      - python -m src.scheduler show-log --app "$APP_KEY" --file job.log
 ```
 
 | Concern | How |
 |---|---|
-| Which apps | `plan` runs `python -m src.registry list --status active,pending_backfill --json` |
-| Pending backfills | In `daily` mode, `plan` also emits apps with `status='pending_backfill'`, and they run `backfill` |
-| No overlap per app | `concurrency` group per `app_key` |
+| Which apps | `python -m src.scheduler plan` reads the registry and emits one `{app_key, mode}` per job. `pulse` and `reconcile` take `active` apps only |
+| Pending backfills | In `daily` mode, apps in `pending_backfill` or `backfilling` (a job that died part-way) run `backfill` |
+| No overlap per app | `concurrency` group per `app_key`. GitHub keeps one running and one waiting job per group; a third replaces the waiting one, and the next daily run picks that app up again |
 | Isolation | `fail-fast: false` |
 | Rate limits | `max-parallel: 2` |
 | Dispatch from backend | `POST /repos/{owner}/{repo}/actions/workflows/pulse.yml/dispatches` with a fine-grained token scoped to this repository, permission **Actions: write** only |
 | 60-day inactivity disable | The repo gets a commit at least every 60 days, or the operator re-enables the workflow; the dashboard health card shows the last successful scheduled run |
+| Default branch | GitHub runs schedules and dispatches only for workflows on the default branch, so `pulse.yml` takes effect after the merge to `main` |
+| Log privacy | The job's output goes to a file. `show-log` prints it only when it holds no secret, email or stored review text, and withholds it when the store cannot be read. Jobs print statuses and counts; crashes print the exception type and source line only |
+| Archive during a run (APP-13) | Status is read again before the Doc write and before the draft write; a job cannot set an archived app back to another status |
+| Low volume (COL-08) | Fewer than `note.min_reviews` (30) usable reviews in the window: status `low_volume`, nothing published, job green |
+| Parallel migrations | `apply_schema` takes a Postgres advisory lock and records applied files in `pulse_internal.applied_migrations`, so two jobs starting together cannot race |
+| Publish secrets | Composio settings and `PULSE_EMAIL_TO` reach the job step only for `pulse` and `backfill` |
 
-Secrets (GitHub Actions): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `COMPOSIO_API_KEY`, `COMPOSIO_MCP_URL`, `COMPOSIO_DOCS_ACCOUNT_ID`, `COMPOSIO_GMAIL_ACCOUNT_ID`, `GEMINI_API_KEY`, `PULSE_EMAIL_TO`.
+Secrets (GitHub Actions): `SUPABASE_DB_URL` (session pooler DSN), `COMPOSIO_API_KEY`, `COMPOSIO_MCP_URL`, `COMPOSIO_GOOGLEDOCS_ACCOUNT_ID`, `COMPOSIO_GMAIL_ACCOUNT_ID`, `PULSE_EMAIL_TO`. No code calls Gemini, so no Gemini key is set.
 Secrets (HF Space): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GH_DISPATCH_TOKEN`, `GH_REPO`, `OPERATOR_EMAILS`, `SUPABASE_JWT_SECRET`.
 
 ---

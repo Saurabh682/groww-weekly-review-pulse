@@ -1,9 +1,7 @@
 """Phase 2 Theme Engine coordinator."""
 
 import hashlib
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 from src.config import PulseConfig, load_pulse_config
 from src.domains import domain_pack_for
@@ -22,7 +20,7 @@ def run_theme_pipeline(
     week_str: str,
     config: Optional[PulseConfig] = None,
     run_id: Optional[str] = None
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Execute Phase 2 Theme Engine on a dataset of reviews."""
     if not config:
         config = load_pulse_config()
@@ -60,7 +58,7 @@ def run_theme_pipeline(
 
     # 4. Labeling & Statistics
     pack = domain_pack_for(store.app.category)
-    used_labels = set()
+    used_labels: Set[str] = set()
     raw_themes: List[dict] = []
 
     for cluster_idx, member_indices in clusters.items():

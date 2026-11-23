@@ -7,10 +7,8 @@ Produces:
 """
 
 import html
-from typing import Optional
 from src.note.models import WeeklyPulseNote
 from src.note.coverage import sources_line
-from src.note.words import count_note_words
 from src.note.titles import pulse_doc_title
 
 

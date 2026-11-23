@@ -6,7 +6,6 @@ sources:
     enabled: true                     # Kill switch for Apple RSS collection (COL-02)
   play_store:
     enabled: true                     # Kill switch for Play Store collection (COL-02)
-    path: data/imports/play_reviews.csv
 
 themes:
   max_themes: 5                       # Hard cap: maximum 5 themes
@@ -17,6 +16,7 @@ note:
   max_words: 250                      # Hard cap: maximum 250 words
   quotes: 3                           # Exactly 3 verbatim quotes
   actions: 3                          # Exactly 3 concrete action ideas
+  min_reviews: 30                     # Publish nothing below this many usable reviews (COL-08)
 
 llm:
   provider: gemini

@@ -35,6 +35,7 @@ COLLECTION_COLUMNS = (
 )
 THEME_COLUMNS = (
     "theme_id", "run_id", "label", "description", "review_count", "share_pct", "avg_rating", "is_top3",
+    "neg_share", "priority_score",
 )
 
 
@@ -114,6 +115,13 @@ class PulseStore:
             raise UnknownApp(f"No app registered with app_key {app_key!r}.")
         return self.get_app(app_key)
 
+    def set_live_status(self, app_key: str, status: str) -> AppRecord:
+        with self.connector.session() as s:
+            s.execute(
+                "UPDATE apps SET status = ? WHERE app_key = ? AND status <> 'archived'", (status, app_key)
+            )
+        return self.get_app(app_key)
+
     def attach_listing(self, app_key: str, platform: str, listing_id: str) -> AppRecord:
         column = LISTING_COLUMNS.get(platform)
         if column is None:
@@ -176,7 +184,12 @@ class AppStore:
         return self._store.connector
 
     def set_status(self, status: str) -> AppRecord:
-        self.app = self._store.set_app_status(self.app_key, status)
+        change = self._store.set_app_status if status == "archived" else self._store.set_live_status
+        self.app = change(self.app_key, status)
+        return self.app
+
+    def refresh(self) -> AppRecord:
+        self.app = self._store.get_app(self.app_key)
         return self.app
 
     def _session(self):
@@ -294,7 +307,8 @@ class AppStore:
             f"VALUES ({', '.join('?' for _ in range(len(THEME_COLUMNS) + 1))}) "
             "ON CONFLICT (app_key, theme_id) DO UPDATE SET run_id = excluded.run_id, label = excluded.label, "
             "description = excluded.description, review_count = excluded.review_count, "
-            "share_pct = excluded.share_pct, avg_rating = excluded.avg_rating, is_top3 = excluded.is_top3"
+            "share_pct = excluded.share_pct, avg_rating = excluded.avg_rating, is_top3 = excluded.is_top3, "
+            "neg_share = excluded.neg_share, priority_score = excluded.priority_score"
         )
         with self._session() as s:
             s.execute(
@@ -306,6 +320,19 @@ class AppStore:
                 (self.app_key, run_id, week_start, total_reviews, analyzed_reviews, avg_rating,
                  coverage_weeks, _now()),
             )
+            kept = [theme["theme_id"] for theme in themes]
+            stale = [
+                r["theme_id"]
+                for r in s.fetchall(
+                    "SELECT theme_id FROM themes WHERE app_key = ? AND run_id = ?", (self.app_key, run_id)
+                )
+                if r["theme_id"] not in kept
+            ]
+            for theme_id in stale:
+                s.execute(
+                    "DELETE FROM review_themes WHERE app_key = ? AND theme_id = ?", (self.app_key, theme_id)
+                )
+                s.execute("DELETE FROM themes WHERE app_key = ? AND theme_id = ?", (self.app_key, theme_id))
             for theme in themes:
                 s.execute(
                     "DELETE FROM review_themes WHERE app_key = ? AND theme_id = ?",
@@ -314,7 +341,8 @@ class AppStore:
                 s.execute(
                     theme_upsert,
                     (self.app_key, theme["theme_id"], run_id, theme["label"], theme["description"],
-                     theme["review_count"], theme["share_pct"], theme["avg_rating"], theme["is_top3"]),
+                     theme["review_count"], theme["share_pct"], theme["avg_rating"], theme["is_top3"],
+                     theme["neg_share"], theme["priority_score"]),
                 )
                 for review_id in theme["member_review_ids"]:
                     s.execute(
@@ -478,6 +506,9 @@ class AppStore:
                 (self.app_key,),
             )
         return [CollectionRunRecord(**_pick(r, COLLECTION_COLUMNS)) for r in rows]
+
+    def finished_collections(self, platform: str) -> List[CollectionRunRecord]:
+        return [c for c in self.list_collections() if c.platform == platform and c.status != "running"]
 
     def latest_finished_collection(self, platform: str) -> Optional[CollectionRunRecord]:
         with self._session() as s:

@@ -350,9 +350,9 @@ def test_store_coverage_in_note_header(groww_store, tmp_path, config):
     })
     coverage = build_store_coverage(groww_store, "2026-11-01", "2026-11-30")
     assert [(c.platform, c.reviews, c.caveat) for c in coverage] == [
-        ("play_store", 1, None), ("app_store", 0, "last collection failed")]
+        ("play_store", 1, "partial, from 2026-11-21"), ("app_store", 0, "last collection failed")]
     note = WeeklyPulseNote("2026-11-23", "2026-11-01", "2026-11-30", "Groww", store_coverage=coverage)
-    assert sources_line(note) == "Google Play 1 · App Store 0 (last collection failed)"
+    assert sources_line(note) == "Google Play 1 (partial, from 2026-11-21) · App Store 0 (last collection failed)"
 
 
 def test_store_coverage_flags_feed_gaps(groww_store):
@@ -360,6 +360,32 @@ def test_store_coverage_flags_feed_gaps(groww_store):
     groww_store.finish_collection(collection_id, "ok", source_limit_hit=True, feed_gaps=2, covered_start="2026-11-21")
     coverage = {c.platform: c for c in build_store_coverage(groww_store, "2026-11-01", "2026-11-30")}
     assert coverage["app_store"].caveat == "partial, store feed had gaps"
+
+
+def _ok_collection(store, mode, window_start, window_end, covered_start, feed_gaps=0):
+    collection_id = store.start_collection("app_store", mode, window_start, window_end)
+    store.finish_collection(collection_id, "ok", covered_start=covered_start, feed_gaps=feed_gaps)
+
+
+def _app_store_caveat(store, window_start="2026-08-31", window_end="2026-11-22"):
+    return {c.platform: c for c in build_store_coverage(store, window_start, window_end)}["app_store"].caveat
+
+
+def test_daily_run_does_not_hide_a_short_backfill(groww_store):
+    _ok_collection(groww_store, "backfill", "2026-08-31", "2026-11-23", "2026-10-02")
+    assert _app_store_caveat(groww_store) == "partial, from 2026-10-02"
+    _ok_collection(groww_store, "daily", "2026-11-21", "2026-11-23", "2026-11-21")
+    assert _app_store_caveat(groww_store) == "partial, from 2026-10-02"
+    assert _app_store_caveat(groww_store, "2026-10-05", "2026-12-27") is None
+
+
+def test_feed_gap_caveat_clears_only_after_a_clean_recollection(groww_store):
+    _ok_collection(groww_store, "backfill", "2026-08-31", "2026-11-10", "2026-08-31")
+    _ok_collection(groww_store, "daily", "2026-11-09", "2026-11-11", "2026-11-09", feed_gaps=1)
+    _ok_collection(groww_store, "daily", "2026-11-10", "2026-11-12", "2026-11-10")
+    assert _app_store_caveat(groww_store) == "partial, store feed had gaps"
+    _ok_collection(groww_store, "reconcile", "2026-11-01", "2026-11-30", "2026-11-01")
+    assert _app_store_caveat(groww_store) is None
 
 
 def test_NOT_14_note_names_exactly_its_stores():

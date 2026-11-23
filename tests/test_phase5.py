@@ -24,23 +24,18 @@ Covers:
 """
 
 import json
-import os
-import shutil
-import subprocess
-import sys
-from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from src.clean.pii import scrub_pii
 from src.clean.window import normalize_to_week_start
-from src.config import get_project_root, load_pulse_config, outputs_root
+from src.config import get_project_root, outputs_root
 from src.pipeline import run_full_pipeline, validate_week_parameter
 from src.store.factory import sqlite_store
 from src.store.models import ReviewRecord
-from src.store.retention import calculate_retention_cutoff, purge_retention
+from src.store.retention import purge_retention
 
 
 @pytest.fixture

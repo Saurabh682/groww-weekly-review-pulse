@@ -10,28 +10,23 @@ Covers:
 
 import json
 from pathlib import Path
-import pytest
 
 from src.note.generate import (
     enforce_word_budget,
-    synthesize_action_items,
     synthesize_theme_one_liner,
 )
 from src.note.models import ActionItem, Quote, ThemeSummary, WeeklyPulseNote
-from src.note.render import render_html, render_markdown, render_plain_text
+from src.note.render import render_markdown
 from src.note.select import (
-    compute_sentence_score,
     is_candidate_eligible,
-    select_quotes_for_themes,
     split_sentences,
 )
 from src.note.validate import (
     is_verbatim_substring,
     validate_note,
-    ValidationResult,
 )
 from src.note.words import count_note_words, strip_markdown
-from src.store.models import ReviewRecord, ThemeRecord
+from src.store.models import ThemeRecord
 from src.domains import FINANCE_PACK
 
 
@@ -145,7 +140,6 @@ def test_QUO_01_verbatim_check():
     """QUO-01 (P0): Quotes must be exact verbatim substrings of source review."""
     rev_id = "rev_101"
     src_text = "Withdrawal request placed on Monday, still pending on Friday."
-    rev = ReviewRecord(rev_id, "play_store", 1, src_text, "2026-11-04")
     
     quote = Quote(
         text="Withdrawal request placed on Monday, still pending on Friday.",
@@ -159,7 +153,6 @@ def test_QUO_01_verbatim_check():
 
 def test_QUO_02_mutation_detected():
     """QUO-02 (P0): Changing even 1 word or character fails verbatim validation."""
-    rev_id = "rev_101"
     src_text = "Withdrawal request placed on Monday, still pending on Friday."
     mutated_text = "Withdrawal request placed on Monday, still pending on Saturday."
     assert not is_verbatim_substring(mutated_text, src_text)

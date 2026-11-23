@@ -1,7 +1,7 @@
 """Data models for persistence in SQLite and in-memory pipeline stages."""
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from typing import Optional
 
 

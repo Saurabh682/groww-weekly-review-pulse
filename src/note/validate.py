@@ -11,7 +11,6 @@ Enforces hard invariants:
 - Play Store scope (no App Store references)
 """
 
-import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 from src.clean.pii import scrub_pii

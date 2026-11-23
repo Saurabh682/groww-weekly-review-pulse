@@ -6,10 +6,9 @@ Generates:
 - Deterministic budget enforcement (NOT-11)
 """
 
-import os
-from typing import Dict, List, Optional
+from typing import List
 from src.domains.pack import DomainPack
-from src.note.models import ActionItem, Quote, ThemeSummary
+from src.note.models import ActionItem
 from src.note.words import count_note_words
 from src.store.models import ThemeRecord
 
@@ -103,7 +102,7 @@ def enforce_word_budget(rendered_markdown: str, max_words: int = 250) -> str:
         else:
             # Trim line
             words = line.split()
-            keep = []
+            keep: List[str] = []
             for w in words:
                 if count_note_words(" ".join(keep + [w])) + current_count <= max_words:
                     keep.append(w)

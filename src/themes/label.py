@@ -1,15 +1,13 @@
 """Theme labeling engine with LLM extraction and deterministic fallback (LBL-01..05, THM-19, THM-20)."""
 
-import json
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from src.clean.pii import scrub_pii
 from src.domains.pack import DomainPack
-from src.store.models import ReviewRecord
 
 
 def extract_cluster_keywords(texts: List[str], top_n: int = 5) -> List[str]:

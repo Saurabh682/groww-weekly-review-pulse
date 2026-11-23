@@ -10,7 +10,7 @@ Handles:
 import re
 import unicodedata
 from datetime import datetime, date, timezone
-from typing import Optional, Tuple
+from typing import Any, Optional
 
 
 ZERO_WIDTH_PATTERN = re.compile(r"[\u200B-\u200D\uFEFF\u200E\u200F\u00A0]")
@@ -44,7 +44,7 @@ def normalize_text(text: Optional[str]) -> str:
     return cleaned
 
 
-def validate_and_coerce_rating(raw_rating: any) -> int:
+def validate_and_coerce_rating(raw_rating: Any) -> int:
     """Validate rating is integer 1-5. Coerces 4.0 -> 4. Rejects out of range or non-numeric (ING-05)."""
     if raw_rating is None:
         raise ValueError("Rating cannot be None")
@@ -72,7 +72,7 @@ def validate_and_coerce_rating(raw_rating: any) -> int:
     raise ValueError(f"Unsupported rating type: {type(raw_rating)}")
 
 
-def parse_review_date(raw_date: any, reference_date: Optional[date] = None) -> str:
+def parse_review_date(raw_date: Any, reference_date: Optional[date] = None) -> str:
     """Parse various date formats into UTC YYYY-MM-DD. Rejects future dates (ING-06, ING-07)."""
     if not raw_date:
         raise ValueError("Date cannot be empty")

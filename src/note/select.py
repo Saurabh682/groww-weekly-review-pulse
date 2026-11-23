@@ -6,7 +6,7 @@ and exact substring preservation (the LLM never writes or rewrites quote text).
 """
 
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Set, Tuple
 from src.note.models import Quote
 from src.note.words import count_note_words
 from src.store.models import ReviewRecord, ThemeRecord

@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from src.clean.pii import scrub_pii
 from src.mcp.composio import ToolCaller
-from src.mcp.errors import MCPMalformedResponse, MCPNotFoundError
+from src.mcp.errors import MCPMalformedResponse, MCPNotFoundError, PublishStoppedArchived
 from src.note.titles import pulse_doc_title, pulse_email_subject
 from src.store.models import PublishStateRecord
 from src.store.store import AppStore
@@ -141,7 +141,12 @@ class PulsePublisher:
         self.docs = DocsPublisher(client)
         self.drafts = DraftPublisher(client)
 
+    def _require_live_app(self) -> None:
+        if self.store.refresh().status == "archived":
+            raise PublishStoppedArchived(f"App {self.store.app_key!r} is archived; nothing more is published.")
+
     def publish_pulse(self, week_start: str, note_markdown: str, recipient_email: str) -> PublishResult:
+        self._require_live_app()
         content_hash = hashlib.sha256(note_markdown.encode("utf-8")).hexdigest()
         state = self.store.get_publish_state(week_start) or PublishStateRecord(week_start=week_start)
         if state.content_hash == content_hash and state.doc_id and state.draft_id:
@@ -157,6 +162,7 @@ class PulsePublisher:
         pii_gate(title, subject, note_markdown)
         self.client.verify_accounts()
 
+        self._require_live_app()
         doc_id, doc_url = self.docs.upsert(title, note_markdown, state.doc_id, state.doc_url)
         self.store.save_publish_state(PublishStateRecord(
             week_start=week_start, doc_id=doc_id, doc_url=doc_url, draft_id=state.draft_id, content_hash=None,
@@ -164,6 +170,7 @@ class PulsePublisher:
 
         body = draft_body(note_markdown, doc_url)
         pii_gate(subject, body.replace(doc_url, DOC_URL_MASK))
+        self._require_live_app()
         draft_id = self.drafts.upsert(recipient, subject, body, state.draft_id)
         self.store.save_publish_state(PublishStateRecord(
             week_start=week_start, doc_id=doc_id, doc_url=doc_url, draft_id=draft_id, content_hash=content_hash,

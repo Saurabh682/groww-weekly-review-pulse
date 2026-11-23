@@ -104,6 +104,8 @@ CREATE TABLE IF NOT EXISTS themes (
     share_pct REAL NOT NULL,
     avg_rating REAL NOT NULL,
     is_top3 INTEGER NOT NULL DEFAULT 0,
+    neg_share REAL NOT NULL DEFAULT 0.0,
+    priority_score REAL NOT NULL DEFAULT 0.0,
     PRIMARY KEY (app_key, theme_id),
     FOREIGN KEY (app_key, run_id) REFERENCES runs (app_key, run_id)
 );

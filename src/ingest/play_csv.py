@@ -12,7 +12,7 @@ import csv
 import io
 import warnings
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import List
 
 from src.clean.normalize import normalize_text, validate_and_coerce_rating, parse_review_date
 from src.config import resolve_project_path

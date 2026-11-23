@@ -5,11 +5,10 @@ Enforces:
 - ORC-09: Retention removes old raw files; only files outside window + one prior window removed.
 """
 
-import os
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from src.clean.window import normalize_to_week_start
 from src.config import raw_reviews_dir, resolve_project_path
@@ -36,7 +35,7 @@ def purge_retention(
     store: AppStore,
     cutoff_date: str,
     raw_dir: Optional[Path | str] = None
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Execute retention purge on database reviews and archived raw CSV files.
     
     Returns:

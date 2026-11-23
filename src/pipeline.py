@@ -14,7 +14,7 @@ import json
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.clean.window import (
     calculate_window_bounds,
@@ -32,19 +32,21 @@ from src.config import (
 from src.ingest.persist import clean_raw_reviews
 from src.ingest.play_csv import PlayStoreImportSource
 from src.store.factory import open_store
+from src.store.models import ReviewRecord
 from src.mcp.capabilities import load_mcp_config
 from src.mcp.composio import ComposioClient, ToolCaller
-from src.mcp.errors import MCPError
+from src.mcp.errors import MCPError, PublishStoppedArchived
 from src.mcp.publisher import PublishResult, PulsePublisher
 from src.store.store import AppStore
+from src.themes.engine import run_theme_pipeline
 
 
 def process_and_ingest_reviews(
     store: AppStore,
     week_str: str,
+    csv_path: Path | str,
     config: Optional[PulseConfig] = None,
-    csv_path: Optional[Path | str] = None,
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Execute Phase 1 Ingestion, Scrubbing, and Persistence."""
     if not config:
         config = load_pulse_config()
@@ -54,7 +56,7 @@ def process_and_ingest_reviews(
     window_start, window_end = calculate_window_bounds(week_start, weeks=config.window.weeks)
 
     # 2. Ingest raw records with allowlist (ING-01, ING-03)
-    source_path = resolve_project_path(csv_path or config.sources.play_store.path)
+    source_path = resolve_project_path(csv_path)
     importer = PlayStoreImportSource(source_path)
     raw_records = importer.fetch(window_start=window_start, window_end=window_end)
 
@@ -96,14 +98,11 @@ def process_and_ingest_reviews(
     return summary
 
 
-from src.themes.engine import run_theme_pipeline
-
-
 def run_themes_stage(
     store: AppStore,
     week_str: str,
     config: Optional[PulseConfig] = None,
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Execute Phase 2 Theme Engine on reviews stored for one app."""
     if not config:
         config = load_pulse_config()
@@ -142,6 +141,22 @@ def validate_week_parameter(week_str: str):
     return normalize_to_week_start(cleaned)
 
 
+PUBLISH_RUN_STATUSES = {
+    "published": "published",
+    "noop": "published",
+    "stopped_archived": "stopped_archived",
+    "failed": "failed",
+}
+
+
+def final_run_status(pub_result: Optional[PublishResult]) -> str:
+    return "validated" if pub_result is None else PUBLISH_RUN_STATUSES[pub_result.status]
+
+
+def mean_rating(reviews: List[ReviewRecord]) -> float:
+    return round(sum(r.rating for r in reviews) / len(reviews), 2) if reviews else 0.0
+
+
 def run_full_pipeline(
     store: AppStore,
     week_str: str,
@@ -151,7 +166,7 @@ def run_full_pipeline(
     retries: int = 3,
     config: Optional[PulseConfig] = None,
     mcp_client: Optional[ToolCaller] = None,
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Execute complete weekly pulse pipeline (Phase 5 Orchestrator).
     
     Stages:
@@ -167,6 +182,8 @@ def run_full_pipeline(
 
     if not config:
         config = load_pulse_config()
+    if stage_limit == "ingest" and csv_path is None:
+        raise ValueError("The ingest stage reads a CSV file. Pass --file.")
     if not dry_run and mcp_client is None:
         mcp_client = ComposioClient.from_env(load_mcp_config(config.mcp.config))
 
@@ -186,22 +203,23 @@ def run_full_pipeline(
     # Stage 1: Ingestion
     t0 = datetime.now(timezone.utc)
     try:
-        reviews_in_window = store.get_reviews_in_window(window_start, window_end)
-        if not reviews_in_window or stage_limit == "ingest" or csv_path is not None:
+        if csv_path is not None:
             ingest_summary = process_and_ingest_reviews(
                 store=store,
                 week_str=norm_week,
-                config=config,
                 csv_path=csv_path,
+                config=config,
             )
             stage_statuses["ingest"] = "done"
         else:
+            reviews_in_window = store.get_reviews_in_window(window_start, window_end)
             stage_statuses["ingest"] = "cached"
             ingest_summary = {
                 "week": norm_week,
                 "window_start": window_start,
                 "window_end": window_end,
                 "total_analyzed": len(reviews_in_window),
+                "avg_rating": mean_rating(reviews_in_window),
                 "coverage_weeks": compute_coverage_weeks(reviews_in_window),
                 "short_coverage_flag": compute_coverage_weeks(reviews_in_window) < 8.0,
             }
@@ -227,6 +245,36 @@ def run_full_pipeline(
             "stage_limit": "ingest",
             "ingest": ingest_summary,
             "timings": stage_timings
+        }
+
+    usable_reviews = len(store.get_reviews_in_window(window_start, window_end, include_low_info=False))
+    if not dry_run and stage_limit in (None, "publish") and usable_reviews < config.note.min_reviews:
+        store.update_run(run_id=run_id, status="low_volume", finished=True)
+        stage_statuses["publish"] = "skipped_low_volume"
+        low_volume_report = {
+            "run_id": run_id,
+            "week_start": norm_week,
+            "window_start": window_start,
+            "window_end": window_end,
+            "status": "low_volume",
+            "usable_reviews": usable_reviews,
+            "min_reviews": config.note.min_reviews,
+            "dry_run": dry_run,
+            "stage_statuses": stage_statuses,
+            "timings": stage_timings,
+        }
+        low_volume_dir = outputs_root() / store.app_key / norm_week
+        low_volume_dir.mkdir(parents=True, exist_ok=True)
+        low_volume_path = low_volume_dir / "run_report.json"
+        low_volume_path.write_text(json.dumps(low_volume_report, indent=2), encoding="utf-8")
+        return {
+            "run_id": run_id,
+            "week": norm_week,
+            "status": "low_volume",
+            "usable_reviews": usable_reviews,
+            "min_reviews": config.note.min_reviews,
+            "report_path": str(low_volume_path),
+            "timings": stage_timings,
         }
 
     # Stage 2: Themes Clustering
@@ -260,14 +308,7 @@ def run_full_pipeline(
     from src.note.engine import build_and_validate_pulse_note
     from src.clean.pii import scrub_pii
 
-    attempt = 0
-    note = None
-    rendered_md = None
-    val_result = None
-    out_folder = None
-
-    while attempt < max(1, retries):
-        attempt += 1
+    for attempt in range(1, max(1, retries) + 1):
         note, rendered_md, val_result, out_folder = build_and_validate_pulse_note(
             store=store,
             week_start=norm_week,
@@ -334,7 +375,7 @@ def run_full_pipeline(
     t0 = datetime.now(timezone.utc)
     pub_result = None
 
-    if not dry_run:
+    if mcp_client is not None and not dry_run:
         publisher = PulsePublisher(store=store, client=mcp_client)
         try:
             pub_result = publisher.publish_pulse(
@@ -346,6 +387,10 @@ def run_full_pipeline(
             pub_result = PublishResult(status="failed", week_start=norm_week, message=str(exc))
             store.update_run(run_id=run_id, status="publish_failed", error=str(exc), finished=True)
             stage_statuses["publish"] = "failed"
+        except PublishStoppedArchived as exc:
+            pub_result = PublishResult(status="stopped_archived", week_start=norm_week, message=str(exc))
+            store.update_run(run_id=run_id, status="stopped_archived", finished=True)
+            stage_statuses["publish"] = "stopped_archived"
         else:
             store.update_run(run_id=run_id, status="published", finished=True)
             stage_statuses["publish"] = "done"
@@ -365,7 +410,7 @@ def run_full_pipeline(
         "week_start": norm_week,
         "window_start": window_start,
         "window_end": window_end,
-        "status": "published" if (not dry_run and pub_result and pub_result.status in ("published", "noop")) else ("validated" if dry_run else "failed"),
+        "status": final_run_status(pub_result),
         "dry_run": dry_run,
         "total_reviews": ingest_summary.get("total_analyzed", 0),
         "analyzed_reviews": theme_summary.get("analyzable_reviews", 0),
@@ -431,7 +476,7 @@ def require_recipient(config: PulseConfig) -> str:
     return recipient
 
 
-def _print_theme_summary(theme_summary: Dict[str, any]) -> None:
+def _print_theme_summary(theme_summary: Dict[str, Any]) -> None:
     display_summary = {
         "week": theme_summary["week"],
         "total_input_reviews": theme_summary["total_input_reviews"],
@@ -472,7 +517,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     ingest_parser = subparsers.add_parser("ingest", help="Ingest, clean, and scrub reviews from a CSV import")
     add_common(ingest_parser)
-    ingest_parser.add_argument("--file", default=None, help="Path to input CSV file")
+    ingest_parser.add_argument("--file", required=True, help="Path to input CSV file")
 
     themes_parser = subparsers.add_parser("themes", help="Cluster reviews into <=5 ranked themes")
     add_common(themes_parser)
@@ -540,7 +585,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         _print_theme_summary(run_themes_stage(store=store, week_str=args.week))
     elif args.command == "note":
         from src.note.engine import build_and_validate_pulse_note
-        week_start = normalize_to_week_start(args.week)
+        week_start = str(normalize_to_week_start(args.week))
         note, rendered_md, val_result, out_folder = build_and_validate_pulse_note(
             store=store,
             week_start=week_start,

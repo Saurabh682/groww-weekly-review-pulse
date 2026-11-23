@@ -8,17 +8,30 @@ LISTING_ATTRIBUTES = {"play_store": "play_package_id", "app_store": "app_store_i
 IOS_WORDS = ("iOS", "iPhone")
 
 
-def coverage_caveat(latest: Optional[CollectionRunRecord], reviews: int) -> Optional[str]:
-    if latest is None:
+def _recollected(gap: CollectionRunRecord, runs: List[CollectionRunRecord]) -> bool:
+    return any(
+        r.collection_id > gap.collection_id and not r.feed_gaps
+        and r.covered_start is not None and r.covered_start <= gap.window_start and r.window_end >= gap.window_end
+        for r in runs
+    )
+
+
+def coverage_caveat(
+    collections: List[CollectionRunRecord], window_start: str, window_end: str, reviews: int
+) -> Optional[str]:
+    if not collections:
         return None if reviews else "not collected yet"
-    if latest.status == "skipped_disabled":
+    if collections[-1].status == "skipped_disabled":
         return "collection disabled"
-    if latest.status == "failed":
+    if collections[-1].status == "failed":
         return "last collection failed"
-    if latest.feed_gaps:
+    runs = [c for c in collections if c.status == "ok"]
+    in_window = [c for c in runs if c.window_start <= window_end and c.window_end >= window_start]
+    if any(c.feed_gaps and not _recollected(c, runs) for c in in_window):
         return "partial, store feed had gaps"
-    if latest.source_limit_hit and latest.covered_start:
-        return f"partial, from {latest.covered_start}"
+    starts = [c.covered_start for c in runs if c.covered_start]
+    if starts and min(starts) > window_start:
+        return f"partial, from {min(starts)}"
     return None
 
 
@@ -30,8 +43,8 @@ def build_store_coverage(store: AppStore, window_start: str, window_end: str) ->
         reviews = counts.get(platform, 0)
         if not listed and reviews == 0:
             continue
-        latest = store.latest_finished_collection(platform)
-        coverage.append(StoreCoverage(platform, reviews, coverage_caveat(latest, reviews)))
+        caveat = coverage_caveat(store.finished_collections(platform), window_start, window_end, reviews)
+        coverage.append(StoreCoverage(platform, reviews, caveat))
     return coverage
 
 

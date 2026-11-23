@@ -26,6 +26,13 @@ class ListingRequest:
     lang: str = LANG_DEFAULT
 
 
+BACKFILL_MESSAGES = {
+    "dispatched": "Backfill started.",
+    "failed": "Backfill is queued for the next daily run.",
+    "not_configured": "Backfill is queued for the next daily run.",
+}
+
+
 @dataclass
 class Registration:
     app: AppRecord
@@ -37,7 +44,11 @@ class Registration:
             "app": app_to_dict(self.app),
             "slots_used": self.slots_used,
             "slots_total": ACTIVE_APP_CAP,
-            "backfill_dispatch": {"status": self.dispatch.status, "detail": self.dispatch.detail},
+            "backfill_dispatch": {
+                "status": self.dispatch.status,
+                "detail": self.dispatch.detail,
+                "message": BACKFILL_MESSAGES[self.dispatch.status],
+            },
         }
 
 

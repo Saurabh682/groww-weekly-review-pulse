@@ -8,7 +8,8 @@ from src.store.errors import translate_integrity_error
 SCHEMA_DIR = Path(__file__).resolve().parent / "schema"
 SQLITE_SCHEMA_FILE = SCHEMA_DIR / "sqlite.sql"
 POSTGRES_MIGRATIONS_DIR = Path(__file__).resolve().parents[2] / "supabase" / "migrations"
-SQLITE_SCHEMA_VERSION = 3
+SQLITE_SCHEMA_VERSION = 4
+MIGRATION_LOCK_KEY = 4207311
 
 
 class SqlSession:
@@ -69,13 +70,18 @@ class SqliteConnector:
         try:
             version = conn.execute("PRAGMA user_version").fetchone()[0]
             legacy = _sqlite_has_legacy_v1_schema(conn)
+            scores_missing = "themes" in _sqlite_tables(conn) and "neg_share" not in _sqlite_columns(conn, "themes")
             if legacy:
                 _sqlite_rename_legacy_tables(conn)
             if "collection_runs" in _sqlite_tables(conn) and "feed_gaps" not in _sqlite_columns(conn, "collection_runs"):
                 conn.execute("ALTER TABLE collection_runs ADD COLUMN feed_gaps INTEGER NOT NULL DEFAULT 0")
+            if scores_missing and not legacy:
+                _sqlite_add_theme_score_columns(conn)
             conn.executescript(SQLITE_SCHEMA_FILE.read_text(encoding="utf-8"))
             if legacy:
                 _sqlite_copy_legacy_rows(conn)
+            if scores_missing:
+                _sqlite_fill_theme_scores(conn)
             if version != SQLITE_SCHEMA_VERSION:
                 conn.execute(f"PRAGMA user_version = {SQLITE_SCHEMA_VERSION}")
             conn.commit()
@@ -115,8 +121,17 @@ class PostgresConnector:
     def apply_schema(self) -> None:
         conn = self._connect()
         try:
+            conn.execute("SELECT pg_advisory_xact_lock(%s)", (MIGRATION_LOCK_KEY,))
+            conn.execute("CREATE SCHEMA IF NOT EXISTS pulse_internal")
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS pulse_internal.applied_migrations "
+                "(name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+            )
+            applied = {r["name"] for r in conn.execute("SELECT name FROM pulse_internal.applied_migrations")}
             for migration in sorted(POSTGRES_MIGRATIONS_DIR.glob("*.sql")):
-                conn.execute(migration.read_text(encoding="utf-8"))
+                if migration.name not in applied:
+                    conn.execute(migration.read_text(encoding="utf-8"))
+                    conn.execute("INSERT INTO pulse_internal.applied_migrations (name) VALUES (%s)", (migration.name,))
             conn.commit()
         finally:
             conn.close()
@@ -145,6 +160,20 @@ def _sqlite_rename_legacy_tables(conn: sqlite3.Connection) -> None:
             conn.execute(f"ALTER TABLE {table} RENAME TO legacy_v1_{table}")
     for index in ("idx_reviews_date", "idx_reviews_platform_date", "idx_reviews_low_info"):
         conn.execute(f"DROP INDEX IF EXISTS {index}")
+
+
+def _sqlite_add_theme_score_columns(conn: sqlite3.Connection) -> None:
+    conn.execute("ALTER TABLE themes ADD COLUMN neg_share REAL NOT NULL DEFAULT 0.0")
+    conn.execute("ALTER TABLE themes ADD COLUMN priority_score REAL NOT NULL DEFAULT 0.0")
+
+
+def _sqlite_fill_theme_scores(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        "UPDATE themes SET neg_share = COALESCE((SELECT ROUND(AVG(CASE WHEN r.rating <= 2 THEN 1.0 ELSE 0.0 END), 4) "
+        "FROM review_themes rt JOIN reviews r ON r.app_key = rt.app_key AND r.review_id = rt.review_id "
+        "WHERE rt.app_key = themes.app_key AND rt.theme_id = themes.theme_id), 0.0)"
+    )
+    conn.execute("UPDATE themes SET priority_score = ROUND(share_pct * (0.6 + 0.4 * neg_share), 5)")
 
 
 def _sqlite_copy_legacy_rows(conn: sqlite3.Connection) -> None:

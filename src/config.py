@@ -12,7 +12,7 @@ import os
 import re
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 import yaml
 from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -28,7 +28,6 @@ class AppStoreSourceConfig(BaseModel):
 
 class PlayStoreSourceConfig(BaseModel):
     enabled: bool = True
-    path: Path = Path("data/imports/play_reviews.csv")
 
 
 class SourcesConfig(BaseModel):
@@ -55,6 +54,7 @@ class NoteConfig(BaseModel):
     max_words: int = Field(default=250)
     quotes: int = Field(default=3)
     actions: int = Field(default=3)
+    min_reviews: int = Field(default=30, ge=3)
 
     @field_validator("max_words")
     @classmethod

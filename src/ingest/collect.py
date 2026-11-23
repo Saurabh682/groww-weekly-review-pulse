@@ -118,7 +118,7 @@ def collect_app(
 ) -> CollectionReport:
     if mode not in COLLECTION_MODES:
         raise ValueError(f"Unknown collection mode {mode!r}. Use one of {COLLECTION_MODES}.")
-    if store.app.status not in COLLECTABLE_STATUSES:
+    if store.refresh().status not in COLLECTABLE_STATUSES:
         raise CollectionRefused(f"App {store.app_key!r} is {store.app.status}; collection is not allowed.")
     config = config or load_pulse_config()
     window = collection_window(mode, today, config.window.weeks)
@@ -145,4 +145,4 @@ def collect_app(
         store.set_status("failed")
     elif mode == "backfill":
         store.set_status("active")
-    return CollectionReport(store.app_key, mode, window[0], window[1], runs, store.app.status)
+    return CollectionReport(store.app_key, mode, window[0], window[1], runs, store.refresh().status)

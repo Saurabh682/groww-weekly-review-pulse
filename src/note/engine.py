@@ -13,7 +13,6 @@ from src.note.models import ThemeSummary, WeeklyPulseNote
 from src.note.render import render_html, render_markdown, render_plain_text
 from src.note.select import select_quotes_for_themes
 from src.note.validate import ValidationResult, validate_note
-from src.note.words import count_note_words
 from src.store.models import ReviewRecord
 from src.store.store import AppStore
 
@@ -78,7 +77,6 @@ def build_and_validate_pulse_note(
 
     # Compute window dates from week_start
     # Note covers week_start backwards ~9 weeks
-    from datetime import datetime, timedelta
     dt_end = datetime.strptime(week_start, "%Y-%m-%d")
     dt_start = dt_end - timedelta(weeks=run_record.coverage_weeks if run_record.coverage_weeks > 0 else 8.0)
     window_start_str = dt_start.strftime("%Y-%m-%d")

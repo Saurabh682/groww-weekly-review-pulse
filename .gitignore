@@ -41,4 +41,4 @@ ENV/
 .vscode/
 
 # Space builds
-hf_space/
+/hf_space/

@@ -496,6 +496,7 @@ AG should update this table and the affected tests whenever a decision changes.
 | COL-10 | Same review text on both stores on the same day | Kept as two reviews (platform is in the dedupe key) | `test_COL_10_cross_store_not_merged` | U | P2 |
 | COL-11 | Backfill completes | Status `active`; first pulse generated for the latest complete week | `test_COL_11_backfill_then_pulse` | I | P0 |
 | COL-12 | Review in a non-configured language from the RSS feed | Stored with detected `lang`; v1 language rules apply | `test_COL_12_lang_from_feed` | U | P2 |
+| COL-14 | Short backfill followed by daily runs | Note keeps "partial, from <date>" until the window starts after that date; a feed gap clears only after a clean recollection of the same days | `test_daily_run_does_not_hide_a_short_backfill`, `test_feed_gap_caveat_clears_only_after_a_clean_recollection` | I | P0 |
 | COL-13 | App Store RSS page returns 200 with no reviews (a feed gap), in JSON and in XML | All 10 pages are swept; an empty page is never treated as end of feed; XML is tried when JSON is empty; `feed_gaps` counted, `source_limit_hit=true`; note header says "partial, store feed had gaps" | `test_COL_13_feed_gaps_flagged_and_xml_fallback` | U | P0 |
 
 ## 22. Scheduler
@@ -511,6 +512,8 @@ AG should update this table and the affected tests whenever a decision changes.
 | SCH-07 | One app's job fails | Other apps' jobs finish; workflow reports the one failure | `test_SCH_07_failure_isolation` | S | P0 |
 | SCH-08 | Workflow logs | Contain no review text, no emails, no secrets | `test_SCH_08_log_scan` | I | P0 |
 | SCH-09 | Pulse week computed on Monday 03:30 UTC | `week_start` is the previous Monday (UTC) | `test_SCH_09_week_start` | U | P1 |
+| SCH-11 | Job died part-way, app left in `backfilling` | Next daily run backfills it | `test_SCH_04_pending_backfill_pickup` | U | P1 |
+| SCH-12 | Two jobs open Supabase at once | Migrations run once under a lock, no deadlock | `test_parallel_jobs_can_open_one_postgres_store`, `test_postgres_migrations_run_once` | I | P1 |
 | SCH-10 | Reconcile on the 1st | Window is the full previous calendar month, including leap-year February | `test_SCH_10_reconcile_window` | U | P1 |
 
 ## 23. Storage

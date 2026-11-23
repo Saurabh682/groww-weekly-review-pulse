@@ -1,6 +1,6 @@
 """Review embedding generation and SQLite caching (THM-10, THM-11)."""
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD

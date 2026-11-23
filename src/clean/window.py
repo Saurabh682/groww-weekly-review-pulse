@@ -5,7 +5,7 @@ from typing import List, Tuple
 from src.store.models import ReviewRecord
 
 
-def normalize_to_week_start(input_date_str: str, reference_date: date = None) -> date:
+def normalize_to_week_start(input_date_str: str, reference_date: date | None = None) -> date:
     """Normalize input date to Monday-start ISO week date (WIN-06).
     Rejects future week dates (WIN-08).
     """

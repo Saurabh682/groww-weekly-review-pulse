@@ -6,8 +6,6 @@ Covers:
 - LBL-01..05
 """
 
-import tempfile
-from pathlib import Path
 import numpy as np
 import pytest
 
@@ -16,12 +14,10 @@ from src.domains import FINANCE_PACK
 from src.store.models import ReviewRecord
 from src.themes.cluster import cluster_reviews
 from src.themes.embed import Embedder
-from src.themes.engine import run_theme_pipeline
-from src.themes.filter import prepare_reviews_for_themes, count_words
+from src.themes.filter import prepare_reviews_for_themes
 from src.themes.label import (
     generate_deterministic_label,
     label_cluster,
-    extract_cluster_keywords,
 )
 from src.themes.rank import compute_theme_stats, rank_themes
 

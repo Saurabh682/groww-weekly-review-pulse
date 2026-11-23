@@ -7,26 +7,23 @@ Implements all Phase 0 edge cases specified in docs/edge-case.md §16:
 - SEC-04, SEC-05
 """
 
-import os
 import socket
 import tempfile
 import warnings
 from pathlib import Path
 import pytest
-import yaml
 
 from src.config import (
     load_pulse_config,
     require_secret,
     get_project_root,
-    PulseConfig,
     ThemesConfig,
     NoteConfig,
     AppStoreSourceConfig,
     PlayStoreSourceConfig,
 )
-from src.mcp.capabilities import load_mcp_config, resolve_capability, MCPConfigData
-from src.skeleton import run_skeleton, count_words, build_skeleton_note
+from src.mcp.capabilities import load_mcp_config, MCPConfigData
+from src.skeleton import run_skeleton
 
 
 # ==============================================================================
@@ -112,7 +109,7 @@ def test_CFG_06_no_secrets_in_outputs(monkeypatch):
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
-        report = run_skeleton(
+        run_skeleton(
             config_path="config/pulse.yaml",
             week_str="2026-11-10",
             output_base=tmp_path
@@ -173,7 +170,6 @@ def test_CFG_09_cross_platform_paths():
     """CFG-09: Paths handled via pathlib.Path resolve cleanly across platforms."""
     root = get_project_root()
     pulse_cfg = load_pulse_config("config/pulse.yaml")
-    assert isinstance(pulse_cfg.sources.play_store.path, Path)
     assert isinstance(pulse_cfg.mcp.config, Path)
     assert root.is_absolute()
 

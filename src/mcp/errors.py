@@ -1,3 +1,7 @@
+class PublishStoppedArchived(Exception):
+    pass
+
+
 class MCPError(Exception):
     pass
 
