@@ -21,7 +21,7 @@ from src.clean.window import (
     compute_coverage_weeks,
     normalize_to_week_start,
 )
-from src.config import load_pulse_config, PulseConfig, get_project_root, resolve_project_path
+from src.config import load_project_env, load_pulse_config, PulseConfig, get_project_root, resolve_project_path
 from src.ingest.persist import clean_raw_reviews, default_raw_dir
 from src.ingest.play_csv import PlayStoreImportSource
 from src.store.factory import open_store
@@ -492,6 +492,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Optional[List[str]] = None) -> None:
     args = build_parser().parse_args(argv)
+    load_project_env()
     store = open_store().for_app(args.app)
 
     if args.command == "collect":

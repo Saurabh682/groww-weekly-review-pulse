@@ -2,8 +2,10 @@ import os
 
 from src.api.app import create_app
 from src.api.auth import auth_from_env
-from src.config import get_project_root
+from src.config import get_project_root, load_project_env
 from src.registry.cli import default_service
+
+load_project_env()
 
 app = create_app(
     service=default_service(),

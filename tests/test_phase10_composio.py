@@ -210,3 +210,20 @@ def test_expired_session_is_renewed(groww_store, composio):
     publisher.publish_pulse(WEEK, "# One", TEST_RECIPIENT)
     composio.sessions.clear()
     assert publisher.publish_pulse(WEEK, "# Two", TEST_RECIPIENT).status == "published"
+
+
+def test_CMP_10_settings_load_from_env_file(tmp_path, monkeypatch):
+    import os
+
+    from src.config import load_project_env
+
+    for name in ENV:
+        monkeypatch.setenv(name, "")
+        monkeypatch.delenv(name)
+    monkeypatch.setenv("COMPOSIO_API_KEY", "from-process")
+    env_file = tmp_path / ".env"
+    env_file.write_text(chr(10).join(f"{k}={v}" for k, v in ENV.items()), encoding="utf-8")
+    assert load_project_env(env_file)
+    settings = ComposioSettings.from_env(load_mcp_config("config/mcp.yaml"), os.environ)
+    assert settings.accounts == {"googledocs": "ca_docs", "gmail": "ca_gmail"}
+    assert settings.api_key == "from-process"

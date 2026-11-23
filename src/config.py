@@ -14,6 +14,7 @@ import warnings
 from pathlib import Path
 from typing import Any, Dict, Optional
 import yaml
+from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -122,6 +123,10 @@ def _expand_env_vars(data: Any) -> Any:
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+def load_project_env(env_path: Path | None = None) -> bool:
+    return load_dotenv(env_path or PROJECT_ROOT / ".env", override=False)
 
 
 def get_project_root() -> Path:
