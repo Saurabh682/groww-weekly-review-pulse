@@ -1,8 +1,8 @@
+import http.client
 import json
 import os
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Protocol, Tuple
@@ -24,6 +24,9 @@ from src.mcp.errors import (
 PROTOCOL_VERSION = "2025-03-26"
 CLIENT_INFO = {"name": "weekly-review-pulse", "version": "2.0.0"}
 SESSION_HEADER = "Mcp-Session-Id"
+EXECUTE_TOOL = "COMPOSIO_MULTI_EXECUTE_TOOL"
+CONNECTIONS_TOOL = "COMPOSIO_MANAGE_CONNECTIONS"
+REPLAY_UNSAFE_CAPABILITIES = ("docs.create", "docs.clear", "docs.write", "gmail.create_draft")
 RETRYABLE_HTTP = (429, 500, 502, 503, 504)
 EXPIRED_MARKERS = (
     "expired",
@@ -44,6 +47,8 @@ ERROR_TEXT_LIMIT = 300
 
 
 class ToolCaller(Protocol):
+    def verify_accounts(self) -> None: ...
+
     def call(self, capability: str, arguments: Dict[str, Any]) -> Dict[str, Any]: ...
 
 
@@ -67,13 +72,6 @@ class ComposioSettings:
             api_key=environ[config.server.api_key_env].strip(),
             accounts={toolkit: environ[env].strip() for toolkit, env in config.accounts.items()},
         )
-
-
-def account_endpoint(base_url: str, account_id: str) -> str:
-    parts = urllib.parse.urlsplit(base_url)
-    query = [(k, v) for k, v in urllib.parse.parse_qsl(parts.query) if k != "connected_account_id"]
-    query.append(("connected_account_id", account_id))
-    return urllib.parse.urlunsplit(parts._replace(query=urllib.parse.urlencode(query)))
 
 
 def decode_rpc_body(body: str, request_id: int) -> Dict[str, Any]:
@@ -112,7 +110,8 @@ class ComposioClient:
     def __init__(self, settings: ComposioSettings, config: MCPConfigData):
         self.settings = settings
         self.config = config
-        self._sessions: Dict[str, str] = {}
+        self._session_id: Optional[str] = None
+        self._verified: Dict[str, str] = {}
         self._request_id = 0
 
     @classmethod
@@ -121,64 +120,107 @@ class ComposioClient:
 
     def call(self, capability: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         target = resolve_capability(self.config, capability)
-        account_id = (self.settings.accounts.get(target.toolkit) or "").strip()
-        if not account_id:
-            raise MCPAccountNotPinned(
-                f"No connected-account ID for toolkit '{target.toolkit}' (CMP-02). "
-                f"Set {self.config.accounts.get(target.toolkit, 'the account variable')}; nothing was called."
-            )
-        endpoint = account_endpoint(self.settings.url, account_id)
-        result = self._call_with_retries(target, endpoint, arguments)
+        self._pinned_account(target.toolkit)
+        self.verify_accounts()
+        item = {"tool_slug": target.tool, "arguments": arguments, "account": self._verified[target.toolkit]}
+        result = self._call_meta_tool(
+            EXECUTE_TOOL,
+            {"tools": [item], "sync_response_to_workbench": False},
+            target.tool,
+            replay_safe=capability not in REPLAY_UNSAFE_CAPABILITIES,
+        )
         return self._unwrap(target, result)
 
-    def _call_with_retries(self, target: CapabilityTarget, endpoint: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def verify_accounts(self) -> None:
+        if self._verified:
+            return
+        pins = {toolkit: self._pinned_account(toolkit) for toolkit in self.config.accounts}
+        listing = [{"name": toolkit, "action": "list"} for toolkit in pins]
+        result = self._call_meta_tool(CONNECTIONS_TOOL, {"toolkits": listing}, CONNECTIONS_TOOL, replay_safe=True)
+        envelope, text = tool_envelope(result)
+        data = (envelope or {}).get("data")
+        connections = data.get("results") if isinstance(data, dict) else None
+        if result.get("isError") or not isinstance(connections, dict):
+            raise MCPMalformedResponse(f"Composio did not list connected accounts: {text[:ERROR_TEXT_LIMIT]}")
+        self._verified = {toolkit: self._match_account(toolkit, pin, connections) for toolkit, pin in pins.items()}
+
+    def _pinned_account(self, toolkit: str) -> str:
+        account = (self.settings.accounts.get(toolkit) or "").strip()
+        if not account:
+            raise MCPAccountNotPinned(
+                f"No connected account for toolkit '{toolkit}' (CMP-02). "
+                f"Set {self.config.accounts[toolkit]}; nothing was called."
+            )
+        return account
+
+    def _match_account(self, toolkit: str, pin: str, connections: Dict[str, Any]) -> str:
+        accounts = (connections.get(toolkit) or {}).get("accounts") or []
+        matches = [a for a in accounts if pin in (a.get("id"), a.get("alias"))]
+        variable = self.config.accounts[toolkit]
+        if len(matches) != 1:
+            known = ", ".join(str(a.get("id")) for a in accounts) or "none"
+            raise MCPAccountNotPinned(
+                f"{variable} matches {len(matches)} {TOOLKIT_LABELS.get(toolkit, toolkit)} accounts (CMP-02). "
+                f"Connected account IDs: {known}. Nothing was published."
+            )
+        status = str(matches[0].get("status", "")).lower()
+        if status != "active":
+            raise self._expired(toolkit, f"status is {status or 'unknown'}")
+        return str(matches[0]["id"])
+
+    def _call_meta_tool(self, name: str, arguments: Dict[str, Any], label: str, replay_safe: bool) -> Dict[str, Any]:
         policy = self.config.policy
         last_error: Optional[BaseException] = None
         rate_limited = False
         for attempt in range(1, policy.max_retries + 1):
+            request_sent = False
             try:
-                session = self._session(target.toolkit, endpoint)
-                return self._rpc(endpoint, session, "tools/call", {"name": target.tool, "arguments": arguments})
+                session = self._session()
+                request_sent = True
+                return self._rpc(session, "tools/call", {"name": name, "arguments": arguments})
             except urllib.error.HTTPError as exc:
                 if exc.code in (401, 403):
                     raise MCPAuthError(
                         f"Composio rejected the request with HTTP {exc.code}. "
                         f"Check {self.config.server.api_key_env} and {self.config.server.url_env}."
                     ) from exc
-                if exc.code == 404 and target.toolkit in self._sessions:
-                    self._sessions.pop(target.toolkit)
-                    last_error = exc
-                    continue
-                if exc.code not in RETRYABLE_HTTP:
-                    raise MCPError(f"Composio returned HTTP {exc.code} for {target.tool}.") from exc
+                session_lost = exc.code == 404 and bool(self._session_id)
+                if session_lost:
+                    self._session_id = None
+                elif exc.code not in RETRYABLE_HTTP:
+                    raise MCPError(f"Composio returned HTTP {exc.code} for {label}.") from exc
                 rate_limited = exc.code == 429
+                never_executed = session_lost or rate_limited or not request_sent
                 last_error = exc
-            except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+            except (OSError, http.client.HTTPException) as exc:
                 rate_limited = False
+                never_executed = not request_sent
                 last_error = exc
+            if not (replay_safe or never_executed):
+                raise MCPConnectionError(
+                    f"{label} may have completed, so it was not retried (MCP-23): {last_error}"
+                ) from last_error
             if attempt < policy.max_retries:
                 time.sleep(policy.backoff_seconds * (2 ** (attempt - 1)))
         error_type = MCPRateLimitError if rate_limited else MCPConnectionError
-        raise error_type(
-            f"Composio MCP unreachable after {policy.max_retries} attempts calling {target.tool}: {last_error}"
-        )
+        raise error_type(f"Composio MCP unreachable after {policy.max_retries} attempts calling {label}: {last_error}")
 
-    def _session(self, toolkit: str, endpoint: str) -> str:
-        if toolkit in self._sessions:
-            return self._sessions[toolkit]
-        headers, _ = self._post(endpoint, "", self._message("initialize", {
+    def _session(self) -> str:
+        if self._session_id is not None:
+            return self._session_id
+        headers, _ = self._post("", self._message("initialize", {
             "protocolVersion": PROTOCOL_VERSION,
             "capabilities": {},
             "clientInfo": CLIENT_INFO,
         }))
         session = headers.get(SESSION_HEADER) or ""
-        self._post(endpoint, session, {"jsonrpc": "2.0", "method": "notifications/initialized"})
-        self._sessions[toolkit] = session
+        self._post(session, {"jsonrpc": "2.0", "method": "notifications/initialized"})
+        self._session_id = session
         return session
 
-    def _rpc(self, endpoint: str, session: str, method: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _rpc(self, session: str, method: str, params: Dict[str, Any]) -> Dict[str, Any]:
         payload = self._message(method, params)
-        _, body = self._post(endpoint, session, payload)
+        _, body = self._post(session, payload)
         message = decode_rpc_body(body, payload["id"])
         if "error" in message:
             error = message["error"] or {}
@@ -194,38 +236,52 @@ class ComposioClient:
         self._request_id += 1
         return {"jsonrpc": "2.0", "id": self._request_id, "method": method, "params": params}
 
-    def _post(self, endpoint: str, session: str, payload: Dict[str, Any]) -> Tuple[Mapping[str, str], str]:
+    def _post(self, session: str, payload: Dict[str, Any]) -> Tuple[Mapping[str, str], str]:
         headers = {
-            "x-api-key": self.settings.api_key,
+            self.config.server.api_key_header: self.settings.api_key,
             "Content-Type": "application/json",
             "Accept": "application/json, text/event-stream",
         }
         if session:
             headers[SESSION_HEADER] = session
-        request = urllib.request.Request(endpoint, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
+        request = urllib.request.Request(
+            self.settings.url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST"
+        )
         with urllib.request.urlopen(request, timeout=self.config.policy.timeout_seconds) as response:
             return response.headers, response.read().decode("utf-8")
 
     def _unwrap(self, target: CapabilityTarget, result: Dict[str, Any]) -> Dict[str, Any]:
         envelope, text = tool_envelope(result)
-        failed = bool(result.get("isError")) or (envelope is not None and envelope.get("successful") is False)
-        if failed:
-            detail = (envelope or {}).get("error") or text or "no error detail"
-            raise self._classify(target, str(detail))
-        data = (envelope or {}).get("data")
+        envelope = envelope or {}
+        outer = envelope.get("data")
+        results = outer.get("results") if isinstance(outer, dict) else None
+        item = results[0] if isinstance(results, list) and results and isinstance(results[0], dict) else {}
+        if not item:
+            if result.get("isError") or envelope.get("error") or envelope.get("successful") is False:
+                raise self._classify(target, str(envelope.get("error") or text or "no error detail"))
+            raise MCPMalformedResponse(f"{target.tool} returned no result (MCP-13).")
+        response = item.get("response")
+        response = response if isinstance(response, dict) else {}
+        error = response.get("error") or item.get("error")
+        if error or result.get("isError") or response.get("successful") is False:
+            raise self._classify(target, str(error or "no error detail"))
+        data = response.get("data")
         if not isinstance(data, dict):
             raise MCPMalformedResponse(f"{target.tool} returned success without a data object (MCP-13).")
         return data
+
+    def _expired(self, toolkit: str, detail: str) -> MCPConnectionExpired:
+        return MCPConnectionExpired(
+            f"Reconnect {TOOLKIT_LABELS.get(toolkit, toolkit)} in Composio: the account in "
+            f"{self.config.accounts[toolkit]} is no longer usable (CMP-07). "
+            f"The local Markdown note is kept. Detail: {detail}"
+        )
 
     def _classify(self, target: CapabilityTarget, detail: str) -> MCPError:
         snippet = detail[:ERROR_TEXT_LIMIT]
         lowered = snippet.lower()
         if any(marker in lowered for marker in EXPIRED_MARKERS):
-            label = TOOLKIT_LABELS.get(target.toolkit, target.toolkit)
-            return MCPConnectionExpired(
-                f"Reconnect {label} in Composio: the account in {self.config.accounts[target.toolkit]} "
-                f"is no longer usable (CMP-07). The local Markdown note is kept. Detail: {snippet}"
-            )
+            return self._expired(target.toolkit, snippet)
         if any(marker in lowered for marker in NOT_FOUND_MARKERS):
             return MCPNotFoundError(f"{target.tool}: {snippet}")
         return MCPError(f"{target.tool} failed: {snippet}")

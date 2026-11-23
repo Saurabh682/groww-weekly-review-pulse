@@ -1,10 +1,11 @@
 import pytest
 
 from src.mcp.capabilities import MCPConfigData, load_mcp_config, refuse_unlisted_tool
-from src.mcp.composio import ComposioClient, ComposioSettings, account_endpoint, decode_rpc_body
+from src.mcp.composio import ComposioClient, ComposioSettings, decode_rpc_body
 from src.mcp.errors import (
     MCPAccountNotPinned,
     MCPAuthError,
+    MCPConnectionError,
     MCPConnectionExpired,
     MCPMissingSetting,
     MCPToolRefused,
@@ -13,11 +14,11 @@ from src.mcp.publisher import PulsePublisher
 from src.pipeline import run_full_pipeline
 from src.store.models import AppRecord
 from tests.conftest import TEST_RECIPIENT
-from tests.support.composio_server import DOCS_ACCOUNT, GMAIL_ACCOUNT, fast_config
+from tests.support.composio_server import DOCS_ACCOUNT, GMAIL_ACCOUNT, GMAIL_ALIAS, fast_config
 
 WEEK = "2026-11-16"
 ENV = {
-    "COMPOSIO_MCP_URL": "https://backend.composio.dev/v3/mcp/srv?user_id=u",
+    "COMPOSIO_MCP_URL": "https://connect.composio.dev/mcp",
     "COMPOSIO_API_KEY": "key",
     "COMPOSIO_GOOGLEDOCS_ACCOUNT_ID": "ca_docs",
     "COMPOSIO_GMAIL_ACCOUNT_ID": "ca_gmail",
@@ -68,9 +69,35 @@ def test_CMP_02_each_toolkit_uses_its_pinned_account(groww_store, composio):
     assert accounts == {"GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN": DOCS_ACCOUNT, "GMAIL_CREATE_EMAIL_DRAFT": GMAIL_ACCOUNT}
 
 
-def test_CMP_02_endpoint_keeps_user_id_and_replaces_account():
-    url = account_endpoint("https://x.dev/v3/mcp/s?user_id=u&connected_account_id=old", "ca_new")
-    assert url == "https://x.dev/v3/mcp/s?user_id=u&connected_account_id=ca_new"
+def test_CMP_02_alias_resolves_to_account_id(groww_store, composio):
+    PulsePublisher(groww_store, composio.client(gmail=GMAIL_ALIAS)).publish_pulse(WEEK, "# Note", TEST_RECIPIENT)
+    assert composio.calls[-1].account == GMAIL_ACCOUNT
+
+
+def test_CMP_02_unknown_account_publishes_nothing(groww_store, composio):
+    with pytest.raises(MCPAccountNotPinned, match="COMPOSIO_GMAIL_ACCOUNT_ID matches 0"):
+        PulsePublisher(groww_store, composio.client(gmail="typo")).publish_pulse(WEEK, "# Note", TEST_RECIPIENT)
+    assert composio.calls == [] and composio.documents == {}
+
+
+@pytest.mark.parametrize("slug", ["GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN", "GMAIL_CREATE_EMAIL_DRAFT"])
+def test_MCP_23_lost_reply_is_not_replayed(groww_store, composio, slug):
+    composio.drop_reply_after.add(slug)
+    with pytest.raises(MCPConnectionError, match="may have completed"):
+        PulsePublisher(groww_store, composio.client()).publish_pulse(WEEK, "# Note", TEST_RECIPIENT)
+    assert composio.tools_called().count(slug) == 1
+
+
+def test_MCP_23_lost_append_is_not_replayed(groww_store, composio):
+    publisher = PulsePublisher(groww_store, composio.client())
+    first = publisher.publish_pulse(WEEK, "# One", TEST_RECIPIENT)
+    composio.drop_reply_after.add("GOOGLEDOCS_UPDATE_DOCUMENT_SECTION_MARKDOWN")
+    with pytest.raises(MCPConnectionError, match="may have completed"):
+        publisher.publish_pulse(WEEK, "# Two", TEST_RECIPIENT)
+    assert composio.doc_text(first.doc_id) == "# Two"
+    composio.drop_reply_after.clear()
+    publisher.publish_pulse(WEEK, "# Two", TEST_RECIPIENT)
+    assert composio.doc_text(first.doc_id) == "# Two"
 
 
 def test_CMP_03_first_publish(groww_store, composio):
@@ -78,7 +105,7 @@ def test_CMP_03_first_publish(groww_store, composio):
     state = groww_store.get_publish_state(WEEK)
     assert (state.doc_id, state.doc_url, state.draft_id) == (res.doc_id, res.doc_url, res.draft_id)
     assert state.content_hash == res.content_hash
-    assert composio.methods.count("initialize") == 2
+    assert composio.methods.count("initialize") == 1
 
 
 def test_CMP_04_same_hash_noop(groww_store, composio):
@@ -133,6 +160,11 @@ def test_CMP_07_connection_expired(groww_store, composio, tmp_path):
         PulsePublisher(groww_store, composio.client()).publish_pulse(WEEK, "# Note", TEST_RECIPIENT)
     assert "COMPOSIO_GOOGLEDOCS_ACCOUNT_ID" in str(exc.value)
     composio.expired_accounts = {GMAIL_ACCOUNT}
+    with pytest.raises(MCPConnectionExpired, match="Reconnect Gmail in Composio"):
+        PulsePublisher(groww_store, composio.client()).publish_pulse(WEEK, "# Note", TEST_RECIPIENT)
+    assert composio.calls == []
+    composio.expired_accounts = set()
+    composio.expiring_tools.add("GMAIL_CREATE_EMAIL_DRAFT")
     with pytest.raises(MCPConnectionExpired, match="Reconnect Gmail in Composio"):
         PulsePublisher(groww_store, composio.client()).publish_pulse(WEEK, "# Note", TEST_RECIPIENT)
 

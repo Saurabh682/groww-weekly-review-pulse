@@ -304,13 +304,16 @@ save draft_id, content_hash
 Failure handling is unchanged from v1 §10.5, per app.
 
 ### 7.2.1 Implementation notes (Phase 10)
-- `src/mcp/composio.py` speaks Streamable HTTP JSON-RPC: `initialize`, `notifications/initialized`, then `tools/call`, with `x-api-key` and the `Mcp-Session-Id` the server returns. Replies may be JSON or SSE.
-- One MCP session per toolkit, because the endpoint carries that toolkit's `connected_account_id`. A 404 on a stored session starts a new one.
-- The client only accepts a capability name, never a raw slug. `config/mcp.yaml` fails to load if a mapped slug matches `denied_tool_patterns`, and those patterns must include `SEND`, `DELETE` and `TRASH`.
-- Tool results are read from the Composio envelope `{successful, data, error}` in `structuredContent` or the first text block. Errors are sorted into connection-expired (CMP-07), not-found (drives MCP-10 and CMP-06) and generic.
-- After the Doc step the publisher saves `doc_id` with `content_hash = NULL`; the hash is written only after the draft step succeeds, so a failed draft never freezes a stale draft or Doc.
+- The server is Composio Connect (`https://connect.composio.dev/mcp`): Streamable HTTP JSON-RPC with the consumer key in `x-consumer-api-key`. It returned no session header when probed on 2026-11-23; the client sends one if a server provides it.
+- Connect exposes meta tools, not the Docs and Gmail tools. The client sends only `COMPOSIO_MANAGE_CONNECTIONS` with `action: list` and `COMPOSIO_MULTI_EXECUTE_TOOL` with one allowlisted slug and an explicit `account`.
+- The server itself is not limited to the six tools: this key can reach every tool Connect offers, so the allowlist in this client is the only tool restriction. A focused Composio MCP server would add a server-side limit.
+- Before any write, the client lists connected accounts and resolves both pins by ID or alias. A pin that matches no account, matches two, or is not active stops the publish before the Doc is created.
+- Create, clear and append calls are not replayed after an ambiguous failure (MCP-23), since a replay could duplicate a Doc, a draft or text. A rerun rewrites a Doc whose ID is stored. If the reply to a create was lost, its ID is unknown and a rerun creates a second object, so the error says the call may have completed.
+- Results are read from `data.results[0].response`. Errors are sorted into connection-expired (CMP-07), not-found (MCP-10, CMP-06) and generic. The error wording markers are assumptions: no real expired or not-found reply has been observed.
+- After the Doc step the publisher saves `doc_id` with `content_hash = NULL`; the hash is written only after the draft step succeeds.
 - The pipeline builds the client before the run starts, so missing variables fail with no run row (CMP-10). Publish errors mark the run `publish_failed`, keep `note.md`, and put the message in `run_report.json`.
-- Limit: a Doc the user moved to Drive trash is still readable through the Docs API, so it is updated in place rather than recreated. Detecting trash would need a Drive tool.
+- Limit: a Doc moved to Drive trash may still be readable through the Docs API, in which case it is updated rather than recreated. Not tested live.
+- Live check 2026-11-23: one Groww Doc and one unsent draft created for week 2026-11-16; an unchanged rerun made no tool calls; two changed reruns kept both IDs, and reading the Doc and draft back showed one copy of the note.
 
 ### 7.3 Retiring `gmail-docs-mcp`
 

@@ -31,6 +31,7 @@ class CapabilityTarget(StrictModel):
 class ServerSettings(StrictModel):
     url_env: str = Field(min_length=1)
     api_key_env: str = Field(min_length=1)
+    api_key_header: str = Field(min_length=1)
 
 
 class MCPPolicyConfig(StrictModel):

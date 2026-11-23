@@ -4,6 +4,7 @@ provider: composio
 server:
   url_env: COMPOSIO_MCP_URL
   api_key_env: COMPOSIO_API_KEY
+  api_key_header: x-consumer-api-key
 
 accounts:
   googledocs: COMPOSIO_GOOGLEDOCS_ACCOUNT_ID

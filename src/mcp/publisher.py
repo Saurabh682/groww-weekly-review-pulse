@@ -137,6 +137,7 @@ class DraftPublisher:
 class PulsePublisher:
     def __init__(self, store: AppStore, client: ToolCaller):
         self.store = store
+        self.client = client
         self.docs = DocsPublisher(client)
         self.drafts = DraftPublisher(client)
 
@@ -154,6 +155,7 @@ class PulsePublisher:
         title = pulse_doc_title(app_name, week_start)
         subject = pulse_email_subject(app_name, week_start)
         pii_gate(title, subject, note_markdown)
+        self.client.verify_accounts()
 
         doc_id, doc_url = self.docs.upsert(title, note_markdown, state.doc_id, state.doc_url)
         self.store.save_publish_state(PublishStateRecord(

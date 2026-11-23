@@ -476,7 +476,7 @@ Phases 8, 9 and 10 touch separate folders (`src/ingest/`, `src/registry/` + `src
 **Objective:** Each app's note lands in its own Doc and draft through Composio MCP.
 
 #### Tasks
-- [ ] **10.1 Connect Google Docs in Composio.** Gmail is already connected. Record both connected-account IDs as secrets.
+- [ ] **10.1 Connect Google Docs in Composio.** Gmail is already connected. Record both connected-account IDs as secrets. *(Connected and set in the local `.env` 2026-11-23; CI secrets are set with the Phase 11 workflow.)*
 - [x] **10.2 `src/mcp/composio.py`:** MCP client against `COMPOSIO_MCP_URL`; tool allowlist and denylist; required account ID on every call.
 - [x] **10.3 Capability map** in `config/mcp.yaml` per `multi-app-architecture.md` §7.1, with no secrets.
 - [x] **10.4 Publish flow** per `(app_key, week_start)` per §7.2, including draft-not-found recovery.

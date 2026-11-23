@@ -4,14 +4,15 @@ import uuid
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Dict, List, Optional, Set
-from urllib.parse import parse_qs, urlsplit
 
 from src.mcp.capabilities import MCPConfigData, load_mcp_config
 from src.mcp.composio import ComposioClient, ComposioSettings
 
 API_KEY = "composio-test-key"
-DOCS_ACCOUNT = "ca_docs_test"
-GMAIL_ACCOUNT = "ca_gmail_test"
+DOCS_ACCOUNT = "googledocs_test-own"
+GMAIL_ACCOUNT = "gmail_test-own"
+GMAIL_DEFAULT = "gmail_test-default"
+GMAIL_ALIAS = "own.alias"
 NOT_FOUND = "Requested entity was not found."
 
 
@@ -32,6 +33,8 @@ class FakeComposio:
     expired_accounts: Set[str] = field(default_factory=set)
     malformed_tools: Set[str] = field(default_factory=set)
     failing_tools: Set[str] = field(default_factory=set)
+    expiring_tools: Set[str] = field(default_factory=set)
+    drop_reply_after: Set[str] = field(default_factory=set)
     http_failures: List[int] = field(default_factory=list)
     sse: bool = True
     _counter: int = 0
@@ -57,7 +60,7 @@ class FakeComposio:
 
     @property
     def url(self) -> str:
-        return f"http://127.0.0.1:{self._server.server_address[1]}/v3/mcp/test-server?user_id=pulse-test"
+        return f"http://127.0.0.1:{self._server.server_address[1]}/mcp"
 
     def settings(self, **accounts: str) -> ComposioSettings:
         pinned = {"googledocs": DOCS_ACCOUNT, "gmail": GMAIL_ACCOUNT}
@@ -74,7 +77,7 @@ class FakeComposio:
         return self.documents[doc_id]["body"]
 
     def handle(self, request: BaseHTTPRequestHandler) -> None:
-        if request.headers.get("x-api-key") != API_KEY:
+        if request.headers.get("x-consumer-api-key") != API_KEY:
             return self._reply(request, 401, {"error": "invalid api key"})
         if self.http_failures:
             return self._reply(request, self.http_failures.pop(0), {"error": "injected"})
@@ -97,22 +100,49 @@ class FakeComposio:
         if method != "tools/call":
             return self._reply(request, 200, {"jsonrpc": "2.0", "id": message.get("id"),
                                               "error": {"code": -32601, "message": f"no method {method}"}})
-        query = parse_qs(urlsplit(request.path).query)
-        account = (query.get("connected_account_id") or [None])[0]
         name = message["params"]["name"]
         arguments = message["params"].get("arguments") or {}
-        self.calls.append(ToolCall(name, arguments, account))
-        envelope = self._run_tool(name, arguments, account)
-        result = {"content": [{"type": "text", "text": json.dumps(envelope)}], "isError": not envelope["successful"]}
+        if name == "COMPOSIO_MANAGE_CONNECTIONS":
+            envelope = self._list_connections(arguments)
+        elif name == "COMPOSIO_MULTI_EXECUTE_TOOL":
+            item = arguments["tools"][0]
+            slug = item["tool_slug"]
+            self.calls.append(ToolCall(slug, item["arguments"], item.get("account")))
+            response = self._run_tool(slug, item["arguments"])
+            if slug in self.drop_reply_after:
+                request.close_connection = True
+                return None
+            envelope = self._ok({"results": [{"response": response, "tool_slug": slug, "index": 0}], "total_count": 1})
+        else:
+            envelope = self._fail(f"unexpected meta tool {name}")
+        result = {"content": [{"type": "text", "text": json.dumps(envelope)}], "isError": False}
         return self._reply(request, 200, self._result(message, result))
 
-    def _run_tool(self, name: str, args: Dict[str, Any], account: Optional[str]) -> Dict[str, Any]:
-        if account in self.expired_accounts:
-            return self._fail(f"Connected account {account} is EXPIRED. Please re-authenticate.")
+    def _list_connections(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        owned = {
+            "googledocs": [{"id": DOCS_ACCOUNT, "is_default": True}],
+            "gmail": [
+                {"id": GMAIL_DEFAULT, "is_default": True},
+                {"id": GMAIL_ACCOUNT, "alias": GMAIL_ALIAS, "is_default": False},
+            ],
+        }
+        results = {}
+        for toolkit in arguments["toolkits"]:
+            if toolkit["action"] != "list":
+                return self._fail("only list is allowed")
+            results[toolkit["name"]] = {"accounts": [
+                dict(a, status="expired" if a["id"] in self.expired_accounts else "active")
+                for a in owned[toolkit["name"]]
+            ]}
+        return self._ok({"results": results})
+
+    def _run_tool(self, name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         if name in self.failing_tools:
             return self._fail("Internal error from Google: backend unavailable")
+        if name in self.expiring_tools:
+            return self._fail("Connected account is EXPIRED. Please re-authenticate.")
         if name in self.malformed_tools:
-            return {"successful": True, "data": {}, "error": None}
+            return self._ok({})
         handler = getattr(self, f"_tool_{name.lower()}", None)
         if handler is None:
             return self._fail(f"Tool {name} not found in this MCP server")

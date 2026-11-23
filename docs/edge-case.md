@@ -289,7 +289,7 @@
 | MCP-20 | Email body: HTML vs plain-text support differs by server | Falls back to plain text; content identical | `test_MCP_20_email_format_fallback` | M | P2 |
 | MCP-21 | Email body length/encoding with Unicode (₹, ★, Devanagari quotes if allowed) | Preserved; subject uses safe characters | `test_MCP_21_unicode_in_email` | M | P1 |
 | MCP-22 | Concurrent runs for the same week (two processes) | Lock prevents duplicate publish; second run exits with a message | `test_MCP_22_concurrent_run_lock` | I | P1 |
-| MCP-23 | MCP call is slow (> timeout) but eventually succeeds | Timeout handled; retry doesn't create duplicate objects (idempotency check by state/ID) | `test_MCP_23_slow_success_no_duplicate` | M | P1 |
+| MCP-23 | Reply to a create, clear or append call is lost or times out | Not replayed; error says the call may have completed; a rerun rewrites a stored Doc; a create whose reply was lost needs a manual check for a duplicate | `test_MCP_23_lost_reply_is_not_replayed`, `test_MCP_23_lost_append_is_not_replayed` | M | P1 |
 | MCP-24 | Pre-publish PII gate on subject and body just before the draft call | Re-scan occurs; seeded PII blocks the call | `test_MCP_24_email_pii_gate` | M | P0 |
 | MCP-25 | Doc link inserted into the email | Uses the returned `doc_url`; if missing, email states "Doc link unavailable" and run flags a warning | `test_MCP_25_doc_link_in_email` | M | P1 |
 | MCP-26 | Doc title/subject contain the week date | Correct ISO week-start date; consistent across Doc, draft, and state | `test_MCP_26_title_subject_consistency` | U | P1 |
@@ -529,7 +529,7 @@ AG should update this table and the affected tests whenever a decision changes.
 | ID | Scenario | Expected | Test | Type | Pri |
 |---|---|---|---|---|---|
 | CMP-01 | Any call to a slug outside the allowlist, or matching `SEND`, `DELETE`, `TRASH` | Client refuses before the network call | `test_CMP_01_tool_allowlist` | U | P0 |
-| CMP-02 | Call without a connected-account ID | Client refuses | `test_CMP_02_account_required` | U | P0 |
+| CMP-02 | Account value missing, unknown, ambiguous or an alias | Missing, unknown or ambiguous: refused before any write; alias: resolved to the account ID | `test_CMP_02_account_required`, `test_CMP_02_unknown_account_publishes_nothing`, `test_CMP_02_alias_resolves_to_account_id` | U | P0 |
 | CMP-03 | First publish for `(app, week)` | One Doc created, one draft created, IDs stored | `test_CMP_03_first_publish` | M | P0 |
 | CMP-04 | Rerun, same content hash | No MCP calls | `test_CMP_04_same_hash_noop` | M | P0 |
 | CMP-05 | Rerun, changed content | Doc cleared and rewritten in place; draft updated; no new Doc | `test_CMP_05_update_in_place` | M | P0 |
