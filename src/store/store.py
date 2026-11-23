@@ -127,6 +127,37 @@ class PulseStore:
             raise AppIdentityFrozen(f"{app_key} already has {column}={getattr(app, column)!r}. Use replace instead.")
         return app
 
+    def live_app_with_listing(self, platform: str, listing_id: str) -> Optional[AppRecord]:
+        column = LISTING_COLUMNS[platform]
+        with self.connector.session() as s:
+            row = s.fetchone(
+                f"SELECT * FROM apps WHERE {column} = ? AND status <> 'archived'", (listing_id,)
+            )
+        return _app(row) if row else None
+
+    def count_live_apps(self) -> int:
+        with self.connector.session() as s:
+            return int(s.scalar("SELECT COUNT(*) AS n FROM apps WHERE status <> 'archived'"))
+
+    def app_keys(self) -> List[str]:
+        with self.connector.session() as s:
+            return [r["app_key"] for r in s.fetchall("SELECT app_key FROM apps")]
+
+    def replace_app(self, old_key: str, new_app: AppRecord) -> AppRecord:
+        values = _pick(new_app.__dict__, APP_COLUMNS)
+        with self.connector.session() as s:
+            changed = s.execute(
+                "UPDATE apps SET status = 'archived', archived_at = ? WHERE app_key = ? AND status <> 'archived'",
+                (_now(), old_key),
+            )
+            if changed == 0:
+                raise UnknownApp(f"No live app registered with app_key {old_key!r}.")
+            s.execute(
+                f"INSERT INTO apps ({', '.join(APP_COLUMNS)}) VALUES ({', '.join('?' for _ in APP_COLUMNS)})",
+                tuple(values.values()),
+            )
+        return self.get_app(new_app.app_key)
+
     def for_app(self, app_key: str) -> "AppStore":
         return AppStore(self, self.get_app(app_key))
 
@@ -465,3 +496,17 @@ class AppStore:
                 (self.app_key, window_start, window_end),
             )
         return {r["platform"]: int(r["n"]) for r in rows}
+
+    def list_pulse_weeks(self, limit: int) -> List[Dict[str, Any]]:
+        sql = (
+            "SELECT r.week_start, r.run_id, r.status, r.total_reviews, r.analyzed_reviews, r.avg_rating, "
+            "r.coverage_weeks, r.window_start, r.window_end, p.doc_url, p.draft_id, p.updated_at AS published_at "
+            "FROM runs r LEFT JOIN publish_state p ON p.app_key = r.app_key AND p.week_start = r.week_start "
+            "WHERE r.app_key = ? AND EXISTS (SELECT 1 FROM themes t WHERE t.app_key = r.app_key AND t.run_id = r.run_id) "
+            "AND r.created_at = (SELECT MAX(r2.created_at) FROM runs r2 WHERE r2.app_key = r.app_key "
+            "AND r2.week_start = r.week_start AND EXISTS (SELECT 1 FROM themes t2 WHERE t2.app_key = r2.app_key "
+            "AND t2.run_id = r2.run_id)) "
+            "ORDER BY r.week_start DESC LIMIT ?"
+        )
+        with self._session() as s:
+            return s.fetchall(sql, (self.app_key, limit))

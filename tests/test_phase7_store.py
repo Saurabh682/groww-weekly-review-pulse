@@ -208,3 +208,28 @@ def test_generic_pack_contains_no_app_names():
     from src.domains.generic import GENERIC_PACK
 
     assert not APP_NAME_PATTERN.search(repr(GENERIC_PACK))
+
+
+def test_APP_02_concurrent_inserts_respect_cap(store):
+    import threading
+
+    for i in range(3):
+        store.insert_app(_app(f"app{i}"))
+    barrier = threading.Barrier(4)
+    outcomes = []
+
+    def add(key):
+        barrier.wait()
+        try:
+            store.insert_app(_app(key))
+            outcomes.append("ok")
+        except ActiveAppCapReached:
+            outcomes.append("cap")
+
+    threads = [threading.Thread(target=add, args=(f"race{i}",)) for i in range(4)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert sorted(outcomes) == ["cap", "cap", "cap", "ok"]
+    assert len(store.list_apps(("active",))) == 5

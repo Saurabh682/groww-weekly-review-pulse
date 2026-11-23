@@ -458,13 +458,13 @@ Phases 8, 9 and 10 touch separate folders (`src/ingest/`, `src/registry/` + `src
 **Objective:** Apps are added by name and confirmed, within the 5-slot cap, by an authenticated operator.
 
 #### Tasks
-- [ ] **9.1 Search** (`src/registry/resolve.py`): iTunes Search API and `google-play-scraper` search in parallel, top 3 each, per-store timeout and error isolation.
-- [ ] **9.2 Verify** each chosen listing by ID and capture `category`.
-- [ ] **9.3 Registry service** (`src/registry/service.py`): register, rename, replace (archive + create in one transaction), archive; `app_key` slug generation.
-- [ ] **9.4 FastAPI** (`src/api/`): endpoints in `multi-app-architecture.md` §8.
-- [ ] **9.5 Operator auth:** verify the Supabase Auth JWT; its email must be in `OPERATOR_EMAILS`; every write endpoint covered by a test.
-- [ ] **9.6 Backfill dispatch:** call GitHub `workflow_dispatch` after register; on failure leave the app `pending_backfill`.
-- [ ] **9.7 CLI:** `python -m src.registry list|add|rename|archive` for the Actions `plan` job and local use.
+- [x] **9.1 Search** (`src/registry/resolve.py`): iTunes Search API and `google-play-scraper` search in parallel, top 3 each, per-store timeout and error isolation.
+- [x] **9.2 Verify** each chosen listing by ID and capture `category`.
+- [x] **9.3 Registry service** (`src/registry/service.py`): register, rename, replace (archive + create in one transaction), archive; `app_key` slug generation.
+- [x] **9.4 FastAPI** (`src/api/`): endpoints in `multi-app-architecture.md` §8.
+- [x] **9.5 Operator auth:** verify the Supabase Auth JWT; its email must be in `OPERATOR_EMAILS`; every write endpoint covered by a test.
+- [x] **9.6 Backfill dispatch:** call GitHub `workflow_dispatch` after register; on failure leave the app `pending_backfill`.
+- [x] **9.7 CLI:** `python -m src.registry list|add|rename|archive` for the Actions `plan` job and local use.
 
 #### Exit Criteria
 `APP-*`, `RES-*`, `AUTH-*` P0 tests green; adding a 6th app fails at the database; Groww's App Store listing resolved and confirmed.

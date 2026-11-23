@@ -478,6 +478,7 @@ AG should update this table and the affected tests whenever a decision changes.
 | RES-07 | Search term with injection characters or 500 chars | Term trimmed to 100 chars and URL-encoded; no error leaks upstream details | `test_RES_07_search_term_sanitized` | U | P1 |
 | RES-08 | Country with no App Store storefront for the app | Empty App Store result for that country, not an error | `test_RES_08_country_without_listing` | U | P2 |
 | RES-09 | Search response contains developer email or website | Not returned to the client; only allowlisted fields | `test_RES_09_search_field_allowlist` | U | P1 |
+| RES-10 | Play search returns its top (featured) hit without a package ID (`google-play-scraper` 1.2.7) | Hit dropped, since it cannot be verified; each App Store hit's bundle ID is tried as a Play package and offered only if the Play lookup confirms it (`matched_by: app_store_bundle_id`); if the gap remains, the Play result tells the operator to paste the package name from the Play URL | `test_play_top_match_without_id_is_flagged`, `test_RES_01_top3_no_autoregister` | U | P1 |
 
 ## 21. Collection
 

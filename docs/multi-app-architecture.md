@@ -111,6 +111,15 @@ sequenceDiagram
 
 `app_key` is a slug of the display name at creation, made unique by suffix (`groww`, `groww-2`).
 
+### 3.3 Implementation notes (Phase 9)
+- `src/registry/resolve.py` runs Play search and one iTunes search in parallel with a per-store timeout; a failed or slow store returns `status: error` without blocking the other. Only allowlisted fields leave the resolver.
+- The Play search's top hit often has no package ID (RES-10). App Store bundle IDs are tried as Play packages and confirmed with a Play lookup before they are offered.
+- Verification by ID is the source of truth: any ID the operator types is accepted if verify succeeds (RES-06). Category comes from the Play genre, else the App Store genre.
+- The service pre-checks the cap and duplicate listings to give a clear message naming the owning app; the database triggers and indexes still enforce both.
+- Write routes return 503 until `OPERATOR_EMAILS` and a JWT verifier (`SUPABASE_JWT_SECRET` or `SUPABASE_URL` JWKS) are set. `test_AUTH_05_route_auth_table` fails if a route is added without an auth entry.
+- Backfill dispatch failures leave the app `pending_backfill`; the response reports `dispatched`, `failed` or `not_configured`.
+- `/apps/{key}/pulses/{week}` serves the published `note.md` from `outputs/` when present. Notes are not stored in Supabase yet, so on the Space this field is `null` until Phase 11 persists it.
+
 ---
 
 ## 4. Collection
