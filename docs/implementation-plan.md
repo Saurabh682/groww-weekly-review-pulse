@@ -172,6 +172,8 @@ Populated SQLite dataset from the chosen Play source (or the fixtures), `pulse i
 
 ### Review Dataset Profile & Clustering Strategy Analysis (`reviews_clean.json`)
 
+> Historical: 163 fixture reviews were found in `reviews_clean.json` on 2026-11-23, and the file was removed (kept in git history). Treat the figures below as unreliable.
+
 Analysis of the 662 clean reviews in `reviews_clean.json` (filtered for English-only, >8 words, emojis stripped) reveals the following empirical characteristics:
 - **Rating Distribution:** Highly polarized — 54.1% negative (1–2★: 358 reviews), 38.8% positive (4–5★: 257 reviews), 7.1% neutral (3★: 47 reviews).
 - **Core Product Failure Modes:**
