@@ -445,7 +445,7 @@ Phases 8, 9 and 10 touch separate folders (`src/ingest/`, `src/registry/` + `src
 - [x] **8.3 Modes** in `src/pipeline.py`: `backfill`, `daily`, `reconcile`, each writing `collection_runs`.
 - [x] **8.4 Retire `allow_automated`.** Replace it with per-store `enabled` kill switches (ADR-9). Rewrite `test_ING_14_*` and `test_SEC_05_*` as `test_COL_02_*`.
 - [x] **8.5 Coverage in the note header.** The header lists per-store counts and says when a store is missing or short.
-- [x] **8.6 Recorded fixtures.** Store responses captured once to `tests/fixtures/stores/` with identity fields stripped; tests never hit the network. The Play page is recorded (`scripts/record_store_fixtures.py`); the App Store feed was empty at recording time, so its fixtures are hand-built from the documented shape and named `*.synthetic.*`.
+- [x] **8.6 Recorded fixtures.** Store responses captured once to `tests/fixtures/stores/` with identity fields stripped; tests never hit the network. Both pages are recorded with `scripts/record_store_fixtures.py`. Feed-gap and XML cases use hand-built fixtures named `*.synthetic.*`.
 - [x] **8.7 Delete `scripts/download_play_reviews.py`** once 8.1 replaces it.
 
 #### Exit Criteria

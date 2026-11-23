@@ -83,7 +83,7 @@ v2 registers up to 5 apps by name and must collect their reviews on a schedule w
 ### Observed 2026-11-23: RSS feed returns empty pages
 During the Phase 8 live run the customer-reviews feed returned HTTP 200 with no review entries for Groww (`id=1404871703`, `in`) and for other apps, in both JSON and XML. Earlier the same day single pages (3 in JSON, 6 in XML) held 50 reviews while the rest were empty; pages 1-2, which hold the newest reviews, stayed empty on every retry. Several 2026 developer reports describe the same behaviour. The collector therefore sweeps all 10 pages, tries XML when JSON is empty, counts empty pages as `feed_gaps`, and marks the run partial (`COL-13`), so a gap never reads as "zero reviews".
 
-**Open decision (owner: operator):** whether to keep RSS as the only App Store source and accept gaps, or approve a different source. The App Store website's own review endpoint is undocumented, needs a token taken from the web page, and is outside the "public, documented, login-free" rule above, so it is not used without a new ADR.
+**Decision (operator, 2026-11-24):** keep RSS as the only App Store source and accept gaps. A retry on 2026-11-24 returned all 10 pages (500 reviews, no gaps, covering 2026-09-03 onward for Groww), so gaps come and go. The App Store website's own review endpoint is undocumented, needs a token taken from the web page, and is outside the "public, documented, login-free" rule above; it is not used without a new ADR.
 
 ---
 

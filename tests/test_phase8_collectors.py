@@ -386,3 +386,12 @@ def test_collect_cli_parses():
     assert (args.app, args.mode, args.today) == ("groww", "backfill", "2026-11-23")
     with pytest.raises(SystemExit):
         build_parser().parse_args(["collect", "--app", "groww", "--mode", "weekly"])
+
+
+def test_COL_01_recorded_app_store_page_identity_never_extracted():
+    recorded = (FIXTURES / "app_store_page.json").read_bytes()
+    mapped = [m for m in (map_app_store_entry(e) for e in parse_feed_page(recorded)) if m is not None]
+    assert mapped
+    for m in mapped:
+        assert set(m) == ALLOWLIST
+    _assert_identity_free(json.dumps(mapped))
