@@ -28,7 +28,7 @@
       "review_count": 973,
       "share_pct": 0.5409,
       "avg_rating": 2.39,
-      "neg_share": 0.0,
+      "neg_share": 0.6053,
       "is_top3": true
     },
     {
@@ -39,7 +39,7 @@
       "review_count": 314,
       "share_pct": 0.1745,
       "avg_rating": 4.57,
-      "neg_share": 0.0,
+      "neg_share": 0.0573,
       "is_top3": true
     },
     {
@@ -50,7 +50,7 @@
       "review_count": 185,
       "share_pct": 0.1028,
       "avg_rating": 1.46,
-      "neg_share": 0.0,
+      "neg_share": 0.8703,
       "is_top3": true
     }
   ],

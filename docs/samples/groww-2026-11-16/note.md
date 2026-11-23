@@ -1,6 +1,6 @@
 # Groww Weekly Review Pulse: Week of 2026-11-16
 
-Reviews 2026-08-24 to 2026-11-16 • Google Play 7,300 · App Store 464 (partial, from 2026-09-03) • Analyzed: 1799 • Avg Rating: 2.9★
+Reviews 2026-08-31 to 2026-11-22 • Google Play 7,791 · App Store 474 (partial, from 2026-09-03) • Analyzed: 1799 • Avg Rating: 2.9★
 
 ## Top Themes
 
