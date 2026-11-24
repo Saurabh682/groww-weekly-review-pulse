@@ -185,6 +185,7 @@
 | THM-18 | No prior-week data | Trend field is null/"n/a"; no crash; note omits trend phrasing | `test_THM_18_no_prior_week` | U | P1 |
 | THM-19 | Label reuse threshold boundary (cosine 0.849 vs 0.851) | Reuse only at/above threshold | `test_THM_19_label_reuse_boundary` | U | P2 |
 | THM-20 | Two clusters would get the same label | Labels disambiguated or clusters merged; theme labels unique | `test_THM_20_unique_labels` | U | P1 |
+| THM-21 | Same reviews on machines with different CPU features | Same terms, themes and keywords; terms tied at the cutoff are taken alphabetically, through `src/themes/terms.py` only | `tests/test_stable_terms.py` | I | P0 |
 
 ### 6.1 LLM Labeling
 
