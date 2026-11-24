@@ -367,7 +367,7 @@ The app switcher sits in the header on every route. The selected app is in the U
 
 ```
 .github/workflows/pulse.yml        # the one scheduled workflow
-supabase/migrations/*.sql          # schema, cap trigger, identity trigger, RLS
+supabase/migrations/*.sql          # schema, cap trigger, identity trigger, RLS, no client-role privileges
 src/registry/                      # app registry service + resolution (search, verify)
 src/ingest/play_store.py           # automated Play adapter
 src/ingest/app_store.py            # App Store RSS adapter

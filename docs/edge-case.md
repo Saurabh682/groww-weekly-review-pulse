@@ -522,7 +522,7 @@ AG should update this table and the affected tests whenever a decision changes.
 |---|---|---|---|---|---|
 | STO-01 | Same test suite against `SqliteStore` and `SupabaseStore` | Identical results (parametrized store fixture; Supabase run against a local Postgres) | `test_STO_01_store_parity` | I | P0 |
 | STO-02 | Query for one app | Never returns another app's rows | `test_STO_02_app_scoping` | P | P0 |
-| STO-03 | Client using the anon key | Reads and writes on every table denied by RLS | `test_STO_03_rls_denies_anon` | I | P0 |
+| STO-03 | Client using the anon key | Reads and writes on every table denied twice: the client roles hold no privileges, and RLS still denies them if a grant returns | `test_STO_03_client_roles_hold_no_privileges`, `test_STO_03_rls_denies_anon` | I | P0 |
 | STO-04 | Supabase unreachable | Run fails before publish with a clear error; local Markdown kept | `test_STO_04_db_unreachable` | I | P1 |
 | STO-05 | Migrations applied twice | Second apply is a no-op | `test_STO_05_migrations_idempotent` | I | P1 |
 | STO-06 | Retention purge | Scoped per app; archived apps' rows kept | `test_STO_06_retention_per_app` | I | P1 |

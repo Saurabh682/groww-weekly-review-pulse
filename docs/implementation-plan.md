@@ -498,15 +498,15 @@ Phases 8, 9 and 10 touch separate folders (`src/ingest/`, `src/registry/` + `src
 - [x] **11.1 `.github/workflows/pulse.yml`** per `multi-app-architecture.md` §6: three crons, `workflow_dispatch`, `plan` job, matrix, `fail-fast: false`, `max-parallel: 2`, per-app concurrency.
 - [x] **11.2 Mode resolution** from `github.event.schedule` or the inputs, as a tested Python function rather than inline shell.
 - [x] **11.3 Pending backfill pickup** in daily mode.
-- [ ] **11.4 Secrets** set in GitHub; workflow logs carry no review text (log scan step). *(Log scan built and tested; the GitHub secrets are still to be set.)*
-- [x] **11.5 CI workflow** (`ci.yml`): lint (ruff), types (mypy), tests on SQLite and Postgres, gitleaks, `no_hf_space_src_copy`, frontend build and tests, actionlint. *(Not yet run on GitHub: nothing is pushed.)*
+- [x] **11.4 Secrets** set in GitHub; workflow logs carry no review text (log scan step). *(All six names confirmed on GitHub 2026-11-24. Their values are proven only by the first runs.)*
+- [x] **11.5 CI workflow** (`ci.yml`): lint (ruff), types (mypy), tests on SQLite and Postgres, gitleaks, `no_hf_space_src_copy`, frontend build and tests, actionlint. *(First run on PR 1: all four jobs passed at `2061d21`.)*
 
 #### Exit Criteria
 `SCH-*` tests green; one manual dispatch of each mode succeeds for two apps; a forced failure for one app leaves the other green.
 
-Status 2026-11-24: `SCH-*` green. All four modes and the forced failure ran locally for two apps (Groww and Zerodha Coin) with real store collection, Postgres and a fake Composio server. The GitHub dispatches wait on the push, the merge to `main`, the secrets and a Supabase project.
+Status 2026-11-24: `SCH-*` green. All four modes and the forced failure ran locally for two apps (Groww and Zerodha Coin) with real store collection, Postgres and a fake Composio server. The branch is pushed, the Supabase project has all four migrations, and the secrets are set. The GitHub dispatches wait on the merge to `main`.
 
-Before the first scheduled pulse, copy Groww's `publish_state` row for 2026-11-16 from `data/pulse.db` to Supabase, or that week gets a second Doc and draft.
+Groww's data, with its `publish_state` row for 2026-11-16, was copied from `data/pulse.db` to Supabase on 2026-11-24 in one transaction. Every row matches, and the note built from Supabase has the published note's hash, so that week keeps its Doc and draft.
 
 Fixed on the way:
 - `neg_share` and `priority_score` are stored per theme (they were always read back as 0.0).

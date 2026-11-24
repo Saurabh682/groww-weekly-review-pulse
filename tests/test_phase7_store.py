@@ -233,3 +233,94 @@ def test_APP_02_concurrent_inserts_respect_cap(store):
         t.join()
     assert sorted(outcomes) == ["cap", "cap", "cap", "ok"]
     assert len(store.list_apps(("active",))) == 5
+
+
+CLIENT_ROLES = ("anon", "authenticated")
+DEFAULT_GRANT = "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON {} TO anon, authenticated"
+CLIENT_WRITE = ("INSERT INTO apps (app_key, display_name, app_store_id, status, created_at) "
+                "VALUES ('probe', 'Probe', '1', 'archived', '2026-11-24')")
+
+
+@pytest.fixture
+def supabase_like_dsn():
+    import psycopg
+
+    if POSTGRES_DSN_ENV not in os.environ:
+        pytest.skip(f"{POSTGRES_DSN_ENV} is not set")
+    dsn = _fresh_postgres_dsn()
+    with psycopg.connect(dsn, autocommit=True) as conn:
+        for role in CLIENT_ROLES:
+            conn.execute(f"CREATE ROLE {role} NOLOGIN")
+        for kind in ("TABLES", "SEQUENCES", "FUNCTIONS"):
+            conn.execute(DEFAULT_GRANT.format(kind))
+    yield dsn
+    with psycopg.connect(dsn, autocommit=True) as conn:
+        for role in CLIENT_ROLES:
+            conn.execute(f"DROP OWNED BY {role}")
+            conn.execute(f"DROP ROLE {role}")
+
+
+def _public_tables(conn) -> list:
+    return [r[0] for r in conn.execute("SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY 1")]
+
+
+def _client_denied(conn, role: str, statement: str) -> bool:
+    import psycopg
+
+    try:
+        with conn.transaction():
+            conn.execute(f"SET LOCAL ROLE {role}")
+            conn.execute(statement)
+    except psycopg.errors.InsufficientPrivilege:
+        return True
+    return False
+
+
+@pytest.mark.parametrize("role", CLIENT_ROLES)
+def test_STO_03_client_roles_hold_no_privileges(supabase_like_dsn, role):
+    import psycopg
+
+    postgres_store(supabase_like_dsn)
+    with psycopg.connect(supabase_like_dsn, autocommit=True) as conn:
+        conn.execute("CREATE TABLE added_later (id BIGSERIAL PRIMARY KEY)")
+        conn.execute("CREATE FUNCTION added_later_fn() RETURNS INT LANGUAGE sql AS 'SELECT 1'")
+        conn.execute("REVOKE EXECUTE ON FUNCTION added_later_fn() FROM PUBLIC")
+        tables = _public_tables(conn)
+        assert {"apps", "reviews", "publish_state", "added_later"} <= set(tables)
+        for table in tables:
+            for statement in (f"SELECT * FROM {table}", f"DELETE FROM {table}", f"TRUNCATE {table} CASCADE"):
+                assert _client_denied(conn, role, statement), (role, statement)
+        assert _client_denied(conn, role, CLIENT_WRITE)
+        sequences = conn.execute("SELECT c.oid FROM pg_class c WHERE c.relkind = 'S' "
+                                 "AND c.relnamespace = 'public'::regnamespace").fetchall()
+        functions = conn.execute("SELECT p.oid FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace").fetchall()
+        assert len(sequences) == 2 and len(functions) == 3
+        for (oid,) in sequences:
+            assert not conn.execute("SELECT has_sequence_privilege(%s, %s::oid, 'USAGE')", (role, oid)).fetchone()[0]
+        for (oid,) in functions:
+            assert not conn.execute("SELECT has_function_privilege(%s, %s::oid, 'EXECUTE')", (role, oid)).fetchone()[0]
+
+
+@pytest.mark.parametrize("role", CLIENT_ROLES)
+def test_STO_03_rls_denies_anon(supabase_like_dsn, role):
+    import psycopg
+
+    store = postgres_store(supabase_like_dsn)
+    store.for_app("groww").upsert_reviews([_review("r1")])
+    with psycopg.connect(supabase_like_dsn, autocommit=True) as conn:
+        conn.execute(f"GRANT USAGE ON SCHEMA public TO {role}")
+        conn.execute(f"GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO {role}")
+        assert conn.execute("SELECT COUNT(*) FROM reviews").fetchone()[0] == 1
+        for table in _public_tables(conn):
+            with conn.transaction():
+                conn.execute(f"SET LOCAL ROLE {role}")
+                assert conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0, (role, table)
+        assert _client_denied(conn, role, CLIENT_WRITE)
+
+
+def test_STO_03_triggers_still_work_without_client_privileges(supabase_like_dsn):
+    store = postgres_store(supabase_like_dsn)
+    for i in range(4):
+        store.insert_app(_app(f"app{i}"))
+    with pytest.raises(ActiveAppCapReached):
+        store.insert_app(_app("app4"))
