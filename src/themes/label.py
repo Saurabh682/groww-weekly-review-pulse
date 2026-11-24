@@ -1,28 +1,13 @@
 """Theme labeling engine with LLM extraction and deterministic fallback (LBL-01..05, THM-19, THM-20)."""
 
-import json
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from src.clean.pii import scrub_pii
-from src.store.models import ReviewRecord
-
-
-# Candidate Groww domain themes for consistent labeling hints
-GROWW_DOMAIN_HINTS = [
-    "Payments & UPI",
-    "Account Opening & KYC",
-    "Withdrawals & Payouts",
-    "App Performance & Login",
-    "Charges & Pricing Transparency",
-    "Customer Support Response",
-    "Mutual Funds & SIPs",
-    "Stocks & F&O Trading",
-    "Positive UX & Simplicity",
-]
+from src.domains.pack import DomainPack
 
 
 def extract_cluster_keywords(texts: List[str], top_n: int = 5) -> List[str]:
@@ -54,21 +39,13 @@ def extract_cluster_keywords(texts: List[str], top_n: int = 5) -> List[str]:
 def generate_deterministic_label(
     texts: List[str],
     avg_rating: float,
-    used_labels: Set[str]
+    used_labels: Set[str],
+    pack: DomainPack,
 ) -> Tuple[str, str]:
     """Fallback rule-based labeling using scoring across domain categories and TF-IDF (LBL-01, LBL-04)."""
     joined = " ".join(texts).lower()
 
-    categories = {
-        "Payments & UPI": ["upi", "payment", "wallet", "gpay", "phonepe", "add fund", "credited", "debit"],
-        "Account Opening & KYC": ["kyc", "document", "onboarding", "verification", "bank account", "digilocker", "pan"],
-        "Withdrawals & Payouts": ["withdraw", "redemption", "settlement", "payout", "delayed payout"],
-        "App Performance & Bugs": ["crash", "lag", "login", "biometric", "freeze", "blank screen", "stuck", "bug", "glitch", "slow"],
-        "Charges & Pricing": ["charge", "brokerage", "hidden", "fee", "stt", "amc", "deducted"],
-        "Customer Support": ["support", "ticket", "bot", "call", "agent", "executive", "reply", "helpline"],
-        "Mutual Funds & SIPs": ["sip", "mutual fund", "nav", "portfolio", "returns", "index fund"],
-        "Positive UX & Simplicity": ["easy", "simple", "love", "awesome", "excellent", "superb", "clean", "best app"],
-    }
+    categories = pack.label_keywords
 
     # Score each category based on keyword density
     scores = {}
@@ -120,6 +97,7 @@ def label_cluster(
     cluster_centroid: np.ndarray,
     avg_rating: float,
     used_labels: Set[str],
+    pack: DomainPack,
     previous_themes: Optional[List[dict]] = None
 ) -> Tuple[str, str]:
     """Assign a human-readable label (<=4 words) and description (<=15 words) to a theme.
@@ -145,7 +123,7 @@ def label_cluster(
                     return prev_label, prev.get("description", f"User issues relating to {prev_label.lower()}.")
 
     # 2. Generate deterministic fallback/baseline
-    label, desc = generate_deterministic_label(cluster_texts, avg_rating, used_labels)
+    label, desc = generate_deterministic_label(cluster_texts, avg_rating, used_labels, pack)
     used_labels.add(label)
 
     return label, desc

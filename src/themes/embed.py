@@ -1,26 +1,13 @@
 """Review embedding generation and SQLite caching (THM-10, THM-11)."""
 
-import json
-import sqlite3
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import normalize
 
-from src.store.db import Database
+from src.store.store import AppStore
 from src.store.models import ReviewRecord
-
-
-CACHE_TABLE_SQL = """
-CREATE TABLE IF NOT EXISTS embedding_cache (
-    review_id TEXT NOT NULL,
-    model_name TEXT NOT NULL,
-    vector_json TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (review_id, model_name)
-);
-"""
 
 
 class Embedder:
@@ -28,47 +15,22 @@ class Embedder:
 
     def __init__(
         self,
-        db: Database,
+        store: AppStore,
         model_name: str = "tfidf-lsa-128",
         n_components: int = 64
     ):
-        self.db = db
+        self.store = store
         self.model_name = model_name
         self.n_components = n_components
-        self._init_cache_table()
-
-    def _init_cache_table(self) -> None:
-        with self.db.get_connection() as conn:
-            conn.executescript(CACHE_TABLE_SQL)
 
     def _get_cached_vectors(self, review_ids: List[str]) -> Dict[str, np.ndarray]:
-        if not review_ids:
-            return {}
-
-        cached: Dict[str, np.ndarray] = {}
-        # Fetch in batches
-        placeholders = ",".join("?" for _ in review_ids)
-        query = f"SELECT review_id, vector_json FROM embedding_cache WHERE model_name = ? AND review_id IN ({placeholders})"
-
-        with self.db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, [self.model_name] + review_ids)
-            for row in cursor.fetchall():
-                cached[row["review_id"]] = np.array(json.loads(row["vector_json"]), dtype=np.float32)
-
-        return cached
+        cached = self.store.get_cached_embeddings(self.model_name, review_ids)
+        return {rid: np.array(vec, dtype=np.float32) for rid, vec in cached.items()}
 
     def _save_cached_vectors(self, items: List[Tuple[str, np.ndarray]]) -> None:
         if not items:
             return
-        query = "INSERT OR REPLACE INTO embedding_cache (review_id, model_name, vector_json) VALUES (?, ?, ?)"
-        with self.db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.executemany(
-                query,
-                [(rev_id, self.model_name, json.dumps(vec.tolist())) for rev_id, vec in items]
-            )
-            conn.commit()
+        self.store.save_cached_embeddings(self.model_name, [(rid, vec.tolist()) for rid, vec in items])
 
     def embed_reviews(self, reviews: List[ReviewRecord]) -> np.ndarray:
         """Compute normalized vector embeddings for given reviews with SQLite caching (THM-11)."""

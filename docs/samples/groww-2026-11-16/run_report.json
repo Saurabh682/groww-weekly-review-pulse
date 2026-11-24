@@ -1,0 +1,60 @@
+{
+  "run_id": "run_2026-11-16_36961",
+  "week_start": "2026-11-16",
+  "status": "validated",
+  "word_count": 206,
+  "max_words_allowed": 250,
+  "is_valid": true,
+  "errors": [],
+  "checks_passed": [
+    "word_count_cap",
+    "theme_count",
+    "theme_labels_unique",
+    "quotes_count",
+    "quotes_distinct_reviews",
+    "quote_1_verbatim",
+    "quote_2_verbatim",
+    "quote_3_verbatim",
+    "actions_count",
+    "store_scope",
+    "pii_free_rendered_note"
+  ],
+  "top_themes": [
+    {
+      "theme_id": "thm_2026-11-16_3",
+      "label": "Charges & Pricing",
+      "description": "User feedback regarding charges & pricing.",
+      "one_liner": "Users report unexpected charges and request transparent fee breakdowns on equity and DP deductions.",
+      "review_count": 973,
+      "share_pct": 0.5409,
+      "avg_rating": 2.39,
+      "neg_share": 0.6053,
+      "is_top3": true
+    },
+    {
+      "theme_id": "thm_2026-11-16_2",
+      "label": "Positive UX & Simplicity",
+      "description": "User feedback regarding positive ux & simplicity.",
+      "one_liner": "Users praise intuitive navigation, clean interface design, and straightforward mutual fund investing.",
+      "review_count": 314,
+      "share_pct": 0.1745,
+      "avg_rating": 4.57,
+      "neg_share": 0.0573,
+      "is_top3": true
+    },
+    {
+      "theme_id": "thm_2026-11-16_5",
+      "label": "Customer Support",
+      "description": "User feedback regarding customer support.",
+      "one_liner": "Customer service tickets experience delayed response times and automated bot reply loops.",
+      "review_count": 185,
+      "share_pct": 0.1028,
+      "avg_rating": 1.46,
+      "neg_share": 0.8703,
+      "is_top3": true
+    }
+  ],
+  "quotes_count": 3,
+  "actions_count": 3,
+  "dry_run": false
+}

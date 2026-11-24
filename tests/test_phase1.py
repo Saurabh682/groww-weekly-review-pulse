@@ -12,13 +12,11 @@ Covers all test requirements from docs/edge-case.md §16:
 """
 
 import json
-import sqlite3
-import tempfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import date
 from pathlib import Path
 import pytest
 
-from src.clean.dedupe import deduplicate_reviews, compute_exact_hash
+from src.clean.dedupe import deduplicate_reviews
 from src.clean.lang import detect_language
 from src.clean.low_info import is_low_info, check_low_info_distribution
 from src.clean.normalize import (
@@ -26,16 +24,15 @@ from src.clean.normalize import (
     parse_review_date,
     validate_and_coerce_rating,
 )
-from src.clean.pii import scrub_pii, normalize_unicode_digits
+from src.clean.pii import scrub_pii
 from src.clean.window import (
     calculate_window_bounds,
     compute_coverage_weeks,
     normalize_to_week_start,
 )
-from src.config import get_project_root, load_pulse_config
+from src.config import get_project_root
 from src.ingest.play_csv import PlayStoreImportSource
 from src.pipeline import process_and_ingest_reviews
-from src.store.db import Database
 from src.store.models import ReviewRecord
 
 
@@ -150,17 +147,15 @@ def test_ING_10_csv_quoting(tmp_path: Path):
     assert "Line one, line two, with comma" in records[0]["text"]
 
 
-def test_ING_16_reingest_idempotent(tmp_path: Path):
+def test_ING_16_reingest_idempotent(tmp_path: Path, groww_store):
     """ING-16 (P0): Ingesting same file twice adds 0 new rows."""
-    db_file = tmp_path / "test.db"
-    db = Database(db_file)
     root = get_project_root()
     fixture = root / "tests" / "fixtures" / "reviews_baseline.csv"
 
-    sum1 = process_and_ingest_reviews(week_str="2026-11-10", csv_path=fixture, db=db)
+    sum1 = process_and_ingest_reviews(store=groww_store, week_str="2026-11-10", csv_path=fixture)
     assert sum1["newly_inserted"] > 0
 
-    sum2 = process_and_ingest_reviews(week_str="2026-11-10", csv_path=fixture, db=db)
+    sum2 = process_and_ingest_reviews(store=groww_store, week_str="2026-11-10", csv_path=fixture)
     assert sum2["newly_inserted"] == 0
 
 
@@ -557,7 +552,7 @@ def test_PII_38_raw_files_clean(tmp_path: Path):
     root = get_project_root()
     raw_dir = root / "data" / "raw"
     if raw_dir.exists():
-        for csv_path in raw_dir.glob("*.csv"):
+        for csv_path in raw_dir.glob("**/*.csv"):
             with open(csv_path, "r", encoding="utf-8") as f:
                 header = f.readline()
                 assert "author_name" not in header
@@ -566,15 +561,10 @@ def test_PII_38_raw_files_clean(tmp_path: Path):
                 assert "device_id" not in header
 
 
-def test_SEC_01_no_identity_fields_stored():
+def test_SEC_01_no_identity_fields_stored(pulse_store):
     """SEC-01 (P0): Database schema contains zero identity columns."""
-    root = get_project_root()
-    db_path = root / "data" / "pulse.db"
-    db = Database(db_path)
-    with db.get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("PRAGMA table_info(reviews)")
-        cols = [row["name"] for row in cursor.fetchall()]
+    with pulse_store.connector.session() as s:
+        cols = [row["name"] for row in s.fetchall("PRAGMA table_info(reviews)")]
 
         forbidden = ["author_name", "user_id", "avatar_url", "device_id", "email", "reviewer_name"]
         for f in forbidden:

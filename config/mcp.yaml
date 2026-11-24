@@ -1,52 +1,49 @@
-# Capability to Tool mapping for Model Context Protocol (MCP) integrations
-# Auth is handled entirely inside the MCP server/host environment; NO credentials live here.
+version: "2.0"
+provider: composio
 
-version: "1.0"
+server:
+  url_env: COMPOSIO_MCP_URL
+  api_key_env: COMPOSIO_API_KEY
+  api_key_header: x-consumer-api-key
 
-servers:
-  gmail-docs-mcp:
-    url: "https://gmail-docs-mcp-five.vercel.app/api/mcp"
-    headers:
-      Authorization: "Bearer 0f3780ce835e5a48f746104f6be69f6e57d373c79490e340"
-
-# Allowed capabilities for this application.
-# IMPORTANT: Send email capabilities are strictly FORBIDDEN. This application is DRAFT-ONLY.
-allowed_capabilities:
-  - docs.create
-  - docs.update
-  - gmail.create_draft
-  - gmail.update_draft
+accounts:
+  googledocs: COMPOSIO_GOOGLEDOCS_ACCOUNT_ID
+  gmail: COMPOSIO_GMAIL_ACCOUNT_ID
 
 capabilities:
   docs.create:
-    server: gmail-docs-mcp
-    tool: create_document
-    description: "Create a new Google Document for the weekly review pulse"
-    required: true
-
-  docs.update:
-    server: gmail-docs-mcp
-    tool: update_document
-    description: "Update existing weekly review pulse document"
-    required: false
-    fallback: versioned_create
-
+    tool: GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN
+    toolkit: googledocs
+    description: Create the weekly pulse Doc from Markdown
+  docs.get:
+    tool: GOOGLEDOCS_GET_DOCUMENT_BY_ID
+    toolkit: googledocs
+    description: Read the Doc body end index before replacing it
+  docs.clear:
+    tool: GOOGLEDOCS_UPDATE_EXISTING_DOCUMENT
+    toolkit: googledocs
+    description: Clear the Doc body with one deleteContentRange
+  docs.write:
+    tool: GOOGLEDOCS_UPDATE_DOCUMENT_SECTION_MARKDOWN
+    toolkit: googledocs
+    description: Append the new Markdown into the cleared Doc
   gmail.create_draft:
-    server: gmail-docs-mcp
-    tool: create_draft
-    description: "Create an unsent draft in Gmail addressed to self or alias"
-    required: true
-
+    tool: GMAIL_CREATE_EMAIL_DRAFT
+    toolkit: gmail
+    description: Create an unsent draft addressed to the operator
   gmail.update_draft:
-    server: gmail-docs-mcp
-    tool: update_draft
-    description: "Update an existing draft for the same week"
-    required: false
-    fallback: versioned_draft
+    tool: GMAIL_UPDATE_DRAFT
+    toolkit: gmail
+    description: Update the stored draft for the same app and week
+
+denied_tool_patterns:
+  - SEND
+  - DELETE
+  - TRASH
 
 policy:
   draft_only: true
   allow_send_email: false
-  retry_on_network_error: true
   max_retries: 3
-  timeout_seconds: 30
+  timeout_seconds: 60
+  backoff_seconds: 0.5

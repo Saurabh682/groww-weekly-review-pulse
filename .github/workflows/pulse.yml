@@ -1,0 +1,94 @@
+name: Pulse
+
+on:
+  schedule:
+    - cron: "30 20 * * *"
+    - cron: "30 3 * * 1"
+    - cron: "30 21 1 * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Job to run
+        required: true
+        type: choice
+        options: [backfill, daily, pulse, reconcile]
+      app_key:
+        description: One app. Required for backfill, empty means every eligible app
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  PULSE_STORE: supabase
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      jobs: ${{ steps.plan.outputs.jobs }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install
+        run: pip install --quiet .
+      - name: Resolve the jobs for this run
+        id: plan
+        env:
+          PULSE_SCHEDULE: ${{ github.event.schedule }}
+          PULSE_MODE: ${{ inputs.mode }}
+          PULSE_APP_KEY: ${{ inputs.app_key }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: python -m src.scheduler plan
+
+  run:
+    name: ${{ matrix.mode }} ${{ matrix.app_key }}
+    needs: plan
+    if: needs.plan.outputs.jobs != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.jobs) }}
+    concurrency:
+      group: pulse-${{ matrix.app_key }}
+      cancel-in-progress: false
+    env:
+      APP_KEY: ${{ matrix.app_key }}
+      JOB_MODE: ${{ matrix.mode }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install
+        run: pip install --quiet .
+      - name: Run the job
+        id: job
+        env:
+          COMPOSIO_MCP_URL: ${{ (matrix.mode == 'pulse' || matrix.mode == 'backfill') && secrets.COMPOSIO_MCP_URL || '' }}
+          COMPOSIO_API_KEY: ${{ (matrix.mode == 'pulse' || matrix.mode == 'backfill') && secrets.COMPOSIO_API_KEY || '' }}
+          COMPOSIO_GOOGLEDOCS_ACCOUNT_ID: ${{ (matrix.mode == 'pulse' || matrix.mode == 'backfill') && secrets.COMPOSIO_GOOGLEDOCS_ACCOUNT_ID || '' }}
+          COMPOSIO_GMAIL_ACCOUNT_ID: ${{ (matrix.mode == 'pulse' || matrix.mode == 'backfill') && secrets.COMPOSIO_GMAIL_ACCOUNT_ID || '' }}
+          PULSE_EMAIL_TO: ${{ (matrix.mode == 'pulse' || matrix.mode == 'backfill') && secrets.PULSE_EMAIL_TO || '' }}
+        run: python -m src.scheduler run --app "$APP_KEY" --mode "$JOB_MODE" > "$RUNNER_TEMP/job.log" 2>&1
+      - name: Scan the log, then show it
+        if: ${{ !cancelled() && steps.job.outcome != 'skipped' }}
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          COMPOSIO_GOOGLEDOCS_ACCOUNT_ID: ${{ secrets.COMPOSIO_GOOGLEDOCS_ACCOUNT_ID }}
+          COMPOSIO_GMAIL_ACCOUNT_ID: ${{ secrets.COMPOSIO_GMAIL_ACCOUNT_ID }}
+        run: python -m src.scheduler show-log --app "$APP_KEY" --file "$RUNNER_TEMP/job.log"

@@ -1,12 +1,11 @@
 """Phase 2 Theme Engine coordinator."""
 
 import hashlib
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set
 
-from src.config import PulseConfig, get_project_root, load_pulse_config
-from src.store.db import Database
+from src.config import PulseConfig, load_pulse_config
+from src.domains import domain_pack_for
+from src.store.store import AppStore
 from src.store.models import ReviewRecord
 from src.themes.cluster import cluster_reviews
 from src.themes.embed import Embedder
@@ -17,17 +16,17 @@ from src.themes.rank import compute_theme_stats, rank_themes
 
 def run_theme_pipeline(
     reviews: List[ReviewRecord],
+    store: AppStore,
+    week_str: str,
+    window_start: str,
+    window_end: str,
+    coverage_weeks: float,
     config: Optional[PulseConfig] = None,
-    db: Optional[Database] = None,
-    week_str: str = "2026-11-10",
     run_id: Optional[str] = None
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Execute Phase 2 Theme Engine on a dataset of reviews."""
     if not config:
         config = load_pulse_config()
-
-    root = get_project_root()
-    database = db or Database(root / "data" / "pulse.db")
     active_run_id = run_id or f"run_{week_str}_{int(hashlib.md5(week_str.encode()).hexdigest(), 16) % 100000}"
 
     # 1. Apply User Phase 2 Filters:
@@ -47,7 +46,7 @@ def run_theme_pipeline(
         )
 
     # 2. Vector Embedding (with SQLite cache THM-10, THM-11)
-    embedder = Embedder(db=database, model_name=f"{config.llm.provider}-lsa-64")
+    embedder = Embedder(store=store, model_name=f"{config.llm.provider}-lsa-64")
     vectors = embedder.embed_reviews(filtered_reviews)
 
     # 3. Capped Clustering (THM-01..09)
@@ -61,7 +60,8 @@ def run_theme_pipeline(
     )
 
     # 4. Labeling & Statistics
-    used_labels = set()
+    pack = domain_pack_for(store.app.category)
+    used_labels: Set[str] = set()
     raw_themes: List[dict] = []
 
     for cluster_idx, member_indices in clusters.items():
@@ -75,7 +75,8 @@ def run_theme_pipeline(
             cluster_texts=cluster_texts,
             cluster_centroid=centroid,
             avg_rating=avg_rating,
-            used_labels=used_labels
+            used_labels=used_labels,
+            pack=pack,
         )
 
         stats = compute_theme_stats(
@@ -92,56 +93,20 @@ def run_theme_pipeline(
     ranked_themes = rank_themes(raw_themes, enforce_issue_in_top3=True)
 
     # 6. Persist Run and Themes to SQLite
-    now_iso = datetime.now(timezone.utc).isoformat()
     ratings = [r.rating for r in filtered_reviews]
     overall_avg_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0.0
 
-    with database.get_connection() as conn:
-        cursor = conn.cursor()
-        # Record in runs table first for foreign key integrity
-        cursor.execute(
-            """
-            INSERT OR REPLACE INTO runs (
-                run_id, week_start, status, total_reviews, analyzed_reviews, avg_rating, coverage_weeks, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                active_run_id,
-                week_str,
-                "themes_completed",
-                len(reviews),
-                len(filtered_reviews),
-                overall_avg_rating,
-                12.0,
-                now_iso,
-            )
-        )
-
-        for t in ranked_themes:
-            cursor.execute(
-                """
-                INSERT OR REPLACE INTO themes (
-                    theme_id, run_id, label, description, review_count, share_pct, avg_rating, is_top3
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    t["theme_id"],
-                    active_run_id,
-                    t["label"],
-                    t["description"],
-                    t["review_count"],
-                    t["share_pct"],
-                    t["avg_rating"],
-                    t["is_top3"],
-                )
-            )
-            # Persist review_themes links
-            for rev_id in t["member_review_ids"]:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO review_themes (review_id, theme_id, distance) VALUES (?, ?, ?)",
-                    (rev_id, t["theme_id"], 0.0)
-                )
-        conn.commit()
+    store.save_theme_run(
+        run_id=active_run_id,
+        week_start=week_str,
+        window_start=window_start,
+        window_end=window_end,
+        total_reviews=len(reviews),
+        analyzed_reviews=len(filtered_reviews),
+        avg_rating=overall_avg_rating,
+        coverage_weeks=coverage_weeks,
+        themes=ranked_themes,
+    )
 
     return {
         "run_id": active_run_id,

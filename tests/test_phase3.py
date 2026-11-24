@@ -10,28 +10,24 @@ Covers:
 
 import json
 from pathlib import Path
-import pytest
 
 from src.note.generate import (
     enforce_word_budget,
-    synthesize_action_items,
     synthesize_theme_one_liner,
 )
 from src.note.models import ActionItem, Quote, ThemeSummary, WeeklyPulseNote
-from src.note.render import render_html, render_markdown, render_plain_text
+from src.note.render import render_markdown
 from src.note.select import (
-    compute_sentence_score,
     is_candidate_eligible,
-    select_quotes_for_themes,
     split_sentences,
 )
 from src.note.validate import (
     is_verbatim_substring,
     validate_note,
-    ValidationResult,
 )
 from src.note.words import count_note_words, strip_markdown
-from src.store.models import ReviewRecord, ThemeRecord
+from src.store.models import ThemeRecord
+from src.domains import FINANCE_PACK
 
 
 # ==============================================================================
@@ -128,6 +124,7 @@ def test_QUO_05_distinct_reviews_required():
     bad_quotes = [q1, q1, note.quotes[2]]
     bad_note = WeeklyPulseNote(
         week_start=note.week_start,
+        app_name=note.app_name,
         window_start=note.window_start,
         window_end=note.window_end,
         top_themes=note.top_themes,
@@ -143,7 +140,6 @@ def test_QUO_01_verbatim_check():
     """QUO-01 (P0): Quotes must be exact verbatim substrings of source review."""
     rev_id = "rev_101"
     src_text = "Withdrawal request placed on Monday, still pending on Friday."
-    rev = ReviewRecord(rev_id, "play_store", 1, src_text, "2026-11-04")
     
     quote = Quote(
         text="Withdrawal request placed on Monday, still pending on Friday.",
@@ -157,7 +153,6 @@ def test_QUO_01_verbatim_check():
 
 def test_QUO_02_mutation_detected():
     """QUO-02 (P0): Changing even 1 word or character fails verbatim validation."""
-    rev_id = "rev_101"
     src_text = "Withdrawal request placed on Monday, still pending on Friday."
     mutated_text = "Withdrawal request placed on Monday, still pending on Saturday."
     assert not is_verbatim_substring(mutated_text, src_text)
@@ -173,6 +168,7 @@ def test_NOT_06_action_count_invariants():
     # 2 actions
     bad_note = WeeklyPulseNote(
         week_start=note.week_start,
+        app_name=note.app_name,
         window_start=note.window_start,
         window_end=note.window_end,
         top_themes=note.top_themes,
@@ -191,6 +187,7 @@ def test_NOT_07_action_theme_grounding():
     ] + note.actions[1:]
     bad_note = WeeklyPulseNote(
         week_start=note.week_start,
+        app_name=note.app_name,
         window_start=note.window_start,
         window_end=note.window_end,
         top_themes=note.top_themes,
@@ -209,6 +206,7 @@ def test_NOT_08_generic_action_rejected():
     ] + note.actions[1:]
     bad_note = WeeklyPulseNote(
         week_start=note.week_start,
+        app_name=note.app_name,
         window_start=note.window_start,
         window_end=note.window_end,
         top_themes=note.top_themes,
@@ -222,7 +220,7 @@ def test_NOT_08_generic_action_rejected():
 def test_NOT_12_theme_one_liner_length():
     """NOT-12 (P1): Theme one-liner must be <= 22 words."""
     t = ThemeRecord("t1", "r1", "Charges & Pricing", "desc", 100, 0.25, 2.0)
-    one_liner = synthesize_theme_one_liner(t)
+    one_liner = synthesize_theme_one_liner(t, FINANCE_PACK)
     assert count_note_words(one_liner) <= 22
 
 
@@ -296,9 +294,9 @@ def _create_mock_note() -> WeeklyPulseNote:
 
     return WeeklyPulseNote(
         week_start="2026-11-10",
+        app_name="Groww",
         window_start="2026-09-07",
         window_end="2026-11-10",
-        platform="Google Play",
         total_reviews=1435,
         analyzed_reviews=662,
         avg_rating=2.7,

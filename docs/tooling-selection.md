@@ -16,6 +16,19 @@
 | **LLM Provider** | Google Gemini (`gemini-2.5-flash`) | Fast, structured outputs with schema enforcement for theme labeling and action drafting |
 | **MCP Integration** | Python MCP SDK / Stdio Transport | Standardized protocol, credentials remain inside MCP host environment |
 
+### v2 changes (2026-11-23)
+
+| Component | Selected Tool / Technology | Rationale |
+| :--- | :--- | :--- |
+| **Production Store** | Supabase Postgres (free tier) | Reachable from GitHub Actions, the HF backend and (through the backend) the dashboard; constraints and triggers enforce the 5-app cap. SQLite stays for tests and local runs behind `PulseStore` |
+| **MCP Integration** | Composio MCP (Google Docs + Gmail toolkits), Python MCP SDK over Streamable HTTP | Google auth lives in Composio connected accounts; replaces the custom `gmail-docs-mcp` server |
+| **Play Store data** | `google-play-scraper` (`search`, `app`, `reviews`) | Public, login-free; unofficial (risk in ADR-9) |
+| **App Store data** | iTunes Search API, iTunes Lookup API, customer-reviews RSS (JSON) | Public and published by Apple; ~500 most recent reviews per fetch |
+| **Scheduler** | GitHub Actions, one workflow with a matrix | Free, close to the repo, no extra infrastructure |
+| **Backend API** | FastAPI on Hugging Face Spaces | Existing deploy target |
+| **Operator auth** | Supabase Auth (magic link) + email allowlist | No passwords stored by us |
+| **Secret scanning** | `gitleaks` in CI | The v1 repo had a committed MCP token |
+
 ---
 
 ## 2. Privacy & Data Handling Agreement

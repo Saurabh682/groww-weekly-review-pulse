@@ -1,11 +1,10 @@
-"""Configuration models and loader for Groww Weekly Review Pulse.
+"""Configuration models and loader for the weekly review pulse.
 
 Enforces hard architectural constraints at startup:
 - max_themes <= 5 (CFG-01)
 - max_words <= 250 (CFG-02)
 - quotes == 3 and actions == 3 (CFG-03)
-- automated collection blocked by default (ING-14, SEC-05)
-- App Store source rejected (ING-15)
+- per-store collection kill switches (COL-02)
 - safe secret handling without leaking values (CFG-05, CFG-06)
 """
 
@@ -13,15 +12,10 @@ import os
 import re
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
-
-class AppConfig(BaseModel):
-    name: str = "Groww"
-    play_store_id: str = "com.nextbillion.groww"
-    region: str = "in"
+from dotenv import load_dotenv
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class WindowConfig(BaseModel):
@@ -29,34 +23,11 @@ class WindowConfig(BaseModel):
 
 
 class AppStoreSourceConfig(BaseModel):
-    enabled: bool = False
-
-    @field_validator("enabled")
-    @classmethod
-    def reject_app_store_enabled(cls, v: bool) -> bool:
-        if v:
-            raise ValueError(
-                "App Store source is not supported in this build. "
-                "Only Google Play Store is active."
-            )
-        return v
+    enabled: bool = True
 
 
 class PlayStoreSourceConfig(BaseModel):
-    mode: str = "csv_import"
-    path: Path = Path("data/imports/play_reviews.csv")
-    allow_automated: bool = False
-
-    @model_validator(mode="after")
-    def validate_automated_guard(self) -> "PlayStoreSourceConfig":
-        env_allowed = os.getenv("ALLOW_AUTOMATED_PLAY_COLLECTION", "false").lower() == "true"
-        if self.mode == "automated" or self.allow_automated:
-            if not env_allowed:
-                raise ValueError(
-                    "Automated Google Play collection is disabled by default. "
-                    "A recorded compliance approval and ALLOW_AUTOMATED_PLAY_COLLECTION=true are required."
-                )
-        return self
+    enabled: bool = True
 
 
 class SourcesConfig(BaseModel):
@@ -83,6 +54,7 @@ class NoteConfig(BaseModel):
     max_words: int = Field(default=250)
     quotes: int = Field(default=3)
     actions: int = Field(default=3)
+    min_reviews: int = Field(default=30, ge=3)
 
     @field_validator("max_words")
     @classmethod
@@ -115,7 +87,7 @@ class LLMConfig(BaseModel):
 
 
 class EmailConfig(BaseModel):
-    to: str = "self@groww-pulse.local"
+    to: str = ""
 
 
 class MCPConfig(BaseModel):
@@ -123,7 +95,6 @@ class MCPConfig(BaseModel):
 
 
 class PulseConfig(BaseModel):
-    app: AppConfig = Field(default_factory=AppConfig)
     window: WindowConfig = Field(default_factory=WindowConfig)
     sources: SourcesConfig = Field(default_factory=SourcesConfig)
     themes: ThemesConfig = Field(default_factory=ThemesConfig)
@@ -152,11 +123,33 @@ def _expand_env_vars(data: Any) -> Any:
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RUNTIME_ROOT_ENV = "PULSE_HOME"
+
+
+def load_project_env(env_path: Path | None = None) -> bool:
+    return load_dotenv(env_path or PROJECT_ROOT / ".env", override=False)
 
 
 def get_project_root() -> Path:
     """Return the absolute path to the groww-weekly-review-pulse root directory."""
     return PROJECT_ROOT
+
+
+def runtime_root() -> Path:
+    configured = os.getenv(RUNTIME_ROOT_ENV, "").strip()
+    return Path(configured).resolve() if configured else PROJECT_ROOT
+
+
+def outputs_root() -> Path:
+    return runtime_root() / "outputs"
+
+
+def raw_reviews_dir(app_key: str) -> Path:
+    return runtime_root() / "data" / "raw" / app_key
+
+
+def default_sqlite_path() -> Path:
+    return runtime_root() / "data" / "pulse.db"
 
 
 def resolve_project_path(path_input: Path | str) -> Path:
@@ -194,7 +187,7 @@ def load_pulse_config(config_path: Path | str = "config/pulse.yaml") -> PulseCon
     # Expand environment variables
     expanded_data = _expand_env_vars(raw_data)
 
-    known_keys = {"app", "window", "sources", "themes", "note", "llm", "email", "mcp"}
+    known_keys = {"window", "sources", "themes", "note", "llm", "email", "mcp"}
     unknown_keys = set(expanded_data.keys()) - known_keys
     if unknown_keys:
         warnings.warn(

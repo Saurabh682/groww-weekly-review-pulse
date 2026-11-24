@@ -7,26 +7,23 @@ Implements all Phase 0 edge cases specified in docs/edge-case.md §16:
 - SEC-04, SEC-05
 """
 
-import os
 import socket
 import tempfile
 import warnings
 from pathlib import Path
 import pytest
-import yaml
 
 from src.config import (
     load_pulse_config,
     require_secret,
     get_project_root,
-    PulseConfig,
     ThemesConfig,
     NoteConfig,
     AppStoreSourceConfig,
     PlayStoreSourceConfig,
 )
-from src.mcp.capabilities import load_mcp_config, resolve_capability, MCPConfigData
-from src.skeleton import run_skeleton, count_words, build_skeleton_note
+from src.mcp.capabilities import load_mcp_config, MCPConfigData
+from src.skeleton import run_skeleton
 
 
 # ==============================================================================
@@ -112,7 +109,7 @@ def test_CFG_06_no_secrets_in_outputs(monkeypatch):
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
-        report = run_skeleton(
+        run_skeleton(
             config_path="config/pulse.yaml",
             week_str="2026-11-10",
             output_base=tmp_path
@@ -144,7 +141,7 @@ def test_CFG_07_unknown_keys():
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             cfg = load_pulse_config(cfg_file)
-            assert cfg.app.name == "Groww"
+            assert cfg.window.weeks == 12
             assert len(w) >= 1
             assert "Unknown configuration keys found" in str(w[-1].message)
 
@@ -173,42 +170,19 @@ def test_CFG_09_cross_platform_paths():
     """CFG-09: Paths handled via pathlib.Path resolve cleanly across platforms."""
     root = get_project_root()
     pulse_cfg = load_pulse_config("config/pulse.yaml")
-    assert isinstance(pulse_cfg.sources.play_store.path, Path)
     assert isinstance(pulse_cfg.mcp.config, Path)
     assert root.is_absolute()
 
 
 # ==============================================================================
-# ING-14 & SEC-05: Automated Play Collection Guard (P0)
+# COL-02: Per-store kill switches replace the v1 automation guard (ADR-9)
 # ==============================================================================
-def test_ING_14_automated_source_blocked(monkeypatch):
-    """ING-14 / SEC-05: Automated Play collection without approval record is blocked."""
-    monkeypatch.setenv("ALLOW_AUTOMATED_PLAY_COLLECTION", "false")
-
-    with pytest.raises(ValueError, match="Automated Google Play collection is disabled"):
-        PlayStoreSourceConfig(mode="automated")
-
-    with pytest.raises(ValueError, match="Automated Google Play collection is disabled"):
-        PlayStoreSourceConfig(allow_automated=True)
-
-
-def test_SEC_05_automation_guard(monkeypatch):
-    """SEC-05: Verification that default config has automated collection off."""
+def test_COL_02_both_stores_enabled_by_default():
     cfg = load_pulse_config("config/pulse.yaml")
-    assert cfg.sources.play_store.mode == "csv_import"
-    assert cfg.sources.play_store.allow_automated is False
-
-
-# ==============================================================================
-# ING-15: App Store Source Rejected in this Build (P1)
-# ==============================================================================
-def test_ING_15_app_store_not_supported():
-    """ING-15: Enabling App Store source is rejected as unsupported."""
-    with pytest.raises(ValueError, match="App Store source is not supported in this build"):
-        AppStoreSourceConfig(enabled=True)
-
-    disabled_cfg = AppStoreSourceConfig(enabled=False)
-    assert disabled_cfg.enabled is False
+    assert cfg.sources.play_store.enabled is True
+    assert cfg.sources.app_store.enabled is True
+    assert AppStoreSourceConfig(enabled=False).enabled is False
+    assert PlayStoreSourceConfig(enabled=False).enabled is False
 
 
 # ==============================================================================
@@ -220,25 +194,15 @@ def test_MCP_17_no_send_capability():
     assert mcp_cfg.policy.draft_only is True
     assert mcp_cfg.policy.allow_send_email is False
 
-    # Attempting to load a config with send capability must raise ValueError
-    invalid_mcp_dict = {
-        "version": "1.0",
-        "allowed_capabilities": ["docs.create", "gmail.send_email"],
-        "capabilities": {
-            "docs.create": {
-                "server": "google_docs",
-                "tool": "create_document",
-                "description": "test",
-            },
-            "gmail.send_email": {
-                "server": "gmail",
-                "tool": "send_email",
-                "description": "send",
-            },
-        },
-        "policy": {"draft_only": False, "allow_send_email": True},
+    invalid_mcp_dict = mcp_cfg.model_dump()
+    invalid_mcp_dict["capabilities"]["gmail.send_email"] = {
+        "tool": "GMAIL_SEND_EMAIL", "toolkit": "gmail", "description": "send",
     }
     with pytest.raises(ValueError, match="Forbidden capability"):
+        MCPConfigData.model_validate(invalid_mcp_dict)
+    invalid_mcp_dict["capabilities"].pop("gmail.send_email")
+    invalid_mcp_dict["policy"]["allow_send_email"] = True
+    with pytest.raises(ValueError, match="Policy violation"):
         MCPConfigData.model_validate(invalid_mcp_dict)
 
 

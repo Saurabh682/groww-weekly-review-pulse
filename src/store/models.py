@@ -1,7 +1,7 @@
 """Data models for persistence in SQLite and in-memory pipeline stages."""
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from typing import Optional
 
 
@@ -42,6 +42,29 @@ class RunRecord:
     finished_at: Optional[str] = None
 
 
+PLATFORMS = ("play_store", "app_store")
+COLLECTION_MODES = ("backfill", "daily", "reconcile", "csv_import")
+COLLECTION_STATUSES = ("running", "ok", "failed", "skipped_disabled")
+
+
+@dataclass
+class CollectionRunRecord:
+    collection_id: int
+    platform: str
+    mode: str
+    window_start: str
+    window_end: str
+    status: str
+    started_at: str
+    covered_start: Optional[str] = None
+    fetched: int = 0
+    inserted: int = 0
+    source_limit_hit: int = 0
+    feed_gaps: int = 0
+    error: Optional[str] = None
+    finished_at: Optional[str] = None
+
+
 @dataclass
 class PublishStateRecord:
     week_start: str
@@ -66,3 +89,23 @@ class ThemeRecord:
     is_top3: int = 0
     neg_share: float = 0.0
     priority_score: float = 0.0
+
+
+APP_STATUSES = ("pending_backfill", "backfilling", "active", "archived", "failed")
+LIVE_APP_STATUSES = ("pending_backfill", "backfilling", "active", "failed")
+
+
+@dataclass
+class AppRecord:
+    app_key: str
+    display_name: str
+    status: str
+    play_package_id: Optional[str] = None
+    app_store_id: Optional[str] = None
+    country: str = "in"
+    lang: str = "en"
+    category: Optional[str] = None
+    created_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+    archived_at: Optional[str] = None

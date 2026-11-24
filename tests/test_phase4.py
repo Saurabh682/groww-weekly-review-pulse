@@ -1,299 +1,164 @@
-"""Unit and contract tests for Phase 4: MCP Publishing (Google Docs + Gmail).
-
-Covers:
-- MCP-01..11: Publish flows, idempotency, partial failure resume, fallbacks
-- MCP-13..16: Schema validation, recipient validation, malformed responses
-- MCP-17..18: No send capability and zero Google SDK / REST imports
-- MCP-21, 24..26: Unicode preservation, pre-publish PII gate, doc links, date consistency
-"""
-
-import os
-from pathlib import Path
 import pytest
-import tempfile
 
 from src.config import get_project_root
-from src.mcp.capabilities import load_mcp_config
-from src.mcp.client import (
-    MCPAuthExpiredError,
-    MCPConnectionError,
-    MCPError,
-    MockMCPClient,
-)
-from src.mcp.publisher import DocsPublisher, DraftPublisher, PulsePublisher
-from src.store.db import Database
+from src.mcp.errors import MCPConnectionError, MCPError, MCPMalformedResponse
+from src.mcp.composio import ComposioClient, ComposioSettings
+from src.mcp.publisher import DocsPublisher, DraftPublisher, PulsePublisher, draft_body
+from tests.conftest import TEST_RECIPIENT
+from tests.support.composio_server import fast_config
+
+WEEK = "2026-11-10"
 
 
 @pytest.fixture
-def mock_db():
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        db = Database(Path(tmp_dir) / "test.db")
-        yield db
+def publisher(groww_store, composio):
+    return PulsePublisher(store=groww_store, client=composio.client())
 
 
-@pytest.fixture
-def mcp_cfg():
-    return load_mcp_config("config/mcp.yaml")
-
-
-# ==============================================================================
-# Publish Lifecycle & Idempotency Tests (MCP-01, 06, 08, 09, 10, 11)
-# ==============================================================================
-
-def test_MCP_01_normal_first_publish(mock_db, mcp_cfg):
-    """MCP-01 (P0): First publish creates Google Doc and Gmail draft with Doc link."""
-    client = MockMCPClient()
-    publisher = PulsePublisher(database=mock_db, mcp_config=mcp_cfg, client=client)
-
-    res = publisher.publish_pulse(
-        week_start="2026-11-10",
-        note_markdown="# Note content\n\nGoogle Play reviews.",
-        recipient_email="self@groww-pulse.local"
-    )
-
+def test_MCP_01_normal_first_publish(publisher, composio):
+    res = publisher.publish_pulse(WEEK, "# Note content\n\nGoogle Play reviews.", TEST_RECIPIENT)
     assert res.status == "published"
-    assert res.doc_id is not None
-    assert "https://docs.google.com/document/d/" in res.doc_url
-    assert res.draft_id is not None
-    assert len(client.call_history) == 2  # create_document + create_draft
+    assert res.doc_url.startswith("https://docs.google.com/document/d/")
+    assert res.draft_id in composio.drafts
+    assert composio.tools_called() == ["GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN", "GMAIL_CREATE_EMAIL_DRAFT"]
 
 
-def test_MCP_08_same_hash_noop(mock_db, mcp_cfg):
-    """MCP-08 (P0): Calling publish twice with identical content is a NO-OP."""
-    client = MockMCPClient()
-    publisher = PulsePublisher(database=mock_db, mcp_config=mcp_cfg, client=client)
+def test_MCP_08_same_hash_noop(publisher, composio):
     md = "# Note\n\nGoogle Play reviews."
-
-    res1 = publisher.publish_pulse("2026-11-10", md)
-    assert res1.status == "published"
-    calls_after_first = len(client.call_history)
-
-    res2 = publisher.publish_pulse("2026-11-10", md)
-    assert res2.status == "noop"
-    assert "Content hash unchanged" in res2.message
-    # No new tool calls were made
-    assert len(client.call_history) == calls_after_first
+    publisher.publish_pulse(WEEK, md, TEST_RECIPIENT)
+    calls = len(composio.calls)
+    res = publisher.publish_pulse(WEEK, md, TEST_RECIPIENT)
+    assert res.status == "noop"
+    assert "Content hash unchanged" in res.message
+    assert len(composio.calls) == calls
 
 
-def test_MCP_09_changed_content_update(mock_db, mcp_cfg):
-    """MCP-09 (P0): Publishing modified content updates existing Doc and draft in place."""
-    client = MockMCPClient()
-    publisher = PulsePublisher(database=mock_db, mcp_config=mcp_cfg, client=client)
-
-    res1 = publisher.publish_pulse("2026-11-10", "# Note v1\n\nGoogle Play reviews.")
-    doc_id_1 = res1.doc_id
-    draft_id_1 = res1.draft_id
-
-    res2 = publisher.publish_pulse("2026-11-10", "# Note v2 (modified)\n\nGoogle Play reviews.")
-    assert res2.status == "published"
-    # Same IDs updated in place
-    assert res2.doc_id == doc_id_1
-    assert res2.draft_id == draft_id_1
-    assert client.documents[doc_id_1]["version"] == 2
+def test_MCP_09_changed_content_update(publisher, composio):
+    first = publisher.publish_pulse(WEEK, "# Note v1\n\nGoogle Play reviews.", TEST_RECIPIENT)
+    second = publisher.publish_pulse(WEEK, "# Note v2 (modified)\n\nGoogle Play reviews.", TEST_RECIPIENT)
+    assert (second.doc_id, second.draft_id) == (first.doc_id, first.draft_id)
+    assert composio.doc_text(first.doc_id) == "# Note v2 (modified)\n\nGoogle Play reviews."
+    assert len(composio.documents) == 1 and len(composio.drafts) == 1
 
 
-def test_MCP_06_partial_failure_resume(mock_db, mcp_cfg):
-    """MCP-06 (P0): If Doc succeeded and Gmail draft failed, next run resumes at Gmail."""
-    # Run 1: Docs succeeds, but Gmail fails
-    client1 = MockMCPClient(unsupported_tools=["create_draft"])
-    pub1 = PulsePublisher(database=mock_db, mcp_config=mcp_cfg, client=client1)
-    
+def test_MCP_06_partial_failure_resume(groww_store, composio):
+    composio.failing_tools.add("GMAIL_CREATE_EMAIL_DRAFT")
     with pytest.raises(MCPError):
-        pub1.publish_pulse("2026-11-10", "# Note\n\nGoogle Play reviews.")
+        PulsePublisher(groww_store, composio.client()).publish_pulse(WEEK, "# Note\n\nGoogle Play reviews.", TEST_RECIPIENT)
+    state = groww_store.get_publish_state(WEEK)
+    assert state.doc_id and state.draft_id is None and state.content_hash is None
 
-    # Doc was recorded in publish_state
-    with mock_db.get_connection() as conn:
-        c = conn.cursor()
-        c.execute("SELECT doc_id, draft_id FROM publish_state WHERE week_start = '2026-11-10'")
-        row = c.fetchone()
-        assert row["doc_id"] is not None
-        assert row["draft_id"] is None
-        doc_id_saved = row["doc_id"]
-
-    # Run 2: Resume with healthy client
-    client2 = MockMCPClient()
-    pub2 = PulsePublisher(database=mock_db, mcp_config=mcp_cfg, client=client2)
-    res2 = pub2.publish_pulse("2026-11-10", "# Note\n\nGoogle Play reviews.")
-
-    assert res2.status == "published"
-    assert res2.doc_id == doc_id_saved  # Reused without duplicate doc creation!
-    assert res2.draft_id is not None
+    composio.failing_tools.clear()
+    res = PulsePublisher(groww_store, composio.client()).publish_pulse(WEEK, "# Note\n\nGoogle Play reviews.", TEST_RECIPIENT)
+    assert res.doc_id == state.doc_id
+    assert len(composio.documents) == 1 and len(composio.drafts) == 1
 
 
-def test_MCP_10_doc_deleted_externally(mock_db, mcp_cfg):
-    """MCP-10 (P1): If user deleted the Doc on Google Docs, pipeline recreates it."""
-    client = MockMCPClient()
-    publisher = PulsePublisher(database=mock_db, mcp_config=mcp_cfg, client=client)
-
-    res1 = publisher.publish_pulse("2026-11-10", "# Note v1\n\nGoogle Play reviews.")
-    first_doc_id = res1.doc_id
-
-    # Simulate user deleting doc externally
-    client.deleted_docs.add(first_doc_id)
-
-    res2 = publisher.publish_pulse("2026-11-10", "# Note v2\n\nGoogle Play reviews.")
-    assert res2.status == "published"
-    assert res2.doc_id != first_doc_id  # New doc created
-    assert res2.doc_id in client.documents
+def test_MCP_06_failed_draft_update_never_freezes_stale_draft(groww_store, composio):
+    publisher = PulsePublisher(groww_store, composio.client())
+    first = publisher.publish_pulse(WEEK, "# v1", TEST_RECIPIENT)
+    composio.failing_tools.add("GMAIL_UPDATE_DRAFT")
+    with pytest.raises(MCPError):
+        publisher.publish_pulse(WEEK, "# v2", TEST_RECIPIENT)
+    composio.failing_tools.clear()
+    retry = publisher.publish_pulse(WEEK, "# v2", TEST_RECIPIENT)
+    assert retry.status == "published"
+    assert composio.drafts[first.draft_id]["body"].startswith("# v2")
+    reverted = publisher.publish_pulse(WEEK, "# v1", TEST_RECIPIENT)
+    assert reverted.status == "published"
+    assert composio.doc_text(first.doc_id) == "# v1"
 
 
-def test_MCP_11_draft_deleted_or_sent(mock_db, mcp_cfg):
-    """MCP-11 (P1): If user sent or deleted the draft, pipeline creates a fresh draft."""
-    client = MockMCPClient()
-    publisher = PulsePublisher(database=mock_db, mcp_config=mcp_cfg, client=client)
-
-    res1 = publisher.publish_pulse("2026-11-10", "# Note v1\n\nGoogle Play reviews.")
-    first_draft_id = res1.draft_id
-
-    # Simulate user sending draft externally
-    client.deleted_drafts.add(first_draft_id)
-
-    res2 = publisher.publish_pulse("2026-11-10", "# Note v2\n\nGoogle Play reviews.")
-    assert res2.status == "published"
-    assert res2.draft_id != first_draft_id
+def test_MCP_10_doc_deleted_externally(publisher, composio):
+    first = publisher.publish_pulse(WEEK, "# Note v1", TEST_RECIPIENT)
+    del composio.documents[first.doc_id]
+    second = publisher.publish_pulse(WEEK, "# Note v2", TEST_RECIPIENT)
+    assert second.doc_id != first.doc_id
+    assert composio.doc_text(second.doc_id) == "# Note v2"
+    assert second.doc_url in composio.drafts[second.draft_id]["body"]
 
 
-# ==============================================================================
-# Unsupported Tool Fallbacks (MCP-02, MCP-03)
-# ==============================================================================
-
-def test_MCP_02_update_unsupported_versioned_doc(mcp_cfg):
-    """MCP-02 (P1): When docs.update is unsupported, DocsPublisher creates a versioned doc."""
-    client = MockMCPClient(unsupported_tools=["update_document"])
-    docs_pub = DocsPublisher(client, mcp_cfg)
-
-    # First creation
-    doc_id_1, _ = docs_pub.upsert_pulse("2026-11-10", "Content v1")
-    # Attempt update falls back to versioned create (v2)
-    doc_id_2, _ = docs_pub.upsert_pulse("2026-11-10", "Content v2", existing_doc_id=doc_id_1)
-    
-    assert doc_id_2 != doc_id_1
-    assert "v2" in client.documents[doc_id_2]["title"]
+def test_MCP_11_draft_deleted_or_sent(publisher, composio):
+    first = publisher.publish_pulse(WEEK, "# Note v1", TEST_RECIPIENT)
+    del composio.drafts[first.draft_id]
+    second = publisher.publish_pulse(WEEK, "# Note v2", TEST_RECIPIENT)
+    assert second.draft_id != first.draft_id
+    assert composio.drafts[second.draft_id]["is_sent"] is False
 
 
-def test_MCP_03_draft_update_unsupported_revision(mcp_cfg):
-    """MCP-03 (P1): When gmail.update_draft is unsupported, creates revision draft."""
-    client = MockMCPClient(unsupported_tools=["update_draft"])
-    draft_pub = DraftPublisher(client, mcp_cfg)
-
-    draft_1 = draft_pub.upsert_draft("2026-11-10", "self@groww-pulse.local", "Body v1")
-    draft_2 = draft_pub.upsert_draft("2026-11-10", "self@groww-pulse.local", "Body v2", existing_draft_id=draft_1)
-
-    assert draft_2 != draft_1
-    assert "[Rev 2]" in client.drafts[draft_2]["subject"]
-
-
-# ==============================================================================
-# Error Handling & Edge Cases (MCP-04, 05, 13, 15, 16)
-# ==============================================================================
-
-def test_MCP_04_unreachable_retries_then_fails(mock_db, mcp_cfg):
-    """MCP-04 (P0): Unreachable server raises MCPConnectionError."""
-    client = MockMCPClient(fail_unreachable=True)
-    publisher = PulsePublisher(database=mock_db, mcp_config=mcp_cfg, client=client)
-
+def test_MCP_04_unreachable_retries_then_fails(groww_store, composio):
+    composio.http_failures.extend([503, 503, 503])
     with pytest.raises(MCPConnectionError):
-        publisher.publish_pulse("2026-11-10", "Content")
+        PulsePublisher(groww_store, composio.client()).publish_pulse(WEEK, "Content", TEST_RECIPIENT)
+    assert composio.calls == []
 
 
-def test_MCP_05_auth_expired_message(mock_db, mcp_cfg):
-    """MCP-05 (P1): Auth expired raises actionable error naming connector."""
-    client = MockMCPClient(fail_auth_expired=True)
-    publisher = PulsePublisher(database=mock_db, mcp_config=mcp_cfg, client=client)
-
-    with pytest.raises(MCPAuthExpiredError) as exc_info:
-        publisher.publish_pulse("2026-11-10", "Content")
-    assert "Re-authorize" in str(exc_info.value)
-
-
-def test_MCP_13_malformed_success_response(mcp_cfg):
-    """MCP-13 (P0): Tool returning success but missing doc_id or URL raises MCPError."""
-    client = MockMCPClient(fail_malformed_response=True)
-    docs_pub = DocsPublisher(client, mcp_cfg)
-
-    with pytest.raises(MCPError) as exc_info:
-        docs_pub.upsert_pulse("2026-11-10", "Content")
-    assert "missing doc_id or doc_url" in str(exc_info.value)
+def test_MCP_04_closed_port_is_connection_error(groww_store, composio):
+    url = composio.url
+    composio.stop()
+    config = fast_config()
+    single_attempt = config.model_copy(update={"policy": config.policy.model_copy(update={"max_retries": 1})})
+    client = ComposioClient(ComposioSettings(url=url, api_key="k", accounts={"googledocs": "a", "gmail": "b"}), single_attempt)
+    with pytest.raises(MCPConnectionError):
+        PulsePublisher(groww_store, client).publish_pulse(WEEK, "Content", TEST_RECIPIENT)
 
 
-def test_MCP_15_recipient_validation(mcp_cfg):
-    """MCP-15 (P0): Empty or malformed email address rejected."""
-    client = MockMCPClient()
-    draft_pub = DraftPublisher(client, mcp_cfg)
-
-    with pytest.raises(ValueError):
-        draft_pub.upsert_draft("2026-11-10", "", "Content")
-
-    with pytest.raises(ValueError):
-        draft_pub.upsert_draft("2026-11-10", "not-an-email", "Content")
+def test_MCP_04_transient_failure_recovers(publisher, composio):
+    composio.http_failures.extend([502])
+    assert publisher.publish_pulse(WEEK, "Content", TEST_RECIPIENT).status == "published"
 
 
-# ==============================================================================
-# Security Invariants & Compliance (MCP-17, 18, 21, 24, 25, 26)
-# ==============================================================================
+def test_MCP_14_rate_limit_is_bounded(groww_store, composio):
+    from src.mcp.errors import MCPRateLimitError
 
-def test_MCP_17_no_send_capability():
-    """MCP-17 (P0): Drafts must never have is_sent=True; no send capabilities."""
-    mcp_cfg = load_mcp_config("config/mcp.yaml")
-    client = MockMCPClient()
-    draft_pub = DraftPublisher(client, mcp_cfg)
+    composio.http_failures.extend([429, 429, 429])
+    with pytest.raises(MCPRateLimitError):
+        PulsePublisher(groww_store, composio.client()).publish_pulse(WEEK, "Content", TEST_RECIPIENT)
 
-    draft_id = draft_pub.upsert_draft("2026-11-10", "self@groww-pulse.local", "Body text")
-    assert client.drafts[draft_id]["is_sent"] is False
+
+def test_MCP_13_malformed_success_response(composio):
+    composio.malformed_tools.add("GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN")
+    with pytest.raises(MCPMalformedResponse, match="missing doc_id"):
+        DocsPublisher(composio.client()).upsert("Title", "Content", None, None)
+
+
+def test_MCP_15_recipient_validation(groww_store, composio):
+    publisher = PulsePublisher(groww_store, composio.client())
+    for bad in ("", "not-an-email"):
+        with pytest.raises(ValueError, match="MCP-15"):
+            publisher.publish_pulse(WEEK, "Content", bad)
+    assert composio.calls == []
+
+
+def test_MCP_17_drafts_never_sent(publisher, composio):
+    res = publisher.publish_pulse(WEEK, "Body text", TEST_RECIPIENT)
+    assert composio.drafts[res.draft_id]["is_sent"] is False
+    assert not any("SEND" in tool for tool in composio.tools_called())
 
 
 def test_MCP_18_no_google_sdk_or_rest():
-    """MCP-18 (P0): Static scan guarantees zero Google SDK or direct REST imports."""
-    root = get_project_root()
-    py_files = list(root.glob("src/**/*.py"))
-
-    forbidden_imports = [
-        "googleapiclient",
-        "google.oauth2",
-        "google.auth",
-        "from google.cloud import docs",
-        "googleapis.com",
-    ]
-
-    for py_file in py_files:
+    forbidden = ["googleapiclient", "google.oauth2", "google.auth", "from google.cloud import docs", "googleapis.com"]
+    for py_file in get_project_root().glob("src/**/*.py"):
         content = py_file.read_text(encoding="utf-8")
-        for forbidden in forbidden_imports:
-            assert forbidden not in content, f"Forbidden Google SDK import '{forbidden}' found in {py_file}!"
+        for pattern in forbidden:
+            assert pattern not in content, f"{pattern} found in {py_file}"
 
 
-def test_MCP_24_pre_publish_pii_gate(mcp_cfg):
-    """MCP-24 (P0): Pre-publish PII gate blocks draft creation if seeded PII appears."""
-    client = MockMCPClient()
-    draft_pub = DraftPublisher(client, mcp_cfg)
-
-    contaminated_body = "# Note\n\nCustomer phone: +91 98765 43210"
-    with pytest.raises(ValueError) as exc_info:
-        draft_pub.upsert_draft("2026-11-10", "self@groww-pulse.local", contaminated_body)
-    assert "MCP-24: Pre-publish PII gate blocked draft creation" in str(exc_info.value)
+def test_MCP_24_pre_publish_pii_gate(groww_store, composio):
+    with pytest.raises(ValueError, match="MCP-24"):
+        PulsePublisher(groww_store, composio.client()).publish_pulse(
+            WEEK, "# Note\n\nCustomer phone: +91 98765 43210", TEST_RECIPIENT
+        )
+    assert composio.calls == []
 
 
-def test_MCP_25_doc_link_in_email(mcp_cfg):
-    """MCP-25 (P1): Doc link is inserted into draft body using returned doc_url."""
-    client = MockMCPClient()
-    draft_pub = DraftPublisher(client, mcp_cfg)
-
+def test_MCP_25_doc_link_in_email(composio):
     doc_url = "https://docs.google.com/document/d/doc_sample_123/edit"
-    draft_id = draft_pub.upsert_draft(
-        "2026-11-10",
-        "self@groww-pulse.local",
-        "Body content",
-        doc_url=doc_url
-    )
-    assert f"Google Doc: {doc_url}" in client.drafts[draft_id]["body"]
+    draft_id = DraftPublisher(composio.client()).upsert(TEST_RECIPIENT, "Subject", draft_body("Body content", doc_url), None)
+    assert f"Google Doc: {doc_url}" in composio.drafts[draft_id]["body"]
 
 
-def test_MCP_26_consistent_week_dates(mock_db, mcp_cfg):
-    """MCP-26 (P1): Week date is formatted consistently across Doc title and email subject."""
-    client = MockMCPClient()
-    publisher = PulsePublisher(database=mock_db, mcp_config=mcp_cfg, client=client)
-
-    week_start = "2026-11-10"
-    res = publisher.publish_pulse(week_start, "Content")
-
-    assert week_start in client.documents[res.doc_id]["title"]
-    assert week_start in client.drafts[res.draft_id]["subject"]
+def test_MCP_26_consistent_week_dates(publisher, composio):
+    res = publisher.publish_pulse(WEEK, "Content", TEST_RECIPIENT)
+    assert WEEK in composio.documents[res.doc_id]["title"]
+    assert WEEK in composio.drafts[res.draft_id]["subject"]

@@ -11,12 +11,12 @@ Enforces hard invariants:
 - Play Store scope (no App Store references)
 """
 
-import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 from src.clean.pii import scrub_pii
 from src.note.models import WeeklyPulseNote
 from src.note.words import count_note_words
+from src.note.coverage import store_scope_errors
 from src.store.models import ReviewRecord
 
 
@@ -139,12 +139,11 @@ def validate_note(
                 errors.append(f"NOT-08: Action #{idx} contains generic non-actionable phrase '{act.text}'.")
 
         # 5. Scope & Platform Invariant (NOT-14)
-        if "App Store" in rendered_text or "iOS" in rendered_text:
-            errors.append("NOT-14: Note contains prohibited references to 'App Store' or 'iOS' (Google Play only scope).")
-        elif "Google Play" not in rendered_text:
-            errors.append("NOT-14: Note must explicitly state source as 'Google Play'.")
+        store_errors = store_scope_errors(note, rendered_text)
+        if store_errors:
+            errors.extend(store_errors)
         else:
-            checks_passed.append("google_play_scope")
+            checks_passed.append("store_scope")
 
         # 6. Overall PII Scan (PII-30, NOT-18, INV-04)
         scrub_res = scrub_pii(rendered_text)

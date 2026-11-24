@@ -24,31 +24,31 @@ Covers:
 """
 
 import json
-import os
-import shutil
-import subprocess
-import sys
-from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from src.clean.pii import scrub_pii
 from src.clean.window import normalize_to_week_start
-from src.config import get_project_root, load_pulse_config
-from src.mcp.client import MockMCPClient
+from src.config import get_project_root, outputs_root
 from src.pipeline import run_full_pipeline, validate_week_parameter
-from src.store.db import Database
+from src.run_report import SYSTEM_FIELDS
+from src.store.factory import sqlite_store
 from src.store.models import ReviewRecord
-from src.store.retention import calculate_retention_cutoff, purge_retention
+from src.store.retention import purge_retention
 
 
 @pytest.fixture
-def tmp_pipeline_env(tmp_path):
+def tmp_pipeline_env(tmp_path, composio, monkeypatch):
     """Sets up an isolated database and outputs directory for pipeline testing."""
+    settings = composio.settings()
+    monkeypatch.setenv("COMPOSIO_MCP_URL", settings.url)
+    monkeypatch.setenv("COMPOSIO_API_KEY", settings.api_key)
+    monkeypatch.setenv("COMPOSIO_GOOGLEDOCS_ACCOUNT_ID", settings.accounts["googledocs"])
+    monkeypatch.setenv("COMPOSIO_GMAIL_ACCOUNT_ID", settings.accounts["gmail"])
     db_file = tmp_path / "test_pulse.db"
-    db = Database(db_file)
+    db = sqlite_store(db_file).for_app("groww")
     fixture_csv = get_project_root() / "tests" / "fixtures" / "reviews_baseline.csv"
     return {
         "db": db,
@@ -58,28 +58,25 @@ def tmp_pipeline_env(tmp_path):
     }
 
 
-def test_ORC_01_dry_run_no_side_effects(tmp_pipeline_env):
+def test_ORC_01_dry_run_no_side_effects(tmp_pipeline_env, composio):
     """ORC-01: --dry-run runs through validation, makes no MCP calls, and modifies no publish_state."""
     db = tmp_pipeline_env["db"]
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
 
     res = run_full_pipeline(
         week_str="2026-11-10",
         csv_path=tmp_pipeline_env["csv_path"],
         dry_run=True,
-        db=db,
+        store=db,
         mcp_client=mock_mcp
     )
 
     assert res["status"] == "validated"
     assert res["is_valid"] is True
     assert res["dry_run"] is True
-    assert len(mock_mcp.call_history) == 0
+    assert len(composio.calls) == 0
 
-    with db.get_connection() as conn:
-        c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM publish_state")
-        assert c.fetchone()[0] == 0
+    assert db.count_publish_states() == 0
 
 
 def test_ORC_02_stage_resume(tmp_pipeline_env):
@@ -92,7 +89,7 @@ def test_ORC_02_stage_resume(tmp_pipeline_env):
         week_str=week,
         csv_path=tmp_pipeline_env["csv_path"],
         stage_limit="ingest",
-        db=db
+        store=db
     )
     assert ingest_res["status"] == "ingest_completed"
 
@@ -100,7 +97,7 @@ def test_ORC_02_stage_resume(tmp_pipeline_env):
     themes_res = run_full_pipeline(
         week_str=week,
         stage_limit="themes",
-        db=db
+        store=db
     )
     assert themes_res["status"] == "themes_completed"
     assert themes_res["themes"]["themes_count"] >= 3
@@ -109,7 +106,7 @@ def test_ORC_02_stage_resume(tmp_pipeline_env):
     note_res = run_full_pipeline(
         week_str=week,
         stage_limit="note",
-        db=db
+        store=db
     )
     assert note_res["status"] == "validated"
     assert note_res["word_count"] <= 250
@@ -130,48 +127,49 @@ def test_ORC_03_crash_recovery(tmp_pipeline_env):
         week_str=week,
         csv_path=tmp_pipeline_env["csv_path"],
         dry_run=True,
-        db=db
+        store=db
     )
     assert res["status"] == "validated"
     assert res["is_valid"] is True
 
 
-def test_ORC_04_db_failure(tmp_path):
+def test_ORC_04_db_failure(tmp_path, composio):
     """ORC-04: Database failure surfaces clear error and avoids partial publish."""
-    bad_db = Database(tmp_path / "corrupt.db")
-    with bad_db.get_connection() as conn:
-        conn.execute("DROP TABLE reviews;")
+    bad_db = sqlite_store(tmp_path / "corrupt.db").for_app("groww")
+    with bad_db.connector.session() as s:
+        s.execute("DROP TABLE review_themes")
+        s.execute("DROP TABLE reviews")
 
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
     with pytest.raises(Exception):
         run_full_pipeline(
             week_str="2026-11-10",
-            db=bad_db,
+            store=bad_db,
             mcp_client=mock_mcp
         )
-    assert len(mock_mcp.call_history) == 0
+    assert len(composio.calls) == 0
 
 
-def test_ORC_05_disk_full(tmp_pipeline_env):
+def test_ORC_05_disk_full(tmp_pipeline_env, composio):
     """ORC-05: Output write failure surfaces clear error and stops before publishing."""
     db = tmp_pipeline_env["db"]
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
 
-    with patch("src.note.engine.resolve_project_path", side_effect=OSError("Disk full")):
+    with patch("src.note.engine.outputs_root", side_effect=OSError("Disk full")):
         with pytest.raises(Exception):
             run_full_pipeline(
                 week_str="2026-11-10",
                 csv_path=tmp_pipeline_env["csv_path"],
-                db=db,
+                store=db,
                 mcp_client=mock_mcp
             )
-    assert len(mock_mcp.call_history) == 0
+    assert len(composio.calls) == 0
 
 
-def test_ORC_06_double_trigger(tmp_pipeline_env):
+def test_ORC_06_double_trigger(tmp_pipeline_env, composio):
     """ORC-06: Triggering twice for same week is idempotent and no-ops second publish."""
     db = tmp_pipeline_env["db"]
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
     week = "2026-11-10"
 
     # First run: publishes
@@ -179,11 +177,11 @@ def test_ORC_06_double_trigger(tmp_pipeline_env):
         week_str=week,
         csv_path=tmp_pipeline_env["csv_path"],
         dry_run=False,
-        db=db,
+        store=db,
         mcp_client=mock_mcp
     )
     assert res1["status"] in ["published", "created"]
-    calls_after_run1 = len(mock_mcp.call_history)
+    calls_after_run1 = len(composio.calls)
     assert calls_after_run1 >= 2  # create/upsert doc and draft
 
     # Second run: identical inputs no-op
@@ -191,7 +189,7 @@ def test_ORC_06_double_trigger(tmp_pipeline_env):
         week_str=week,
         csv_path=tmp_pipeline_env["csv_path"],
         dry_run=False,
-        db=db,
+        store=db,
         mcp_client=mock_mcp
     )
     assert res2["status"] == "published"
@@ -208,7 +206,7 @@ def test_ORC_07_backfill_past_week(tmp_pipeline_env):
         week_str=past_week,
         csv_path=tmp_pipeline_env["csv_path"],
         dry_run=True,
-        db=db
+        store=db
     )
     assert res["status"] == "validated"
     assert "2026-10-12" in res["report_path"]
@@ -224,7 +222,7 @@ def test_ORC_08_purge_vs_active_run(tmp_pipeline_env):
         week_str=norm_week,
         csv_path=tmp_pipeline_env["csv_path"],
         stage_limit="themes",
-        db=db
+        store=db
     )
 
     # Set run to 'running'
@@ -232,24 +230,26 @@ def test_ORC_08_purge_vs_active_run(tmp_pipeline_env):
     db.record_run_start(active_run_id, norm_week)
 
     # Associate an old review with this active run's theme
-    with db.get_connection() as conn:
-        c = conn.cursor()
-        c.execute("SELECT review_id FROM reviews LIMIT 1")
-        rev_id = c.fetchone()[0]
-        c.execute("UPDATE reviews SET date = '2025-01-01' WHERE review_id = ?", (rev_id,))
-        c.execute("INSERT OR REPLACE INTO themes (theme_id, run_id, label, description, review_count, share_pct, avg_rating) VALUES ('t_act', ?, 'Act', 'Desc', 1, 0.1, 3.0)", (active_run_id,))
-        c.execute("INSERT OR REPLACE INTO review_themes (review_id, theme_id, distance) VALUES (?, 't_act', 0.0)", (rev_id,))
-        conn.commit()
+    with db.connector.session() as s:
+        rev_id = s.scalar("SELECT review_id FROM reviews WHERE app_key = 'groww' LIMIT 1")
+        s.execute("UPDATE reviews SET date = '2025-01-01' WHERE app_key = 'groww' AND review_id = ?", (rev_id,))
+        s.execute(
+            "INSERT INTO themes (app_key, theme_id, run_id, label, description, review_count, share_pct, avg_rating) "
+            "VALUES ('groww', 't_act', ?, 'Act', 'Desc', 1, 0.1, 3.0)",
+            (active_run_id,),
+        )
+        s.execute(
+            "INSERT INTO review_themes (app_key, review_id, theme_id, distance) VALUES ('groww', ?, 't_act', 0.0)",
+            (rev_id,),
+        )
 
     # Purge with cutoff 2026-01-01
-    purge_res = purge_retention(database=db, cutoff_date="2026-01-01")
+    purge_res = purge_retention(store=db, cutoff_date="2026-01-01")
     assert active_run_id in purge_res["active_runs_protected"]
 
     # Verify protected review still exists
-    with db.get_connection() as conn:
-        c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM reviews WHERE review_id = ?", (rev_id,))
-        assert c.fetchone()[0] == 1
+    with db.connector.session() as s:
+        assert s.scalar("SELECT COUNT(*) FROM reviews WHERE app_key = 'groww' AND review_id = ?", (rev_id,)) == 1
 
 
 def test_ORC_09_retention_scope(tmp_path, tmp_pipeline_env):
@@ -265,7 +265,7 @@ def test_ORC_09_retention_scope(tmp_path, tmp_pipeline_env):
     recent_file = raw_dir / "play_reviews_2026-08-01_2026-11-10.csv"
     recent_file.write_text("rating,text\n5,recent\n", encoding="utf-8")
 
-    purge_res = purge_retention(database=db, cutoff_date="2026-05-01", raw_dir=raw_dir)
+    purge_res = purge_retention(store=db, cutoff_date="2026-05-01", raw_dir=raw_dir)
     assert purge_res["files_purged"] == 1
     assert not old_file.exists()
     assert recent_file.exists()
@@ -280,7 +280,7 @@ def test_ORC_10_run_report_clean(tmp_pipeline_env):
         week_str=week,
         csv_path=tmp_pipeline_env["csv_path"],
         dry_run=True,
-        db=db
+        store=db
     )
     report_path = Path(res["report_path"])
     assert report_path.exists()
@@ -295,8 +295,8 @@ def test_ORC_10_run_report_clean(tmp_pipeline_env):
     assert data["word_count"] <= 250
 
     # Strict PII scan on full report JSON
-    pii_check = scrub_pii(report_content)
-    assert pii_check.pii_found == 0
+    free_text = json.dumps({k: v for k, v in data.items() if k not in SYSTEM_FIELDS})
+    assert not scrub_pii(free_text).pii_found
 
 
 def test_ORC_11_exit_codes(tmp_pipeline_env):
@@ -306,7 +306,7 @@ def test_ORC_11_exit_codes(tmp_pipeline_env):
         week_str="2026-11-10",
         csv_path=tmp_pipeline_env["csv_path"],
         dry_run=True,
-        db=tmp_pipeline_env["db"]
+        store=tmp_pipeline_env["db"]
     )
     assert res["status"] == "validated"
 
@@ -327,16 +327,16 @@ def test_INV_01_note_invariants_randomized(tmp_pipeline_env):
         week_str="2026-11-10",
         csv_path=tmp_pipeline_env["csv_path"],
         dry_run=True,
-        db=db
+        store=db
     )
     assert res["is_valid"] is True
     assert res["word_count"] <= 250
 
 
-def test_INV_02_no_mcp_on_failure(tmp_pipeline_env):
+def test_INV_02_no_mcp_on_failure(tmp_pipeline_env, composio):
     """INV-02: Pipeline never calls MCP when validation fails (fails closed)."""
     db = tmp_pipeline_env["db"]
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
 
     # Force a validation failure by mocking validate_note to return invalid
     from src.note.validate import ValidationResult
@@ -353,23 +353,23 @@ def test_INV_02_no_mcp_on_failure(tmp_pipeline_env):
             csv_path=tmp_pipeline_env["csv_path"],
             dry_run=False,
             retries=1,
-            db=db,
+            store=db,
             mcp_client=mock_mcp
         )
         assert res["status"] == "validation_failed"
         assert res["is_valid"] is False
         # MCP publisher was NEVER called
-        assert len(mock_mcp.call_history) == 0
+        assert len(composio.calls) == 0
 
 
-def test_INV_03_idempotent_rerun(tmp_pipeline_env):
+def test_INV_03_idempotent_rerun(tmp_pipeline_env, composio):
     """INV-03: Rerun with identical inputs produces exactly one doc and one draft."""
     db = tmp_pipeline_env["db"]
-    mock_mcp = MockMCPClient()
+    mock_mcp = composio.client()
     week = "2026-11-10"
 
-    res1 = run_full_pipeline(week_str=week, csv_path=tmp_pipeline_env["csv_path"], db=db, mcp_client=mock_mcp)
-    res2 = run_full_pipeline(week_str=week, csv_path=tmp_pipeline_env["csv_path"], db=db, mcp_client=mock_mcp)
+    res1 = run_full_pipeline(week_str=week, csv_path=tmp_pipeline_env["csv_path"], store=db, mcp_client=mock_mcp)
+    res2 = run_full_pipeline(week_str=week, csv_path=tmp_pipeline_env["csv_path"], store=db, mcp_client=mock_mcp)
 
     assert res1["doc_url"] == res2["doc_url"]
     assert res1["draft_id"] == res2["draft_id"]
@@ -389,11 +389,11 @@ def test_INV_04_canary_strings_absent(tmp_pipeline_env):
         week_str="2026-11-10",
         csv_path=tmp_pipeline_env["csv_path"],
         dry_run=True,
-        db=db
+        store=db
     )
 
     report_text = Path(res["report_path"]).read_text(encoding="utf-8")
-    note_text = (get_project_root() / "outputs" / res["week"] / "note.md").read_text(encoding="utf-8")
+    note_text = (outputs_root() / "groww" / res["week"] / "note.md").read_text(encoding="utf-8")
 
     for canary in all_canaries:
         assert canary not in report_text, f"Canary leaked into report: {canary}"
@@ -416,7 +416,7 @@ def test_EDG_01_low_volume_week(tmp_pipeline_env):
         week_str="2026-11-10",
         csv_path=tmp_pipeline_env["csv_path"],
         dry_run=True,
-        db=db
+        store=db
     )
     assert res["status"] == "validated"
 

@@ -1,0 +1,1206 @@
+{
+ "feed": {
+  "entry": [
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-21T04:27:02-07:00"
+    },
+    "im:rating": {
+     "label": "5"
+    },
+    "im:version": {
+     "label": "18.26.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "SIP"
+    },
+    "content": {
+     "label": "Very nice work by the team groww",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-21T00:42:23-07:00"
+    },
+    "im:rating": {
+     "label": "1"
+    },
+    "im:version": {
+     "label": "18.26.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Worst Customer Support"
+    },
+    "content": {
+     "label": "The App maybe good but the customer support is the worst. Just pray you never have to contact them. They give the same automated responses which is really frustrating.",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-20T22:35:14-07:00"
+    },
+    "im:rating": {
+     "label": "3"
+    },
+    "im:version": {
+     "label": "18.26.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Bad UI experience"
+    },
+    "content": {
+     "label": "Having so much funding and still struggling to build a good UI. For UX designing simple funda is in less click user able to do its ops. Even i always spend 1-2 sec to find my portfolio. Portfolio is more common word than holding. A simple AB testing can be done to see usability improvements.",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-20T20:20:56-07:00"
+    },
+    "im:rating": {
+     "label": "3"
+    },
+    "im:version": {
+     "label": "18.26.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "iPad Native App"
+    },
+    "content": {
+     "label": "Create a a iPad native app of groww.",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-20T02:02:04-07:00"
+    },
+    "im:rating": {
+     "label": "5"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Notification Sound problem"
+    },
+    "content": {
+     "label": "Since the iOS 27 update on iPhone, the volume for all notifications has stopped working. This is causing a major problem.",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-20T00:14:33-07:00"
+    },
+    "im:rating": {
+     "label": "2"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Optimise for iPhone Duo"
+    },
+    "content": {
+     "label": "Please update app hurry for iPhone Duo",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-18T20:25:35-07:00"
+    },
+    "im:rating": {
+     "label": "1"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "App server fail many times"
+    },
+    "content": {
+     "label": "We can’t able to track the invested stocks update. Once market closed it is opened properly. No use.",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-17T22:28:46-07:00"
+    },
+    "im:rating": {
+     "label": "1"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Error issue"
+    },
+    "content": {
+     "label": "Most of the time when I open it shows error stating something went wrong pls try later. Facing this issue since so long",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-17T19:29:31-07:00"
+    },
+    "im:rating": {
+     "label": "1"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Honest review"
+    },
+    "content": {
+     "label": "Platform Charge is too high..\nAngle one is better than Groww",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-16T20:37:27-07:00"
+    },
+    "im:rating": {
+     "label": "5"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "easy to use"
+    },
+    "content": {
+     "label": "good app with all information",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-16T06:53:06-07:00"
+    },
+    "im:rating": {
+     "label": "1"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Pathetic experience, Investing in US stocks through Groww, lots of delay"
+    },
+    "content": {
+     "label": "Pathetic experience, Investing in US stocks through Groww, There are lots of delay in fund transfer, even after multiple verification. Worst experience, I don’t recommend this app.\n\nCustomer care support resolution and response is also unsatisfactory.",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-14T22:51:28-07:00"
+    },
+    "im:rating": {
+     "label": "1"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "..."
+    },
+    "content": {
+     "label": "I COULDNT EVEN SIGN UP",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-14T05:41:29-07:00"
+    },
+    "im:rating": {
+     "label": "1"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "iPad compatible App required"
+    },
+    "content": {
+     "label": "Grow is good app for investment purpose .Two basic features required \n1) Savings templates for chart for cross platform usage and study \n2) Native iPad compatible App",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-13T04:53:36-07:00"
+    },
+    "im:rating": {
+     "label": "5"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Improve Features for US Stocks"
+    },
+    "content": {
+     "label": "You guys are doing an amazing job. The app feels incredibly smooth, intuitive, and easy to use. I really appreciate the simplicity and overall user experience.\n\nHowever, I would like to suggest a few improvements to the US stocks section. It would be great to have more detailed company information, similar to what is available for Indian stocks, including financials, company fundamentals, and other key business details.\n\nAdditionally, please consider introducing a Save to Watchlist feature for US stocks, just like the one available for Indian stocks.\n\nThese additions would make the US stock investing experience much more comprehensive and convenient. Keep up the great work!",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-13T00:34:44-07:00"
+    },
+    "im:rating": {
+     "label": "1"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Fake appa"
+    },
+    "content": {
+     "label": "Lost my money",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-12T21:14:11-07:00"
+    },
+    "im:rating": {
+     "label": "5"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Easy to invest"
+    },
+    "content": {
+     "label": "Helped lot 🙌🙌🙌",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-12T19:23:46-07:00"
+    },
+    "im:rating": {
+     "label": "4"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "redesign"
+    },
+    "content": {
+     "label": "please redesign app for ipad mini",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-12T15:42:01-07:00"
+    },
+    "im:rating": {
+     "label": "5"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Fantastic"
+    },
+    "content": {
+     "label": "Fantastic",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-12T06:13:51-07:00"
+    },
+    "im:rating": {
+     "label": "5"
+    },
+    "im:version": {
+     "label": "18.14.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Accha hai lekin samjhkar pese bnana"
+    },
+    "content": {
+     "label": "Thoda market dekho candle samjho bas yehi hai baki kal uper jaa rha h dekh lo baki😊",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-12T04:00:20-07:00"
+    },
+    "im:rating": {
+     "label": "5"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Very good app for trading"
+    },
+    "content": {
+     "label": "Baki app se to Bahut achi app hai very past and smoth",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-12T00:17:40-07:00"
+    },
+    "im:rating": {
+     "label": "5"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Thanks"
+    },
+    "content": {
+     "label": "😊",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-11T20:32:54-07:00"
+    },
+    "im:rating": {
+     "label": "4"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Groww Is Great! Just Two Features Away from Being Perfect"
+    },
+    "content": {
+     "label": "I love using Groww compared to other trading apps. The overall experience is smooth and user-friendly. However, I would love to see two improvements:\n\n1. Portfolio Overview: Provide a single view showing Average Price, Market Price, 1-Day Returns, and Unrealised P&L, similar to Kite. This would make portfolio tracking much easier.\n2. 52-Week / Period High & Low: When viewing a stock chart (1D, 1W, 1Y, etc.), display the respective period’s High and Low prices, similar to Upstox.\n\nThese two additions would make Groww even better and provide a more complete trading experience!",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-11T19:56:30-07:00"
+    },
+    "im:rating": {
+     "label": "1"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Greed starts from groww"
+    },
+    "content": {
+     "label": "Line that make you perfect broker is : Groww starts Cash/Margin Shortfall Charges for F&O Sell Trades. There is nothing free zerodha is best",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-11T15:38:08-07:00"
+    },
+    "im:rating": {
+     "label": "1"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "US stock balance"
+    },
+    "content": {
+     "label": "My amount detected from account on 22/10/2026 but till now I am [REDACTED]. Very bad service. I don’t recommend Groww it’s better to go with SBI security app\n Regards\n[REDACTED]",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   },
+   {
+    "author": {
+     "name": {
+      "label": "Fixture Reviewer"
+     },
+     "uri": {
+      "label": "https://example.invalid/reviewer"
+     }
+    },
+    "updated": {
+     "label": "2026-11-11T04:27:48-07:00"
+    },
+    "im:rating": {
+     "label": "3"
+    },
+    "im:version": {
+     "label": "18.24.0"
+    },
+    "id": {
+     "label": "fixture-review-id"
+    },
+    "title": {
+     "label": "Not Good"
+    },
+    "content": {
+     "label": "UI is great but recently facing a lot of bugs",
+     "attributes": {
+      "type": "text"
+     }
+    },
+    "link": {
+     "attributes": {
+      "href": "https://example.invalid/review"
+     }
+    },
+    "im:voteSum": {
+     "label": "7"
+    },
+    "im:contentType": {
+     "attributes": {
+      "term": "Application",
+      "label": "Application"
+     }
+    },
+    "im:voteCount": {
+     "label": "9"
+    }
+   }
+  ]
+ }
+}

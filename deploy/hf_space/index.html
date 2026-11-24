@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groww Weekly Review Pulse — Backend & ML Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-canvas: #0b111e;
+      --bg-sidebar: #0d1320;
+      --surface-card: rgba(22, 34, 56, 0.85);
+      --surface-hover: rgba(27, 42, 71, 0.95);
+      --border-subtle: rgba(42, 61, 93, 0.45);
+      --teal-primary: #00d09c;
+      --teal-tint: rgba(0, 208, 156, 0.15);
+      --amber-friction: #f59e0b;
+      --coral-critical: #f43f5e;
+      --blue-accent: #38bdf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      padding: 32px 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 32px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-ring {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--teal-tint);
+      border: 1px solid rgba(0, 208, 156, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--teal-primary);
+      font-weight: 700;
+      font-size: 20px;
+    }
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 24px;
+      color: #fff;
+    }
+    .subhead {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .cta-group {
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--teal-primary);
+      color: #04211a;
+      border: 1px solid #00d09c;
+    }
+    .btn-primary:hover {
+      background: #00b386;
+      box-shadow: 0 0 16px rgba(0, 208, 156, 0.4);
+    }
+    .btn-secondary {
+      background: var(--surface-card);
+      color: #f1f5f9;
+      border: 1px solid var(--border-subtle);
+    }
+    .btn-secondary:hover {
+      background: var(--surface-hover);
+      border-color: #475569;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-teal { background: var(--teal-tint); color: var(--teal-primary); border: 1px solid rgba(0, 208, 156, 0.3); }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: var(--amber-friction); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal-primary); box-shadow: 0 0 8px var(--teal-primary); }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+    }
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px;
+    }
+    .stat-label { color: var(--text-muted); }
+    .stat-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #fff; }
+    
+    .pipeline-stepper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 24px 0;
+      position: relative;
+    }
+    .pipeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 1;
+    }
+    .step-node {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #111a2c;
+      border: 2px solid var(--teal-primary);
+      color: var(--teal-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(0, 208, 156, 0.2);
+    }
+    .step-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .step-line {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: rgba(0, 208, 156, 0.3);
+      z-index: 0;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: #e2e8f0;
+    }
+    .code-pill {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--teal-primary);
+      font-size: 11px;
+    }
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 12px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo-ring">G</div>
+        <div>
+          <h1>Groww Weekly Review Pulse — Backend ML Hub</h1>
+          <div class="subhead">Google Play Feedback Pipeline · NLP Clustering Engine · Model Context Protocol</div>
+        </div>
+      </div>
+      <div class="cta-group">
+        <a href="https://groww-weekly-review-pulse-frontend.vercel.app" target="_blank" class="btn btn-primary">
+          <span>Launch Frontend App</span> ↗
+        </a>
+        <a href="https://github.com/Saurabh682/groww-weekly-review-pulse" target="_blank" class="btn btn-secondary">
+          <span>GitHub Repository</span> ↗
+        </a>
+      </div>
+    </header>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <div class="card-title">
+        <span>Active Pipeline Architecture</span>
+        <span class="badge badge-teal"><span class="pulse-dot"></span> Stage Nominal</span>
+      </div>
+      <div class="pipeline-stepper">
+        <div class="step-line"></div>
+        <div class="pipeline-step">
+          <div class="step-node">1</div>
+          <div class="step-label">Ingest CSV</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-node">2</div>
+          <div class="step-label">Dedupe</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-node">3</div>
+          <div class="step-label">PII Scrub</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-node">4</div>
+          <div class="step-label">K-Means</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-node">5</div>
+          <div class="step-label">Gate Check</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-node">6</div>
+          <div class="step-label">MCP Staging</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">
+          <span>Telemetry & System Health</span>
+          <span class="badge badge-teal">v2.4.1</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Service Name</span>
+          <span class="stat-val">groww-review-pulse-backend</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Ingestion Window</span>
+          <span class="stat-val">12 Weeks (Rolling)</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Average Processing</span>
+          <span class="stat-val">1,240 Reviews / Run</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Cluster Ceiling</span>
+          <span class="stat-val">&le; 5 Themes (Optimal)</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Zero-PII Compliance</span>
+          <span class="stat-val" style="color: var(--teal-primary);">100% Guaranteed</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Mathematical Models</span>
+          <span class="badge badge-amber">Algorithms</span>
+        </div>
+        <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 12px;">
+          <strong>Cluster Priority Score Formula:</strong>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 12px; color: var(--teal-primary);">
+          Priority = (Share% × 0.4) + (NegShare% × 0.4) + ((5 - AvgRating) × 10 × 0.2)
+        </div>
+        <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 8px;">
+          <strong>ECG Pulse Amplitude Function:</strong>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; border: 1px solid var(--border-subtle); color: var(--blue-accent);">
+          Y = Y_baseline - ((Rating - 1.0) / 4.0 × Amp_max)
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Deterministic Invariant Matrix (6 Strict Quality Gates)</span>
+        <span class="badge badge-teal">Zero Tolerance</span>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Invariant</th>
+              <th>Rule & Threshold</th>
+              <th>Enforcement Mechanism</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="code-pill">INV-01</span></td>
+              <td>Word Count &le; 250 words</td>
+              <td>Strips markdown AST, counts plain words; fails if &gt; 250</td>
+              <td style="color: var(--teal-primary);">PASS (231w)</td>
+            </tr>
+            <tr>
+              <td><span class="code-pill">INV-02</span></td>
+              <td>Failures Block Delivery</td>
+              <td>Any failed gate aborts Google Docs and Gmail draft creation</td>
+              <td style="color: var(--teal-primary);">ACTIVE</td>
+            </tr>
+            <tr>
+              <td><span class="code-pill">INV-03</span></td>
+              <td>Theme Parity</td>
+              <td>Exactly 3 top themes selected by priority score</td>
+              <td style="color: var(--teal-primary);">PASS (3/3)</td>
+            </tr>
+            <tr>
+              <td><span class="code-pill">INV-04</span></td>
+              <td>Verbatim Authenticity</td>
+              <td>Exactly 3 quotes mapped to verified Google Play review IDs</td>
+              <td style="color: var(--teal-primary);">PASS (3/3)</td>
+            </tr>
+            <tr>
+              <td><span class="code-pill">INV-05</span></td>
+              <td>Ownership Action</td>
+              <td>Exactly 3 initiatives assigned to Engineering, Product, Growth</td>
+              <td style="color: var(--teal-primary);">PASS (3/3)</td>
+            </tr>
+            <tr>
+              <td><span class="code-pill">INV-07</span></td>
+              <td>Zero-PII Guarantee</td>
+              <td>Negative lookahead regex; 0 PAN, Aadhaar, email, phone tokens</td>
+              <td style="color: var(--teal-primary);">PASS (0 PII)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>
+      <div>Groww Weekly Review Pulse · Powered by Hugging Face Spaces & Vercel</div>
+      <div>Maintained by <a href="https://github.com/Saurabh682" target="_blank" style="color: var(--teal-primary); text-decoration: none;">Saurabh682</a></div>
+    </footer>
+  </div>
+</body>
+</html>

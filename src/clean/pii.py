@@ -15,7 +15,6 @@ Implements all detection and redaction rules from docs/edge-case.md §5:
 import re
 import unicodedata
 from dataclasses import dataclass
-from typing import Tuple
 
 # Devanagari to ASCII digit translation table
 DEVANAGARI_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")

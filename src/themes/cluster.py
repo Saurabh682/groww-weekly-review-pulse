@@ -55,7 +55,6 @@ def cluster_reviews(
     effective_max_k = min(max_k, n_samples - 1)
     effective_min_k = min(min_k, effective_max_k)
 
-    best_k = effective_min_k
     best_score = -1.0
     best_kmeans: Optional[KMeans] = None
 
@@ -77,7 +76,6 @@ def cluster_reviews(
         # Deterministic tie-break: strictly greater score required to increase k (smaller k on tie THM-05)
         if score > best_score:
             best_score = score
-            best_k = k
             best_kmeans = kmeans
 
     if best_kmeans is None:

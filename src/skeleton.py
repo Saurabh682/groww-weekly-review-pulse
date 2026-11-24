@@ -11,10 +11,12 @@ import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-from src.config import load_pulse_config, PulseConfig, get_project_root, resolve_project_path
+from src.config import load_pulse_config, outputs_root, runtime_root
 from src.mcp.capabilities import load_mcp_config, resolve_capability, MCPConfigData
+from src.note.titles import pulse_doc_title, pulse_email_subject
+from src.run_report import write_run_report
 
 
 def count_words(markdown_text: str) -> int:
@@ -62,7 +64,7 @@ class SkeletonMCPRunner:
         target = resolve_capability(self.mcp_config, "docs.create")
         return {
             "status": "success",
-            "server": target.server,
+            "toolkit": target.toolkit,
             "tool": target.tool,
             "doc_id": "doc_skeleton_mock_12345",
             "doc_url": "https://docs.google.com/document/d/doc_skeleton_mock_12345/edit",
@@ -75,7 +77,7 @@ class SkeletonMCPRunner:
         full_body = f"{body}\n\n---\nGoogle Doc: {doc_url}"
         return {
             "status": "success",
-            "server": target.server,
+            "toolkit": target.toolkit,
             "tool": target.tool,
             "draft_id": "draft_skeleton_mock_67890",
             "to": to,
@@ -88,7 +90,7 @@ class SkeletonMCPRunner:
 def run_skeleton(
     config_path: Path | str = "config/pulse.yaml",
     week_str: str = "2026-11-10",
-    output_base: Path | str = "outputs"
+    output_base: Path | str | None = None
 ) -> Dict[str, Any]:
     """Execute the Phase 0 walking skeleton run."""
     pulse_cfg = load_pulse_config(config_path)
@@ -106,20 +108,18 @@ def run_skeleton(
     # Run MCP tools via contract adapter
     runner = SkeletonMCPRunner(mcp_cfg)
     doc_res = runner.create_doc(
-        title=f"Groww Weekly Review Pulse: Week of {week_str}",
+        title=pulse_doc_title("Groww", week_str),
         content=note_text
     )
     draft_res = runner.create_draft(
         to=pulse_cfg.email.to,
-        subject=f"Groww Weekly Review Pulse | Week of {week_str}",
+        subject=pulse_email_subject("Groww", week_str),
         body=note_text,
         doc_url=doc_res["doc_url"]
     )
 
     # Write local fallback and report
-    base_dir = Path(output_base)
-    if not base_dir.is_absolute():
-        base_dir = get_project_root() / base_dir
+    base_dir = runtime_root() / output_base if output_base else outputs_root()
     week_output_dir = base_dir / week_str
     week_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -140,9 +140,7 @@ def run_skeleton(
         "local_fallback": str(note_file),
     }
 
-    report_file = week_output_dir / "run_report.json"
-    with open(report_file, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2)
+    write_run_report(week_output_dir, report)
 
     return report
 
