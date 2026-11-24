@@ -539,7 +539,7 @@ Fixed on the way:
 - [x] **12.1 Routes** `/apps/:appKey`, `/apps/:appKey/weeks/:week`, `/manage`; app switcher in the header.
 - [x] **12.2 Overview:** latest pulse, theme table, 8-week theme share trend, Doc and draft links, health card.
 - [x] **12.3 Manage Apps:** slot counter, search → per-store choice (including "not on this store") → confirm, rename, replace, archive with confirmation.
-- [ ] **12.4 Operator sign-in** (Supabase Auth magic link) gating Manage Apps writes. (Built and run against a local stand-in; not yet run against the Supabase project.)
+- [x] **12.4 Operator sign-in** (Supabase Auth magic link) gating Manage Apps writes. (Run against the Supabase project on 2026-11-24: signed in by email link, then searched, registered and renamed an app.)
 - [x] **12.5 States:** waking backend, empty app (backfilling), failed app, archived app, short coverage.
 - [ ] **12.6 Help explorer** entries for the new features.
 - [ ] **12.7 UI consistency** pass with the `ui-consistency` skills before and after building.
