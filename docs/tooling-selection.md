@@ -25,7 +25,7 @@
 | **Play Store data** | `google-play-scraper` (`search`, `app`, `reviews`) | Public, login-free; unofficial (risk in ADR-9) |
 | **App Store data** | iTunes Search API, iTunes Lookup API, customer-reviews RSS (JSON) | Public and published by Apple; ~500 most recent reviews per fetch |
 | **Scheduler** | GitHub Actions, one workflow with a matrix | Free, close to the repo, no extra infrastructure |
-| **Backend API** | FastAPI on Hugging Face Spaces | Existing deploy target |
+| **Backend API** | FastAPI on Vercel | ADR-17: a Hugging Face Space that runs code now needs a paid plan |
 | **Operator auth** | Supabase Auth (magic link) + email allowlist | No passwords stored by us |
 | **Secret scanning** | `gitleaks` in CI | The v1 repo had a committed MCP token |
 

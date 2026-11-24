@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastapi",
+  "regions": [
+    "bom1"
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "**": false,
+      "main": true
+    }
+  },
+  "functions": {
+    "src/api/main.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{data,docs,frontend,graft,outputs,prompts,scripts,stitch_groww_weekly_review_pulse,tests,deploy,hf_space,.github,.claude}/**"
+    }
+  }
+}

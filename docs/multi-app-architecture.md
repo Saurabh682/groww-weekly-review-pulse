@@ -19,7 +19,7 @@
 | MCP | Custom `gmail-docs-mcp` server on Vercel | Composio MCP |
 | Delivery | One Doc + one draft per week | One Doc + one draft per app per week |
 | UI | Single-app pulse viewer | Per-app dashboard with app switcher and Manage Apps |
-| Backend code | `src/` copied into `hf_space/src/` | One `src/`; the HF Space is built from it at deploy time |
+| Backend code | `src/` copied into `hf_space/src/` | One `src/`; Vercel runs the API from it (ADR-17) |
 
 ---
 
@@ -37,7 +37,7 @@ flowchart LR
         MX["matrix job per app<br/>collect / pulse / reconcile / backfill"]
     end
 
-    subgraph HF["HF Space: FastAPI backend"]
+    subgraph HF["Vercel Function: FastAPI backend"]
         API["/apps, /search, /pulses, /health"]
     end
 
@@ -277,7 +277,7 @@ jobs:
 | Publish secrets | Composio settings and `PULSE_EMAIL_TO` reach the job step only for `pulse` and `backfill` |
 
 Secrets (GitHub Actions): `SUPABASE_DB_URL` (session pooler DSN), `COMPOSIO_API_KEY`, `COMPOSIO_MCP_URL`, `COMPOSIO_GOOGLEDOCS_ACCOUNT_ID`, `COMPOSIO_GMAIL_ACCOUNT_ID`, `PULSE_EMAIL_TO`. No code calls Gemini, so no Gemini key is set.
-Secrets (HF Space): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GH_DISPATCH_TOKEN`, `GH_REPO`, `OPERATOR_EMAILS`, `SUPABASE_JWT_SECRET`.
+Settings (Vercel API project, Production only): `PULSE_STORE=supabase`, `SUPABASE_DB_URL` (transaction pooler DSN, port 6543), `SUPABASE_URL`, `OPERATOR_EMAILS`, `CORS_ORIGINS`; to start backfills at once, also `GITHUB_REPOSITORY` and `GITHUB_DISPATCH_TOKEN`.
 
 ---
 
@@ -332,7 +332,7 @@ The v1 `config/mcp.yaml` contains a committed bearer token for the `gmail-docs-m
 
 ---
 
-## 8. Backend API (FastAPI on HF Space)
+## 8. Backend API (FastAPI on Vercel)
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -348,7 +348,7 @@ The v1 `config/mcp.yaml` contains a committed bearer token for the `gmail-docs-m
 
 Read endpoints return only data already published in notes (themes, counts, the 3 quotes). Raw review text is never served.
 
-The HF Space free tier sleeps after inactivity; the dashboard shows a "waking backend" state on the first request.
+A request after a quiet period starts a new server; the dashboard shows a "waking backend" state when the first answer is slow.
 
 ---
 
@@ -377,8 +377,8 @@ src/store/base.py                  # PulseStore protocol
 src/store/sqlite_store.py
 src/store/supabase_store.py
 src/mcp/composio.py                # Composio MCP client with allowlist + account pinning
-src/api/                           # FastAPI app served by the HF Space
-hf_space/                          # Space metadata only; no src/ copy (built at deploy)
+src/api/                           # FastAPI app served by Vercel (vercel.json, pyproject.toml [tool.vercel])
+deploy/hf_space/                   # v1 static Space page; not the API host
 ```
 
 A CI check fails when `hf_space/src/` exists in the repository.
@@ -413,3 +413,4 @@ A CI check fails when `hf_space/src/` exists in the repository.
 | ADR-14 | Confirm-from-top-3 resolution | Auto-pick first match |
 | ADR-15 | Store IDs immutable; replace = archive + new app | Editable IDs (mixes histories) |
 | ADR-16 | Dashboard reads and writes only through the backend; RLS with no client policies | Supabase anon key in the browser |
+| ADR-17 | API on Vercel as its own project from this repository (operator, 2026-11-24). Only `main` is deployed, because the API applies pending migrations when it starts. The theme engine's packages are the optional `pipeline` group, so the API bundle is 44.5 MB instead of 230 MB | HF Docker Space (needs a paid plan since the v2 plan was written); Render free (sleeps after 15 minutes, about a minute to wake) |

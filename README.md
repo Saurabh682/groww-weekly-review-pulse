@@ -60,7 +60,7 @@ cd groww-weekly-review-pulse
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install ".[dev]"
 ```
 
 ### Step 3: Install Frontend Dependencies
@@ -82,6 +82,24 @@ Anyone can read the dashboard. Changing apps on `/manage` needs an operator sign
 2. In Supabase, open Authentication, then URL Configuration, and allow `<dashboard address>/manage` as a redirect URL.
 3. In Supabase, open Authentication, then Users, and add each operator. The dashboard never creates accounts.
 4. Give the API `SUPABASE_URL` and the same addresses in `OPERATOR_EMAILS`.
+
+### Step 5: Deploy the API and Connect the Dashboard
+The API is a second Vercel project on the same repository. `vercel.json` and `[tool.vercel]` in `pyproject.toml` hold its settings, and only `main` is deployed.
+1. In Vercel, add a new project from this repository. Name it `groww-weekly-review-pulse-api` and leave Root Directory as the repository root.
+2. Add these settings for the **Production** environment only, then deploy:
+
+| Setting | Value |
+|---|---|
+| `PULSE_STORE` | `supabase` |
+| `SUPABASE_DB_URL` | The transaction pooler address from Supabase (port 6543). Mark it sensitive |
+| `SUPABASE_URL` | Your Supabase project address |
+| `OPERATOR_EMAILS` | The operators' addresses, separated by commas |
+| `CORS_ORIGINS` | The dashboard address, without a slash at the end |
+
+   To start a new app's first collection at once, also add `GITHUB_REPOSITORY` and `GITHUB_DISPATCH_TOKEN`. Without them it waits for the next daily run.
+3. Open `<API address>/apps`. It lists the registered apps.
+4. In the dashboard's Vercel project, set `VITE_API_URL` (the API address), `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, then redeploy it. These are read when the dashboard is built.
+5. In Supabase, allow `<dashboard address>/manage` as a redirect URL.
 
 ---
 

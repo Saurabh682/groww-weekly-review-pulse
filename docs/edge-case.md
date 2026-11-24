@@ -578,6 +578,19 @@ AG should update this table and the affected tests whenever a decision changes.
 | DSH-18 | Build is given a secret or legacy Supabase key | Build stops without printing the key | `frontend/tests/publishableKey.test.ts` | U | P0 |
 | DSH-10 | Not signed in | Manage Apps is read-only with a sign-in prompt | `test_DSH_10_signed_out_manage` | I | P1 |
 
+## 26a. Deployment
+
+| ID | Case | Expected | Test | Type | Priority |
+|---|---|---|---|---|---|
+| DEP-01 | Vercel loads the entrypoint | It is the FastAPI app with the `/apps` routes | `test_DEP_01_entrypoint_is_the_api` | I | P0 |
+| DEP-02 | A branch other than `main` is pushed | No API deployment, so an unmerged migration cannot reach the live store | `test_DEP_02_only_main_is_deployed` | U | P0 |
+| DEP-03 | Function settings | They name the entrypoint file and run next to the database (Mumbai) | `test_DEP_03_settings_apply_to_the_entrypoint` | U | P1 |
+| DEP-04 | Files left out of the bundle | Review data, outputs and tests are out; source, migrations and config are in | `test_DEP_04_bundle_keeps_what_the_api_reads` | U | P0 |
+| DEP-05 | API starts | The theme engine's packages are not loaded | `test_DEP_05_api_starts_without_the_theme_engine` | I | P1 |
+| DEP-06 | Python version | The same in Vercel and every workflow | `test_DEP_06_one_python_version_everywhere` | U | P1 |
+| DEP-07 | API install | Leaves out the theme engine's packages | `test_DEP_07_api_install_leaves_out_the_theme_engine` | U | P1 |
+| DEP-08 | Scheduled jobs and CI install | Include the theme engine's packages | `test_DEP_08_workflows_install_the_theme_engine` | U | P0 |
+
 ## 27. Retired v1 Cases
 
 | ID | Reason | Replaced by |
@@ -596,4 +609,4 @@ AG should update this table and the affected tests whenever a decision changes.
 | **10** | CMP-*, v1 MCP-* |
 | **11** | SCH-* |
 | **12** | DSH-* |
-| **13** | Full suite; manual smoke for SCH-06, SCH-07 and the v2 acceptance checklist |
+| **13** | DEP-*; full suite; manual smoke for SCH-06, SCH-07 and the v2 acceptance checklist |
