@@ -12,11 +12,13 @@ Lets an operator search both stores, register up to five live apps, rename one, 
 - `apps-replace` archives one app and registers another in its slot.
 - `apps-archive` frees the slot and keeps the record.
 - `apps-auth` refuses anonymous callers and non-operators.
+- `apps-dashboard` does all of it on the `/manage` page after an operator signs in by email link.
 
 ## How to get to it (user POV)
 
 - CLI: `python -m src.registry list | search | add | rename | archive`.
 - HTTP: `GET /apps`, `POST /search`, `POST /apps`, `PATCH /apps/{key}`, `POST /apps/{key}/replace`, `DELETE /apps/{key}`.
+- Dashboard: side menu > Manage Apps, or app picker > Manage apps.
 
 ## Driving it with verify.py
 
@@ -39,9 +41,12 @@ Preconditions:
 - **Register over HTTP, live.** `python $V http --run $RUN --name register-http --as operator --body '{"display_name":"Zerodha Kite","play_package_id":"com.zerodha.kite3"}' POST /apps` gives 201 with `app_key` `zerodha-kite-2`, because archived keys are never reused.
 - **Archive from the CLI.** `python $V cli --run $RUN --name archive -- src.registry archive --app zerodha-kite-2`. Exit 0 and status `archived`. `python $V cli --run $RUN --name list-archived -- src.registry list --include-archived` shows the archived apps and one used slot.
 - **Proof.** `python $V db --run $RUN --name rows "select app_key, display_name, status from apps"` matches the last list.
+- **Dashboard, signed out.** Start the API and the dashboard as README step 4 says and open `/manage`. The live and archived apps and the slot counter show, with a sign-in form and no Add, Rename, Replace or Archive button.
+- **Dashboard, signed in.** Sign in with an operator's email link. Add an app: search, choose one listing per store, press Review, and check with `GET /apps` that nothing is registered yet. Press Add app, and the slot counter rises by one. Rename, replace and archive it. Keep a screenshot of the review step and of the archive confirmation.
 
 ## Gotchas
 
+- Review must not register anything. Check it in a real browser: jsdom does not reproduce the fault it guards against.
 - The CLI has no sign-in. Auth is proven only over HTTP.
 - Backfill dispatch is `not_configured` in a run, so no GitHub workflow can start.
 - The store chooses search results, so assert the shape, not the ranking.

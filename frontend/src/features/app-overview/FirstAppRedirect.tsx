@@ -1,14 +1,22 @@
 import React from 'react';
-import { Navigate, useOutletContext } from 'react-router-dom';
+import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
 import { EmptyState } from '../../components/EmptyState';
 import { ShellContext } from '../../data/types';
-import { Loaded } from './LoadStates';
+import { Loaded } from '../../components/LoadStates';
 
-const NoApps: React.FC = () => (
-  <div className="py-8">
-    <EmptyState title="No apps yet" description="Register an app to start collecting its reviews." />
-  </div>
-);
+const NoApps: React.FC = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="py-8">
+      <EmptyState
+        title="No apps yet"
+        description="Register an app to start collecting its reviews."
+        actionLabel="Manage apps"
+        onAction={() => navigate('/manage')}
+      />
+    </div>
+  );
+};
 
 export const FirstAppRedirect: React.FC = () => {
   const { apps } = useOutletContext<ShellContext>();

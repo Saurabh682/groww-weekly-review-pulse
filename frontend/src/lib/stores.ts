@@ -1,4 +1,4 @@
-import { AppRecord, Platform } from '../../data/types';
+import { AppRecord, Platform } from '../data/types';
 
 export const STORE_NAMES: Record<Platform, string> = { play_store: 'Google Play', app_store: 'App Store' };
 

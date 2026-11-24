@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ApiError, getJson } from './apiClient';
+import { ApiError, getJson, messageOf } from './apiClient';
 import { ApiResource, ApiState } from './types';
 
 interface Held<T> {
@@ -16,9 +16,8 @@ interface UseApiOptions {
 const AWAKE: UseApiOptions = { slowMeansWaking: false };
 
 function failure<T>(error: unknown): ApiState<T> {
-  const message = error instanceof Error ? error.message : 'The data could not be read.';
   const missing = error instanceof ApiError && error.status === NOT_FOUND;
-  return { status: missing ? 'missing' : 'error', message };
+  return { status: missing ? 'missing' : 'error', message: messageOf(error) };
 }
 
 export function useApi<T>(path: string, { slowMeansWaking } = AWAKE): ApiResource<T> {
@@ -30,7 +29,7 @@ export function useApi<T>(path: string, { slowMeansWaking } = AWAKE): ApiResourc
     const hold = (state: ApiState<T>) => {
       if (!controller.signal.aborted) setHeld({ path, state });
     };
-    hold({ status: 'loading' });
+    setHeld((shown) => (shown.path === path && shown.state.status === 'ready' ? shown : { path, state: { status: 'loading' } }));
     getJson<T>(path, { signal: controller.signal, onWaking: () => hold({ status: 'waking' }), slowMeansWaking }).then(
       (data) => hold({ status: 'ready', data }),
       (error) => hold(failure(error)),

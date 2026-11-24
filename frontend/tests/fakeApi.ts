@@ -1,9 +1,19 @@
 import { vi } from 'vitest';
-import { AppHealth, AppRecord, AppStatus, CollectionRun, PulseWeek, PulseWeekDetail } from '../src/data/types';
+import { AppHealth, AppRecord, AppStatus, CollectionRun, PulseWeek, PulseWeekDetail, StoreCandidate, StoreSearch } from '../src/data/types';
 
 export const API_URL = 'http://api.test';
+export const AUTH_URL = 'http://auth.test';
+export const OPERATOR_TOKEN = 'operator-token';
+const SESSION_KEY = 'sb-auth-auth-token';
+const A_DAY = 86_400;
 
-type Answer = { status?: number; body?: unknown; contentType?: string } | 'offline' | 'never';
+export interface SentRequest {
+  path: string;
+  body: unknown;
+  authorization: string | null;
+}
+
+type Answer = { status?: number; body?: unknown; contentType?: string; after?: Promise<void> } | 'offline' | 'never';
 
 export function app(key: string, name: string, status: AppStatus = 'active', more: Partial<AppRecord> = {}): AppRecord {
   return {
@@ -84,7 +94,41 @@ export function detail(appKey: string, week: PulseWeek): PulseWeekDetail {
   };
 }
 
+export function candidate(platform: StoreCandidate['platform'], id: string, title: string): StoreCandidate {
+  return {
+    platform,
+    listing_id: id,
+    title,
+    developer: `${title} Ltd`,
+    icon_url: null,
+    rating: 4.4,
+    rating_count: 1234567,
+    category: 'Finance',
+    matched_by: 'search',
+  };
+}
+
+export function storeSearch(platform: StoreSearch['platform'], more: Partial<StoreSearch> = {}): StoreSearch {
+  return { platform, status: 'ok', candidates: [], message: null, ...more };
+}
+
+export function signIn(): void {
+  const now = Math.floor(Date.now() / 1000);
+  localStorage.setItem(
+    SESSION_KEY,
+    JSON.stringify({
+      access_token: OPERATOR_TOKEN,
+      refresh_token: 'refresh',
+      token_type: 'bearer',
+      expires_in: A_DAY,
+      expires_at: now + A_DAY,
+      user: { id: 'u1', aud: 'authenticated', email: 'operator@example.com', app_metadata: {}, user_metadata: {}, created_at: '' },
+    }),
+  );
+}
+
 export class FakeApi {
+  readonly sent: SentRequest[] = [];
   readonly answers = new Map<string, Answer[]>();
   readonly calls: string[] = [];
 
@@ -106,20 +150,32 @@ export class FakeApi {
 
   install(): this {
     vi.stubEnv('VITE_API_URL', API_URL);
-    vi.stubGlobal('fetch', (url: string, init: RequestInit) => this.answer(url.slice(API_URL.length), init));
+    vi.stubEnv('VITE_SUPABASE_URL', AUTH_URL);
+    vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_test');
+    vi.stubGlobal('fetch', (input: RequestInfo | URL, init: RequestInit = {}) => this.answer(String(input), init));
     return this;
   }
 
-  private answer(path: string, init: RequestInit): Promise<Response> {
+  private answer(url: string, init: RequestInit): Promise<Response> {
+    const method = init.method ?? 'GET';
+    const route = url.startsWith(API_URL) ? url.slice(API_URL.length) : url.split('?')[0];
+    const path = method === 'GET' ? route : `${method} ${route}`;
     this.calls.push(path);
+    if (method !== 'GET') {
+      this.sent.push({
+        path,
+        body: init.body ? JSON.parse(String(init.body)) : null,
+        authorization: new Headers(init.headers).get('authorization'),
+      });
+    }
     const queue = this.answers.get(path) ?? [{ status: 404, body: { error: `Unknown: ${path}` } }];
     const next = queue.length > 1 ? queue.shift()! : queue[0];
     if (next === 'offline') return Promise.reject(new TypeError('Failed to fetch'));
     if (next === 'never') {
-      return new Promise((_, reject) => init.signal!.addEventListener('abort', () => reject(init.signal!.reason)));
+      return new Promise((_, reject) => init.signal?.addEventListener('abort', () => reject(init.signal?.reason)));
     }
-    return Promise.resolve(
-      new Response(JSON.stringify(next.body ?? {}), {
+    return (next.after ?? Promise.resolve()).then(
+      () => new Response(JSON.stringify(next.body ?? {}), {
         status: next.status ?? 200,
         headers: { 'content-type': next.contentType ?? 'application/json' },
       }),

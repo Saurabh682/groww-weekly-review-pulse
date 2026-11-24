@@ -4,7 +4,7 @@ import { PulseWeek } from '../../data/types';
 import { formatDay, formatShortDay } from '../../lib/dates';
 import { formatShare } from '../../lib/format';
 import { buildThemeTrend, ThemeSeries } from '../../lib/themeTrend';
-import { SectionTitle } from './SectionTitle';
+import { SectionTitle } from '../../components/SectionTitle';
 
 const WIDTH = 280;
 const HEIGHT = 84;

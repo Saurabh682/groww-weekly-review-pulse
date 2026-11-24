@@ -570,6 +570,11 @@ AG should update this table and the affected tests whenever a decision changes.
 | DSH-11 | Fewer than two weekly pulses; a week with no pulse; a theme missing from a week | No chart below two weeks; a gap, never a zero | `frontend/tests/themeTrend.test.ts` | U | P1 |
 | DSH-12 | Panel is slow after the backend answered once | Loading, not "Waking backend" | `calls a slow panel loading once the backend has answered` | I | P2 |
 | DSH-13 | Read route | Opens one database connection; a write inside it is refused | `test_read_route_opens_one_connection`, `test_writing_while_reading_is_refused` | I | P1 |
+| DSH-14 | "Review" is clicked in the add flow | Nothing is registered before the confirm button is pressed; the two buttons are different elements | `never turns the review button into the confirm button` (`frontend/tests/ManageApps.test.tsx`) | I | P0 |
+| DSH-15 | A write is refused (401, 403, 409, 503) or gets no answer | The reason is shown in the dialog; the write is sent once | `reports a refused registration once and never repeats it` | I | P0 |
+| DSH-16 | Sign-in link is used, expired, or opened in another browser | Signed out, with the reason and a way to ask for a new link | `says when a sign-in link did not work` | I | P1 |
+| DSH-17 | Link requested for an address that is not an account | Same answer as for an operator; no account is created | `does not reveal whether an address is an operator` | I | P1 |
+| DSH-18 | Build is given a secret or legacy Supabase key | Build stops without printing the key | `frontend/tests/publishableKey.test.ts` | U | P0 |
 | DSH-10 | Not signed in | Manage Apps is read-only with a sign-in prompt | `test_DSH_10_signed_out_manage` | I | P1 |
 
 ## 27. Retired v1 Cases

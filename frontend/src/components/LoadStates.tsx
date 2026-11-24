@@ -1,9 +1,9 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
-import { EmptyState } from '../../components/EmptyState';
-import { ErrorState } from '../../components/ErrorState';
-import { Skeleton } from '../../components/Skeleton';
-import { ApiResource } from '../../data/types';
+import { EmptyState } from './EmptyState';
+import { ErrorState } from './ErrorState';
+import { Skeleton } from './Skeleton';
+import { ApiResource } from '../data/types';
 
 export const LoadingPanels: React.FC = () => (
   <div className="space-y-6" role="status" aria-label="Loading">

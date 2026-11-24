@@ -4,7 +4,7 @@ import { Card } from '../../components/Card';
 import { AppHealth, CollectionRun } from '../../data/types';
 import { formatDay, formatMoment } from '../../lib/dates';
 import { formatIndianNumber } from '../../lib/format';
-import { PLATFORMS, STORE_LISTINGS, STORE_NAMES } from './stores';
+import { PLATFORMS, STORE_LISTINGS, STORE_NAMES } from '../../lib/stores';
 
 const RUN_STATUS: Record<CollectionRun['status'], { text: string; variant: 'teal' | 'amber' | 'coral' | 'gray' }> = {
   ok: { text: 'OK', variant: 'teal' },

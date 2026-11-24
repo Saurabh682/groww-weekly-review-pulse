@@ -7,6 +7,7 @@ import { WeeklyPulsePage } from '../features/pulse/WeeklyPulsePage';
 import { ThemesPage } from '../features/themes/ThemesPage';
 import { RunPublishPage } from '../features/run/RunPublishPage';
 import { DataImportPage } from '../features/import/DataImportPage';
+import { ManageAppsPage } from '../features/manage-apps/ManageAppsPage';
 import { HelpPage } from '../features/help/HelpPage';
 
 export const routes: RouteObject[] = [
@@ -17,6 +18,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <FirstAppRedirect /> },
       { path: 'apps/:appKey', element: <AppOverviewPage /> },
       { path: 'apps/:appKey/weeks/:week', element: <AppWeekPage /> },
+      { path: 'manage', element: <ManageAppsPage /> },
       { path: 'sample', element: <WeeklyPulsePage /> },
       { path: 'themes', element: <ThemesPage /> },
       { path: 'run', element: <RunPublishPage /> },

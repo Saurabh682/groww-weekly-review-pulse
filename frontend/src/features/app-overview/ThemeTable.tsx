@@ -3,7 +3,7 @@ import { Badge } from '../../components/Badge';
 import { Card } from '../../components/Card';
 import { PulseTheme } from '../../data/types';
 import { formatIndianNumber, formatRating, formatShare } from '../../lib/format';
-import { SectionTitle } from './SectionTitle';
+import { SectionTitle } from '../../components/SectionTitle';
 
 const PERCENT = 100;
 

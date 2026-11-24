@@ -195,8 +195,65 @@ export interface ApiResource<T> {
   retry: () => void;
 }
 
+export interface StoreCandidate {
+  platform: Platform;
+  listing_id: string;
+  title: string;
+  developer: string | null;
+  icon_url: string | null;
+  rating: number | null;
+  rating_count: number | null;
+  category: string | null;
+  matched_by: string;
+}
+
+export interface StoreSearch {
+  platform: Platform;
+  status: 'ok' | 'empty' | 'error';
+  candidates: StoreCandidate[];
+  message: string | null;
+}
+
+export interface StoreSearchResult {
+  term: string;
+  country: string;
+  no_matches: boolean;
+  stores: Record<Platform, StoreSearch>;
+}
+
+export interface ListingBody {
+  display_name: string;
+  play_package_id: string | null;
+  app_store_id: string | null;
+  country: string;
+  lang: string;
+}
+
+export interface Registration {
+  app: AppRecord;
+  slots_used: number;
+  slots_total: number;
+  backfill_dispatch: { status: 'dispatched' | 'failed' | 'not_configured'; detail: string | null; message: string };
+}
+
+export type WriteMethod = 'POST' | 'PATCH' | 'DELETE';
+
+export type OperatorSession =
+  | { status: 'unavailable' }
+  | { status: 'checking' }
+  | { status: 'signed_out'; linkFailed: boolean }
+  | { status: 'signed_in'; email: string };
+
+export interface Operator {
+  session: OperatorSession;
+  requestLink: (email: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  send: <T>(method: WriteMethod, path: string, body?: unknown) => Promise<T>;
+}
+
 export interface ShellContext {
   currentScenario: ScenarioType;
   selectedWeek: string;
   apps: ApiResource<AppList>;
+  operator: Operator;
 }

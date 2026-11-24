@@ -8,10 +8,10 @@ import { useApi } from '../../data/useApi';
 import { formatIndianNumber } from '../../lib/format';
 import { AppHeading } from './AppHeading';
 import { AppScope } from './AppScope';
-import { Loaded } from './LoadStates';
+import { Loaded } from '../../components/LoadStates';
 import { PulseSummary } from './PulseSummary';
 import { ThemeTable } from './ThemeTable';
-import { STORE_NAMES } from './stores';
+import { STORE_NAMES } from '../../lib/stores';
 import { appPath } from './paths';
 
 interface StoreCountsProps {

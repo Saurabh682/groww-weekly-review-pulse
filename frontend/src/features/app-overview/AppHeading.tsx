@@ -1,18 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
+import { AppStatusBadge } from '../../components/AppStatusBadge';
 import { Badge } from '../../components/Badge';
 import { Menu, MenuItem } from '../../components/Menu';
-import { AppRecord, AppStatus, PulseWeek } from '../../data/types';
+import { AppRecord, PulseWeek } from '../../data/types';
 import { formatMoment, weekLabel } from '../../lib/dates';
-
-const STATUS_BADGES: Record<AppStatus, { text: string; variant: 'teal' | 'amber' | 'coral' | 'gray' }> = {
-  active: { text: 'Active', variant: 'teal' },
-  pending_backfill: { text: 'Waiting for first collection', variant: 'amber' },
-  backfilling: { text: 'Collecting', variant: 'amber' },
-  failed: { text: 'Failed', variant: 'coral' },
-  archived: { text: 'Archived', variant: 'gray' },
-};
 
 interface AppHeadingProps {
   app: AppRecord;
@@ -22,7 +15,6 @@ interface AppHeadingProps {
 
 export const AppHeading: React.FC<AppHeadingProps> = ({ app, pulses, week }) => {
   const navigate = useNavigate();
-  const badge = STATUS_BADGES[app.status];
   const home = `/apps/${app.app_key}`;
 
   return (
@@ -30,7 +22,7 @@ export const AppHeading: React.FC<AppHeadingProps> = ({ app, pulses, week }) => 
       <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-white">{app.display_name}</h1>
-          <Badge variant={badge.variant}>{badge.text}</Badge>
+          <AppStatusBadge status={app.status} />
         </div>
         {week && pulses.length > 0 && (
           <Menu

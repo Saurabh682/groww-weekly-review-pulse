@@ -3,7 +3,7 @@ import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { AppRecord, ShellContext } from '../../data/types';
-import { Loaded } from './LoadStates';
+import { Loaded } from '../../components/LoadStates';
 
 interface UnknownAppProps {
   appKey: string;

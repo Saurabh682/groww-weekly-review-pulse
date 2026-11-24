@@ -1,7 +1,12 @@
+import { WriteMethod } from './types';
+
 export const SLOW_RESPONSE_MS = 4_000;
 export const RETRY_DELAY_MS = 3_000;
 export const WAKE_LIMIT_MS = 120_000;
 const ASLEEP_STATUSES = [502, 503, 504];
+
+const UNANSWERED_WRITE =
+  'The data service did not answer. The change may still have been saved: reload the page before you try again.';
 
 export class ApiError extends Error {
   constructor(
@@ -10,6 +15,10 @@ export class ApiError extends Error {
   ) {
     super(message);
   }
+}
+
+export function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : 'Something unexpected went wrong.';
 }
 
 interface RequestOptions {
@@ -79,4 +88,21 @@ export async function getJson<T>(path: string, { signal, onWaking, slowMeansWaki
   } finally {
     clearTimeout(slowTimer);
   }
+}
+
+async function sendOnce(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    throw new ApiError(UNANSWERED_WRITE, null);
+  }
+}
+
+export async function sendJson<T>(method: WriteMethod, path: string, body: unknown, token: string): Promise<T> {
+  const response = await sendOnce(apiUrl(path), {
+    method,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  return readJson<T>(response);
 }

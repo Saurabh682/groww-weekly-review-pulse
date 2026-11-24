@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Smartphone } from 'lucide-react';
 import { Badge } from '../components/Badge';
 import { Menu, MenuItem } from '../components/Menu';
@@ -67,6 +67,13 @@ export const AppSwitcher: React.FC<AppSwitcherProps> = ({ state, appKey }) => {
             />
             Show archived apps
           </label>
+          <Link
+            to="/manage"
+            onClick={close}
+            className="block px-3 py-2 border-t border-border text-xs font-semibold text-primary hover:bg-surface-elevated transition-colors"
+          >
+            Manage apps
+          </Link>
         </>
       )}
     </Menu>

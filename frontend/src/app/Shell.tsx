@@ -7,6 +7,7 @@ import {
   HelpCircle,
   Layers,
   LineChart,
+  ListChecks,
   PlayCircle,
   SlidersHorizontal,
   UploadCloud,
@@ -16,6 +17,7 @@ import { Button } from '../components/Button';
 import { Menu, MenuItem } from '../components/Menu';
 import { AppList, ScenarioType, ShellContext } from '../data/types';
 import { useApi } from '../data/useApi';
+import { useOperator } from '../data/useOperator';
 import { AppSwitcher } from './AppSwitcher';
 
 const APPS_PATH = '/apps?include_archived=true';
@@ -47,6 +49,7 @@ export const Shell: React.FC = () => {
   const location = useLocation();
   const appKey = useMatch('/apps/:appKey/*')?.params.appKey;
   const apps = useApi<AppList>(APPS_PATH, FIRST_REQUEST);
+  const operator = useOperator();
   const [selectedWeek, setSelectedWeek] = useState(SAMPLE_WEEKS[0]);
 
   const queryParams = new URLSearchParams(location.search);
@@ -76,7 +79,7 @@ export const Shell: React.FC = () => {
     icon: <LineChart className={ICON} />,
   };
 
-  const context: ShellContext = { currentScenario, selectedWeek, apps };
+  const context: ShellContext = { currentScenario, selectedWeek, apps, operator };
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row text-text-primary antialiased selection:bg-primary selection:text-primary-on">
@@ -97,6 +100,10 @@ export const Shell: React.FC = () => {
           <NavLink to={overviewItem.to} end={overviewItem.to === '/'} className={({ isActive }) => sideLink(isActive)}>
             {overviewItem.icon}
             <span className="font-medium">{overviewItem.label}</span>
+          </NavLink>
+          <NavLink to="/manage" className={({ isActive }) => sideLink(isActive)}>
+            <ListChecks className={ICON} />
+            <span className="font-medium">Manage Apps</span>
           </NavLink>
           <NavLink to="/help" className={({ isActive }) => sideLink(isActive)}>
             <HelpCircle className={ICON} />

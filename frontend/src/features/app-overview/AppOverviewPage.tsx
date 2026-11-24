@@ -7,7 +7,7 @@ import { useApi } from '../../data/useApi';
 import { AppHeading } from './AppHeading';
 import { AppScope } from './AppScope';
 import { HealthCard } from './HealthCard';
-import { Loaded } from './LoadStates';
+import { Loaded } from '../../components/LoadStates';
 import { PulseSummary } from './PulseSummary';
 import { ThemeTable } from './ThemeTable';
 import { ThemeTrendPanel } from './ThemeTrendPanel';
