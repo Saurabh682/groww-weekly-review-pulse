@@ -103,6 +103,7 @@ def run_themes_stage(
     store: AppStore,
     week_str: str,
     config: Optional[PulseConfig] = None,
+    run_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Execute Phase 2 Theme Engine on reviews stored for one app."""
     if not config:
@@ -127,6 +128,7 @@ def run_themes_stage(
         window_end=window_end,
         coverage_weeks=compute_coverage_weeks(stored),
         config=config,
+        run_id=run_id,
     )
     return theme_result
 
@@ -281,7 +283,7 @@ def run_full_pipeline(
     # Stage 2: Themes Clustering
     t0 = datetime.now(timezone.utc)
     try:
-        theme_summary = run_themes_stage(store=store, week_str=norm_week, config=config)
+        theme_summary = run_themes_stage(store=store, week_str=norm_week, config=config, run_id=run_id)
         stage_statuses["themes"] = "done"
         has_spike = any(t.get("is_spike", False) for t in theme_summary.get("themes", []))
         store.update_run(

@@ -217,6 +217,8 @@ CREATE TABLE publish_state (
 );
 ```
 
+**Week status:** one pipeline run writes one `runs` row, and its themes belong to that row. A week is `published` when `publish_state.content_hash` is set, which the publisher does only after both the Doc and the draft exist. Any other week shows the status of its latest run with themes. The API reads both through `PULSE_WEEKS_SQL` in `src/store/store.py`.
+
 **Row-level security:** enabled on every table with no policies for `anon` or `authenticated`. Only the service role (backend and Actions) can read or write.
 
 **Store interface:** `src/store/store.py` holds one SQL implementation, `PulseStore`, for app management. `PulseStore.for_app(key)` returns an `AppStore`, and every per-app read and write goes through it, so pipeline code cannot mix apps. `src/store/connectors.py` has two connectors, `SqliteConnector` (tests, local) and `PostgresConnector` (Supabase via `SUPABASE_DB_URL`); both run the same SQL with `?` placeholders. `PULSE_STORE=sqlite|supabase` selects the connector (`src/store/factory.py`). Flags are INTEGER 0/1 and dates are ISO TEXT on both backends so the schemas match column for column (test STO-01). Postgres tests run when `PULSE_TEST_POSTGRES_DSN` is set.

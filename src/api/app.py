@@ -154,21 +154,20 @@ def create_app(service: RegistryService, auth: OperatorAuth, outputs_root: Path,
     @api.get("/apps/{app_key}/pulses/{week}")
     def pulse(app_key: str, week: str) -> Dict:
         store = app_store(app_key)
-        run = store.latest_themed_run_for_week(week)
+        run = store.get_pulse_week(week)
         if run is None:
             raise UnknownApp(f"No pulse for {app_key} in week {week}.")
         note_path = outputs_root / app_key / week / "note.md"
-        state = store.get_publish_state(week)
         return {
             "app_key": app_key,
             "week_start": week,
-            "status": run.status,
-            "window_start": run.window_start,
-            "window_end": run.window_end,
-            "themes": [_theme_dict(t) for t in store.get_themes(run.run_id)],
+            "status": run["status"],
+            "window_start": run["window_start"],
+            "window_end": run["window_end"],
+            "themes": [_theme_dict(t) for t in store.get_themes(run["run_id"])],
             "note_markdown": note_path.read_text(encoding="utf-8") if note_path.is_file() else None,
-            "doc_url": state.doc_url if state else None,
-            "draft_created": bool(state and state.draft_id),
+            "doc_url": run["doc_url"],
+            "draft_created": bool(run["draft_id"]),
         }
 
     @api.get("/apps/{app_key}/health")

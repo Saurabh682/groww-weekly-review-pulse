@@ -33,6 +33,16 @@ COLLECTION_COLUMNS = (
     "collection_id", "platform", "mode", "window_start", "window_end", "status", "started_at",
     "covered_start", "fetched", "inserted", "source_limit_hit", "feed_gaps", "error", "finished_at",
 )
+PULSE_WEEKS_SQL = (
+    "SELECT r.week_start, r.run_id, CASE WHEN p.content_hash IS NULL THEN r.status ELSE 'published' END AS status, "
+    "r.total_reviews, r.analyzed_reviews, r.avg_rating, r.coverage_weeks, r.window_start, r.window_end, "
+    "p.doc_url, p.draft_id, CASE WHEN p.content_hash IS NULL THEN NULL ELSE p.updated_at END AS published_at "
+    "FROM runs r LEFT JOIN publish_state p ON p.app_key = r.app_key AND p.week_start = r.week_start "
+    "WHERE r.app_key = ? AND EXISTS (SELECT 1 FROM themes t WHERE t.app_key = r.app_key AND t.run_id = r.run_id) "
+    "AND r.created_at = (SELECT MAX(r2.created_at) FROM runs r2 WHERE r2.app_key = r.app_key "
+    "AND r2.week_start = r.week_start AND EXISTS (SELECT 1 FROM themes t2 WHERE t2.app_key = r2.app_key "
+    "AND t2.run_id = r2.run_id))"
+)
 THEME_COLUMNS = (
     "theme_id", "run_id", "label", "description", "review_count", "share_pct", "avg_rating", "is_top3",
     "neg_share", "priority_score",
@@ -317,8 +327,8 @@ class AppStore:
                 "INSERT INTO runs (app_key, run_id, week_start, status, total_reviews, analyzed_reviews, "
                 "avg_rating, coverage_weeks, created_at, window_start, window_end) "
                 "VALUES (?, ?, ?, 'themes_completed', ?, ?, ?, ?, ?, ?, ?) "
-                "ON CONFLICT (app_key, run_id) DO UPDATE SET status = excluded.status, "
-                "total_reviews = excluded.total_reviews, analyzed_reviews = excluded.analyzed_reviews, "
+                "ON CONFLICT (app_key, run_id) DO UPDATE SET total_reviews = excluded.total_reviews, "
+                "analyzed_reviews = excluded.analyzed_reviews, "
                 "avg_rating = excluded.avg_rating, coverage_weeks = excluded.coverage_weeks, "
                 "window_start = excluded.window_start, window_end = excluded.window_end",
                 (self.app_key, run_id, week_start, total_reviews, analyzed_reviews, avg_rating,
@@ -328,7 +338,9 @@ class AppStore:
             stale = [
                 r["theme_id"]
                 for r in s.fetchall(
-                    "SELECT theme_id FROM themes WHERE app_key = ? AND run_id = ?", (self.app_key, run_id)
+                    "SELECT t.theme_id FROM themes t JOIN runs r ON r.app_key = t.app_key AND r.run_id = t.run_id "
+                    "WHERE t.app_key = ? AND r.week_start = ?",
+                    (self.app_key, week_start),
                 )
                 if r["theme_id"] not in kept
             ]
@@ -533,15 +545,9 @@ class AppStore:
         return {r["platform"]: int(r["n"]) for r in rows}
 
     def list_pulse_weeks(self, limit: int) -> List[Dict[str, Any]]:
-        sql = (
-            "SELECT r.week_start, r.run_id, r.status, r.total_reviews, r.analyzed_reviews, r.avg_rating, "
-            "r.coverage_weeks, r.window_start, r.window_end, p.doc_url, p.draft_id, p.updated_at AS published_at "
-            "FROM runs r LEFT JOIN publish_state p ON p.app_key = r.app_key AND p.week_start = r.week_start "
-            "WHERE r.app_key = ? AND EXISTS (SELECT 1 FROM themes t WHERE t.app_key = r.app_key AND t.run_id = r.run_id) "
-            "AND r.created_at = (SELECT MAX(r2.created_at) FROM runs r2 WHERE r2.app_key = r.app_key "
-            "AND r2.week_start = r.week_start AND EXISTS (SELECT 1 FROM themes t2 WHERE t2.app_key = r2.app_key "
-            "AND t2.run_id = r2.run_id)) "
-            "ORDER BY r.week_start DESC LIMIT ?"
-        )
         with self._session() as s:
-            return s.fetchall(sql, (self.app_key, limit))
+            return s.fetchall(f"{PULSE_WEEKS_SQL} ORDER BY r.week_start DESC LIMIT ?", (self.app_key, limit))
+
+    def get_pulse_week(self, week_start: str) -> Optional[Dict[str, Any]]:
+        with self._session() as s:
+            return s.fetchone(f"{PULSE_WEEKS_SQL} AND r.week_start = ?", (self.app_key, week_start))

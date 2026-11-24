@@ -526,6 +526,8 @@ AG should update this table and the affected tests whenever a decision changes.
 | STO-04 | Supabase unreachable | Run fails before publish with a clear error; local Markdown kept | `test_STO_04_db_unreachable` | I | P1 |
 | STO-05 | Migrations applied twice | Second apply is a no-op | `test_STO_05_migrations_idempotent` | I | P1 |
 | STO-06 | Retention purge | Scoped per app; archived apps' rows kept | `test_STO_06_retention_per_app` | I | P1 |
+| STO-07 | Status of a week, including a dry run, a themes-only rerun or a failed rerun after it was published | `published` once the Doc and the draft both exist, in history, pulse and health; a Doc without a draft is not published | `tests/test_pulse_status.py` | I | P0 |
+| STO-08 | A pipeline run saves its themes | Themes belong to that run's row, the week's older themes are removed, and the run stays `running` so retention protects it | `test_pipeline_run_owns_its_themes`, `test_rerun_under_a_new_run_id_drops_the_weeks_stale_themes`, `test_saving_themes_keeps_the_run_protected_from_retention` | I | P0 |
 
 ## 24. Composio MCP
 
@@ -579,7 +581,7 @@ AG should update this table and the affected tests whenever a decision changes.
 
 | Phase | Required test groups |
 |---|---|
-| **7** | STO-01..06, APP-01, APP-05, APP-06, full v1 suite on `SqliteStore` |
+| **7** | STO-01..08, APP-01, APP-05, APP-06, full v1 suite on `SqliteStore` |
 | **8** | COL-* |
 | **9** | APP-*, RES-*, AUTH-* |
 | **10** | CMP-*, v1 MCP-* |
