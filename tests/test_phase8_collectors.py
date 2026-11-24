@@ -379,12 +379,12 @@ def test_daily_run_does_not_hide_a_short_backfill(groww_store):
     assert _app_store_caveat(groww_store, "2026-10-05", "2026-12-27") is None
 
 
-def test_feed_gap_caveat_clears_only_after_a_clean_recollection(groww_store):
-    _ok_collection(groww_store, "backfill", "2026-08-31", "2026-11-10", "2026-08-31")
+def test_feed_gap_caveat_clears_once_every_day_was_collected(groww_store):
+    _ok_collection(groww_store, "backfill", "2026-08-31", "2026-11-08", "2026-08-31")
     _ok_collection(groww_store, "daily", "2026-11-09", "2026-11-11", "2026-11-09", feed_gaps=1)
     _ok_collection(groww_store, "daily", "2026-11-10", "2026-11-12", "2026-11-10")
     assert _app_store_caveat(groww_store) == "partial, store feed had gaps"
-    _ok_collection(groww_store, "reconcile", "2026-11-01", "2026-11-30", "2026-11-01")
+    _ok_collection(groww_store, "daily", "2026-11-09", "2026-11-09", "2026-11-09")
     assert _app_store_caveat(groww_store) is None
 
 
