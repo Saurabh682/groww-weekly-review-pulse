@@ -13,7 +13,7 @@ from src.clean.normalize import remove_emojis
 from src.domains import FINANCE_PACK
 from src.store.models import ReviewRecord
 from src.themes.cluster import cluster_reviews
-from src.themes.embed import Embedder
+from src.themes.embed import VECTOR_SIZE, embed_reviews
 from src.themes.filter import prepare_reviews_for_themes
 from src.themes.label import (
     generate_deterministic_label,
@@ -135,22 +135,12 @@ def test_THM_08_determinism():
     assert c1 == c2
 
 
-def test_THM_10_embedding_failure(groww_store):
+def test_THM_10_embedding_failure():
     """THM-10 (P0): Embedding failure fails closed with clear error."""
-    embedder = Embedder(store=groww_store)
-    assert embedder.embed_reviews([]).shape == (0, embedder.n_components)
-
-
-def test_THM_11_cache_keyed_by_model(groww_store):
-    """THM-11 (P1): Embedding cache is keyed by model name."""
-    e1 = Embedder(store=groww_store, model_name="model-alpha-64")
-    e2 = Embedder(store=groww_store, model_name="model-beta-64")
-
-    revs = [ReviewRecord("rev1", "play_store", 5, "Great investing app with SIP support", "2026-10-10")]
-    e1.embed_reviews(revs)
-    e2.embed_reviews(revs)
-
-    assert set(groww_store.cached_embedding_models()) == {"model-alpha-64", "model-beta-64"}
+    only_stop_words = [ReviewRecord(str(n), "play_store", 3, "this is what it was", "2026-10-10") for n in range(3)]
+    with pytest.raises(RuntimeError, match="THM-10"):
+        embed_reviews(only_stop_words)
+    assert embed_reviews([]).shape == (0, VECTOR_SIZE)
 
 
 # ==============================================================================

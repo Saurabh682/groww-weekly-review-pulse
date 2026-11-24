@@ -175,7 +175,7 @@
 | THM-08 | Same seed and data, repeat run | Identical assignments and ranks | `test_THM_08_determinism` | P | P1 |
 | THM-09 | One review added to the dataset | Assignments change minimally (stability check within tolerance) | `test_THM_09_small_perturbation_stability` | I | P2 |
 | THM-10 | Embedding service/model unavailable | Clear error; run fails closed; no partial publish | `test_THM_10_embedding_failure` | I | P0 |
-| THM-11 | Embedding cache stale after model change | Cache keyed by model name; no mixing of embeddings across models | `test_THM_11_cache_keyed_by_model` | U | P1 |
+| THM-11 | Pulse rerun on the same reviews, after other reviews arrived in between | Same themes, same order, same note; the Doc and draft are left alone. Every run computes all vectors together and stores none, and themes with equal shares are ordered by id | `tests/test_repeat_runs.py` | I | P0 |
 | THM-12 | A theme's reviews all have identical rating | Stats computed without division errors | `test_THM_12_uniform_ratings` | U | P2 |
 | THM-13 | Ranking tie in `priority_score` | Tie-break by `neg_share`, then growth, then label alphabetically (deterministic) | `test_THM_13_rank_tie_break` | U | P1 |
 | THM-14 | `neg_share` = 0 or 1 | Score formula behaves; no NaN | `test_THM_14_neg_share_extremes` | U | P2 |
