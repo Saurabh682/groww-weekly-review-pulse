@@ -3,11 +3,13 @@
 import re
 from typing import List, Optional, Set, Tuple
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from src.clean.pii import scrub_pii
 from src.domains.pack import DomainPack
+from src.themes.terms import highest_first, weigh_terms
+
+MAX_LABEL_TERMS = 100
 
 
 def extract_cluster_keywords(texts: List[str], top_n: int = 5) -> List[str]:
@@ -16,17 +18,9 @@ def extract_cluster_keywords(texts: List[str], top_n: int = 5) -> List[str]:
         return ["General Feedback"]
 
     try:
-        vec = TfidfVectorizer(
-            stop_words="english",
-            max_features=100,
-            ngram_range=(1, 2)
-        )
-        matrix = vec.fit_transform(texts)
-        scores = np.asarray(matrix.sum(axis=0)).ravel()
-        features = vec.get_feature_names_out()
-
-        top_indices = scores.argsort()[::-1][:top_n]
-        keywords = [features[i].title() for i in top_indices]
+        weights, terms = weigh_terms(texts, MAX_LABEL_TERMS)
+        scores = np.asarray(weights.sum(axis=0)).ravel()
+        keywords = [terms[i].title() for i in highest_first(scores)[:top_n]]
         return keywords if keywords else ["User Experience"]
     except Exception:
         # Fallback if text is very sparse
