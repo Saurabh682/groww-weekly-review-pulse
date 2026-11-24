@@ -70,6 +70,19 @@ npm install
 cd ..
 ```
 
+### Step 4: Run the Dashboard Locally
+The dashboard reads the API address from `VITE_API_URL`, and the API allows the origins in `CORS_ORIGINS`.
+```bash
+CORS_ORIGINS=http://localhost:5173 uvicorn src.api.main:app --port 8010
+VITE_API_URL=http://localhost:8010 npm --prefix frontend run dev
+```
+
+Anyone can read the dashboard. Changing apps on `/manage` needs an operator signed in by email link:
+1. Build the dashboard with `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. The build stops if the key is not a publishable one (`sb_publishable_...`), because every visitor can read it.
+2. In Supabase, open Authentication, then URL Configuration, and allow `<dashboard address>/manage` as a redirect URL.
+3. In Supabase, open Authentication, then Users, and add each operator. The dashboard never creates accounts.
+4. Give the API `SUPABASE_URL` and the same addresses in `OPERATOR_EMAILS`.
+
 ---
 
 ## 4. CLI Orchestration & Workflow Commands

@@ -536,13 +536,25 @@ Fixed on the way:
 **Objective:** The operator picks an app and sees everything about it, and manages apps from one page.
 
 #### Tasks
-- [ ] **12.1 Routes** `/apps/:appKey`, `/apps/:appKey/weeks/:week`, `/manage`; app switcher in the header.
-- [ ] **12.2 Overview:** latest pulse, theme table, 8-week theme share trend, Doc and draft links, health card.
-- [ ] **12.3 Manage Apps:** slot counter, search → per-store choice (including "not on this store") → confirm, rename, replace, archive with confirmation.
-- [ ] **12.4 Operator sign-in** (Supabase Auth magic link) gating Manage Apps writes.
-- [ ] **12.5 States:** waking backend, empty app (backfilling), failed app, archived app, short coverage.
+- [x] **12.1 Routes** `/apps/:appKey`, `/apps/:appKey/weeks/:week`, `/manage`; app switcher in the header.
+- [x] **12.2 Overview:** latest pulse, theme table, 8-week theme share trend, Doc and draft links, health card.
+- [x] **12.3 Manage Apps:** slot counter, search → per-store choice (including "not on this store") → confirm, rename, replace, archive with confirmation.
+- [x] **12.4 Operator sign-in** (Supabase Auth magic link) gating Manage Apps writes. (Run against the Supabase project on 2026-11-24: signed in by email link, then searched, registered and renamed an app.)
+- [x] **12.5 States:** waking backend, empty app (backfilling), failed app, archived app, short coverage.
 - [ ] **12.6 Help explorer** entries for the new features.
 - [ ] **12.7 UI consistency** pass with the `ui-consistency` skills before and after building.
+
+#### Decisions
+- The v1 pages run on built-in data. They stay, under "Sample data" in the menu and with a "Sample data" badge; the v1 weekly pulse moved from `/` to `/sample`.
+- The history and week endpoints return every theme with `is_top3`, so the trend has no holes when a theme leaves the top three. `top_themes` is gone.
+- A read request uses one read-only database connection (`store.reading()`); health took eight.
+- Only the first request may call a slow answer "waking"; later panels show loading.
+- The dashboard reads its API address from `VITE_API_URL` at build time and says so when it is missing.
+- Sign-in uses the PKCE flow and never creates an account. The answer to a link request is the same for operators and strangers.
+- The build refuses any Supabase key that is not `sb_publishable_...`.
+- A write is sent once and never retried. If no answer comes, the page says the change may have been saved.
+- The two steps of adding an app are separate components, because one shared button let the click on "Review" also submit the confirmation.
+- Manage Apps is in the side menu and in the app picker. The phone menu was full, so the picker is the way in there.
 
 #### Exit Criteria
 `DSH-*` tests green; every interactive element has an accessible name; screenshots of each route and state attached.

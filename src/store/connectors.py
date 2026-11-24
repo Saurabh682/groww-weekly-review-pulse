@@ -1,4 +1,5 @@
 import sqlite3
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Sequence
@@ -41,20 +42,61 @@ class SqlSession:
         return None if row is None else next(iter(row.values()))
 
 
-class SqliteConnector:
+class SharedReads:
+    placeholder: str
+
+    def __init__(self) -> None:
+        self._held = threading.local()
+
+    def _connect_read_only(self) -> Any:
+        raise NotImplementedError
+
+    @property
+    def _shared(self) -> Optional[SqlSession]:
+        return getattr(self._held, "session", None)
+
+    @contextmanager
+    def reading(self) -> Iterator[None]:
+        if self._shared is not None:
+            yield
+            return
+        conn = self._connect_read_only()
+        self._held.session = SqlSession(conn, self.placeholder)
+        try:
+            yield
+        finally:
+            self._held.session = None
+            conn.close()
+
+
+class SqliteConnector(SharedReads):
     dialect = "sqlite"
+    placeholder = "?"
 
     def __init__(self, path: Path):
+        super().__init__()
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
-    @contextmanager
-    def session(self) -> Iterator[SqlSession]:
+    def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self.path))
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON;")
+        return conn
+
+    def _connect_read_only(self) -> sqlite3.Connection:
+        conn = self._connect()
+        conn.execute("PRAGMA query_only = ON;")
+        return conn
+
+    @contextmanager
+    def session(self) -> Iterator[SqlSession]:
+        if self._shared is not None:
+            yield self._shared
+            return
+        conn = self._connect()
         try:
-            yield SqlSession(conn, "?")
+            yield SqlSession(conn, self.placeholder)
             conn.commit()
         except sqlite3.IntegrityError as exc:
             conn.rollback()
@@ -89,10 +131,12 @@ class SqliteConnector:
             conn.close()
 
 
-class PostgresConnector:
+class PostgresConnector(SharedReads):
     dialect = "postgres"
+    placeholder = "%s"
 
     def __init__(self, dsn: str):
+        super().__init__()
         self.dsn = dsn
 
     def _connect(self) -> Any:
@@ -101,13 +145,21 @@ class PostgresConnector:
 
         return psycopg.connect(self.dsn, row_factory=dict_row, prepare_threshold=None)
 
+    def _connect_read_only(self) -> Any:
+        conn = self._connect()
+        conn.read_only = True
+        return conn
+
     @contextmanager
     def session(self) -> Iterator[SqlSession]:
         import psycopg
 
+        if self._shared is not None:
+            yield self._shared
+            return
         conn = self._connect()
         try:
-            yield SqlSession(conn, "%s")
+            yield SqlSession(conn, self.placeholder)
             conn.commit()
         except psycopg.errors.IntegrityError as exc:
             conn.rollback()

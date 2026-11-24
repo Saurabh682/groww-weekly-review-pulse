@@ -4,6 +4,8 @@ from datetime import date, datetime, timedelta, timezone
 from typing import List, Tuple
 from src.store.models import ReviewRecord
 
+SHORT_COVERAGE_WEEKS = 8.0
+
 
 def normalize_to_week_start(input_date_str: str, reference_date: date | None = None) -> date:
     """Normalize input date to Monday-start ISO week date (WIN-06).
@@ -51,3 +53,7 @@ def compute_coverage_weeks(reviews: List[ReviewRecord]) -> float:
     max_date = max(dates)
     days_span = (max_date - min_date).days + 1
     return round(days_span / 7.0, 1)
+
+
+def is_short_coverage(coverage_weeks: float) -> bool:
+    return coverage_weeks < SHORT_COVERAGE_WEEKS

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, ContextManager, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from src.store.connectors import PostgresConnector, SqliteConnector
 from src.store.errors import AppIdentityFrozen, InvalidAppRecord, UnknownApp
@@ -80,6 +80,9 @@ class PulseStore:
     @property
     def dialect(self) -> str:
         return self.connector.dialect
+
+    def reading(self) -> ContextManager[None]:
+        return self.connector.reading()
 
     def list_apps(self, statuses: Sequence[str] = APP_STATUSES) -> List[AppRecord]:
         placeholders = ", ".join("?" for _ in statuses)
@@ -490,6 +493,14 @@ class AppStore:
             rows = s.fetchall(
                 "SELECT * FROM collection_runs WHERE app_key = ? ORDER BY collection_id",
                 (self.app_key,),
+            )
+        return [CollectionRunRecord(**_pick(r, COLLECTION_COLUMNS)) for r in rows]
+
+    def recent_collections(self, limit: int) -> List[CollectionRunRecord]:
+        with self._session() as s:
+            rows = s.fetchall(
+                "SELECT * FROM collection_runs WHERE app_key = ? ORDER BY collection_id DESC LIMIT ?",
+                (self.app_key, limit),
             )
         return [CollectionRunRecord(**_pick(r, COLLECTION_COLUMNS)) for r in rows]
 

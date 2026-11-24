@@ -4,6 +4,7 @@ from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+from src.clean.window import is_short_coverage
 from src.config import outputs_root, resolve_project_path
 from src.domains import domain_pack_for
 from src.note.coverage import build_store_coverage
@@ -94,7 +95,7 @@ def build_and_validate_pulse_note(
         quotes=selected_quotes,
         actions=action_items,
         coverage_weeks=run_record.coverage_weeks,
-        short_coverage_flag=run_record.coverage_weeks < 8.0
+        short_coverage_flag=is_short_coverage(run_record.coverage_weeks)
     )
 
     # 8. Render and enforce word budget

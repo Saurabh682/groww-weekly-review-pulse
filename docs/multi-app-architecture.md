@@ -342,9 +342,9 @@ The v1 `config/mcp.yaml` contains a committed bearer token for the `gmail-docs-m
 | PATCH | `/apps/{key}` | operator | Rename |
 | POST | `/apps/{key}/replace` | operator | Archive + create |
 | DELETE | `/apps/{key}` | operator | Archive |
-| GET | `/apps/{key}/pulses?limit=` | none | Week list with doc/draft links and theme stats |
-| GET | `/apps/{key}/pulses/{week}` | none | Rendered note + themes |
-| GET | `/apps/{key}/health` | none | Collection runs, covered window, flags, last scheduled run |
+| GET | `/apps/{key}/pulses?limit=` | none | Week list: summary, Doc link, draft flag, short-coverage flag and every theme (`is_top3` marks the note's three) |
+| GET | `/apps/{key}/pulses/{week}` | none | The same summary and themes, `stores` (reviews and caveat per store) and the rendered note |
+| GET | `/apps/{key}/health` | none | Latest collection per store, the last 10 `runs`, `stores` for the latest pulse window, latest pulse |
 
 Read endpoints return only data already published in notes (themes, counts, the 3 quotes). Raw review text is never served.
 
