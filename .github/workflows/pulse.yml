@@ -39,7 +39,7 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: Install
-        run: pip install --quiet .
+        run: pip install --quiet ".[pipeline]"
       - name: Resolve the jobs for this run
         id: plan
         env:
@@ -75,7 +75,7 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: Install
-        run: pip install --quiet .
+        run: pip install --quiet ".[pipeline]"
       - name: Run the job
         id: job
         env:

@@ -564,7 +564,7 @@ Fixed on the way:
 ### Phase 13: Acceptance and Handoff
 
 #### Tasks
-- [ ] **13.1 Deploy:** backend to the HF Space from root `src/`; dashboard to Vercel; Supabase migrations applied; GitHub secrets set.
+- [ ] **13.1 Deploy:** backend to Vercel from root `src/` (ADR-17; built and run locally from Vercel's own bundle, not yet deployed); dashboard to Vercel; Supabase migrations applied; GitHub secrets set.
 - [ ] **13.2 End-to-end:** register a second real app from the dashboard; observe backfill, first pulse, Doc, draft and dashboard view with no manual step.
 - [ ] **13.3 README:** setup, sources and limits, Composio setup, every secret by name, running each mode locally, troubleshooting (re-enable a disabled workflow, reconnect Composio).
 - [ ] **13.4 v1 Phase 6 leftovers:** demo, sample output.
@@ -585,7 +585,7 @@ All v2 acceptance criteria checked with evidence; full suite green.
 | 10 | `CMP-*`, v1 `MCP-*` on the mock |
 | 11 | `SCH-*` |
 | 12 | `DSH-*` |
-| 13 | Real-run acceptance |
+| 13 | `DEP-*`; real-run acceptance |
 
 ### 9.3 Definition of Done (v2)
 
