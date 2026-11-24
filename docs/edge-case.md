@@ -496,7 +496,7 @@ AG should update this table and the affected tests whenever a decision changes.
 | COL-10 | Same review text on both stores on the same day | Kept as two reviews (platform is in the dedupe key) | `test_COL_10_cross_store_not_merged` | U | P2 |
 | COL-11 | Backfill completes | Status `active`; first pulse generated for the latest complete week | `test_COL_11_backfill_then_pulse` | I | P0 |
 | COL-12 | Review in a non-configured language from the RSS feed | Stored with detected `lang`; v1 language rules apply | `test_COL_12_lang_from_feed` | U | P2 |
-| COL-14 | Short backfill followed by daily runs | Note keeps "partial, from <date>" until the window starts after that date; a feed gap clears only after a clean recollection of the same days | `test_daily_run_does_not_hide_a_short_backfill`, `test_feed_gap_caveat_clears_only_after_a_clean_recollection` | I | P0 |
+| COL-14 | Short backfill followed by daily runs | Note keeps "partial, from <date>" until the window starts after that date; a feed gap clears once every one of its days inside the note window was collected without gaps, by a later run or by a run that started after that day ended (UTC); runs add up, and the oldest day of a truncated run does not count | `test_daily_run_does_not_hide_a_short_backfill`, `test_feed_gap_caveat_clears_once_every_day_was_collected`, `tests/test_feed_gap_days.py` | I | P0 |
 | COL-13 | App Store RSS page returns 200 with no reviews (a feed gap), in JSON and in XML | All 10 pages are swept; an empty page is never treated as end of feed; XML is tried when JSON is empty; `feed_gaps` counted, `source_limit_hit=true`; note header says "partial, store feed had gaps" | `test_COL_13_feed_gaps_flagged_and_xml_fallback` | U | P0 |
 
 ## 22. Scheduler

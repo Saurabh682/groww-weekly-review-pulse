@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from typing import List, Optional
 
 from src.note.models import STORE_LABELS, StoreCoverage, WeeklyPulseNote
@@ -6,14 +7,32 @@ from src.store.store import AppStore
 
 LISTING_ATTRIBUTES = {"play_store": "play_package_id", "app_store": "app_store_id"}
 IOS_WORDS = ("iOS", "iPhone")
+ISO_DAY_CHARS = len("2026-01-01")
 
 
-def _recollected(gap: CollectionRunRecord, runs: List[CollectionRunRecord]) -> bool:
+def _days(first: str, last: str) -> List[str]:
+    start = date.fromisoformat(first)
+    return [(start + timedelta(days=n)).isoformat() for n in range((date.fromisoformat(last) - start).days + 1)]
+
+
+def _reaches(run: CollectionRunRecord, day: str) -> bool:
+    if run.covered_start is None or run.feed_gaps:
+        return False
+    starts_in_time = run.covered_start < day if run.source_limit_hit else run.covered_start <= day
+    return starts_in_time and day <= run.window_end
+
+
+def _collected_despite_gap(day: str, gap: CollectionRunRecord, runs: List[CollectionRunRecord]) -> bool:
     return any(
-        r.collection_id > gap.collection_id and not r.feed_gaps
-        and r.covered_start is not None and r.covered_start <= gap.window_start and r.window_end >= gap.window_end
-        for r in runs
+        _reaches(r, day) and (r.collection_id > gap.collection_id or r.started_at[:ISO_DAY_CHARS] > day) for r in runs
     )
+
+
+def _missing_days(
+    gap: CollectionRunRecord, runs: List[CollectionRunRecord], window_start: str, window_end: str
+) -> List[str]:
+    days = _days(max(gap.window_start, window_start), min(gap.window_end, window_end))
+    return [d for d in days if not _collected_despite_gap(d, gap, runs)]
 
 
 def coverage_caveat(
@@ -26,8 +45,7 @@ def coverage_caveat(
     if collections[-1].status == "failed":
         return "last collection failed"
     runs = [c for c in collections if c.status == "ok"]
-    in_window = [c for c in runs if c.window_start <= window_end and c.window_end >= window_start]
-    if any(c.feed_gaps and not _recollected(c, runs) for c in in_window):
+    if any(c.feed_gaps and _missing_days(c, runs, window_start, window_end) for c in runs):
         return "partial, store feed had gaps"
     starts = [c.covered_start for c in runs if c.covered_start]
     if starts and min(starts) > window_start:
