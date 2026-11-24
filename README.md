@@ -70,6 +70,13 @@ npm install
 cd ..
 ```
 
+### Step 4: Run the Dashboard Locally
+The dashboard reads the API address from `VITE_API_URL`, and the API allows the origins in `CORS_ORIGINS`.
+```bash
+CORS_ORIGINS=http://localhost:5173 uvicorn src.api.main:app --port 8010
+VITE_API_URL=http://localhost:8010 npm --prefix frontend run dev
+```
+
 ---
 
 ## 4. CLI Orchestration & Workflow Commands

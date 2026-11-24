@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional
 from src.clean.window import (
     calculate_window_bounds,
     compute_coverage_weeks,
+    is_short_coverage,
     normalize_to_week_start,
 )
 from src.config import (
@@ -87,7 +88,7 @@ def process_and_ingest_reviews(
         "total_analyzed": len(processed_records),
         "newly_inserted": newly_inserted,
         "coverage_weeks": coverage_weeks,
-        "short_coverage_flag": coverage_weeks < 8.0,
+        "short_coverage_flag": is_short_coverage(coverage_weeks),
         "avg_rating": avg_rating,
         "pii_redacted_reviews": persisted.pii_redacted_reviews,
         "pii_tokens_scrubbed": persisted.pii_tokens_scrubbed,

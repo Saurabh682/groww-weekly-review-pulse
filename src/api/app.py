@@ -7,7 +7,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.auth import AuthError, OperatorAuth
+from src.clean.window import is_short_coverage
 from src.ingest.sources import ListingNotFound
+from src.note.coverage import build_store_coverage
 from src.registry.resolve import ResolveError
 from src.registry.service import ACTIVE_APP_CAP, ListingRequest, RegistrationRejected, RegistryService, app_to_dict
 from src.store.errors import (
@@ -19,8 +21,10 @@ from src.store.errors import (
     UnknownApp,
 )
 from src.store.models import PLATFORMS
+from src.store.store import AppStore
 
 PULSE_LIMIT_MAX = 52
+RUN_HISTORY_LIMIT = 10
 ERROR_STATUS = (
     (AuthError, None),
     (UnknownApp, 404),
@@ -69,9 +73,30 @@ def _theme_dict(theme) -> Dict:
     }
 
 
-def _collection_dict(run) -> Optional[Dict]:
-    if run is None:
-        return None
+def _stores(store: AppStore, row: Dict) -> List[Dict]:
+    coverage = build_store_coverage(store, row["window_start"], row["window_end"])
+    return [c.to_dict() for c in coverage]
+
+
+def _pulse_dict(row: Dict, themes: List) -> Dict:
+    return {
+        "week_start": row["week_start"],
+        "status": row["status"],
+        "window_start": row["window_start"],
+        "window_end": row["window_end"],
+        "total_reviews": row["total_reviews"],
+        "analyzed_reviews": row["analyzed_reviews"],
+        "avg_rating": row["avg_rating"],
+        "coverage_weeks": row["coverage_weeks"],
+        "short_coverage": is_short_coverage(row["coverage_weeks"]),
+        "doc_url": row["doc_url"],
+        "draft_created": bool(row["draft_id"]),
+        "published_at": row["published_at"],
+        "themes": [_theme_dict(t) for t in themes],
+    }
+
+
+def _collection_dict(run) -> Dict:
     return {
         "platform": run.platform,
         "mode": run.mode,
@@ -84,6 +109,7 @@ def _collection_dict(run) -> Optional[Dict]:
         "source_limit_hit": bool(run.source_limit_hit),
         "feed_gaps": run.feed_gaps,
         "error": run.error,
+        "started_at": run.started_at,
         "finished_at": run.finished_at,
     }
 
@@ -109,8 +135,9 @@ def create_app(service: RegistryService, auth: OperatorAuth, outputs_root: Path,
 
     @api.get("/apps")
     def list_apps(include_archived: bool = False) -> Dict:
-        apps = service.list_apps(include_archived=include_archived)
-        return {"slots_used": service.slots_used(), "slots_total": ACTIVE_APP_CAP, "apps": [app_to_dict(a) for a in apps]}
+        with service.store.reading():
+            apps = service.list_apps(include_archived=include_archived)
+            return {"slots_used": service.slots_used(), "slots_total": ACTIVE_APP_CAP, "apps": [app_to_dict(a) for a in apps]}
 
     @api.post("/search")
     def search(body: SearchBody, _: str = Depends(operator)) -> Dict:
@@ -134,49 +161,38 @@ def create_app(service: RegistryService, auth: OperatorAuth, outputs_root: Path,
 
     @api.get("/apps/{app_key}/pulses")
     def pulses(app_key: str, limit: int = Query(default=12, ge=1, le=PULSE_LIMIT_MAX)) -> Dict:
-        store = app_store(app_key)
-        weeks = []
-        for row in store.list_pulse_weeks(limit):
-            themes = [t for t in store.get_themes(row["run_id"]) if t.is_top3]
-            weeks.append({
-                "week_start": row["week_start"],
-                "status": row["status"],
-                "total_reviews": row["total_reviews"],
-                "analyzed_reviews": row["analyzed_reviews"],
-                "avg_rating": row["avg_rating"],
-                "doc_url": row["doc_url"],
-                "draft_created": bool(row["draft_id"]),
-                "published_at": row["published_at"],
-                "top_themes": [_theme_dict(t) for t in themes],
-            })
-        return {"app_key": app_key, "pulses": weeks}
+        with service.store.reading():
+            store = app_store(app_key)
+            weeks = [_pulse_dict(row, store.get_themes(row["run_id"])) for row in store.list_pulse_weeks(limit)]
+            return {"app_key": app_key, "pulses": weeks}
 
     @api.get("/apps/{app_key}/pulses/{week}")
     def pulse(app_key: str, week: str) -> Dict:
-        store = app_store(app_key)
-        run = store.get_pulse_week(week)
-        if run is None:
-            raise UnknownApp(f"No pulse for {app_key} in week {week}.")
-        note_path = outputs_root / app_key / week / "note.md"
-        return {
-            "app_key": app_key,
-            "week_start": week,
-            "status": run["status"],
-            "window_start": run["window_start"],
-            "window_end": run["window_end"],
-            "themes": [_theme_dict(t) for t in store.get_themes(run["run_id"])],
-            "note_markdown": note_path.read_text(encoding="utf-8") if note_path.is_file() else None,
-            "doc_url": run["doc_url"],
-            "draft_created": bool(run["draft_id"]),
-        }
+        with service.store.reading():
+            store = app_store(app_key)
+            run = store.get_pulse_week(week)
+            if run is None:
+                raise UnknownApp(f"No pulse for {app_key} in week {week}.")
+            note_path = outputs_root / app_key / week / "note.md"
+            return {
+                "app_key": app_key,
+                **_pulse_dict(run, store.get_themes(run["run_id"])),
+                "stores": _stores(store, run),
+                "note_markdown": note_path.read_text(encoding="utf-8") if note_path.is_file() else None,
+            }
 
     @api.get("/apps/{app_key}/health")
     def health(app_key: str) -> Dict:
-        store = app_store(app_key)
-        return {
-            "app": app_to_dict(store.app),
-            "collections": {p: _collection_dict(store.latest_finished_collection(p)) for p in PLATFORMS},
-            "latest_pulse": next(iter(store.list_pulse_weeks(1)), None),
-        }
+        with service.store.reading():
+            store = app_store(app_key)
+            latest_pulse = next(iter(store.list_pulse_weeks(1)), None)
+            latest = {p: store.latest_finished_collection(p) for p in PLATFORMS}
+            return {
+                "app": app_to_dict(store.app),
+                "collections": {p: None if run is None else _collection_dict(run) for p, run in latest.items()},
+                "runs": [_collection_dict(run) for run in store.recent_collections(RUN_HISTORY_LIMIT)],
+                "stores": [] if latest_pulse is None else _stores(store, latest_pulse),
+                "latest_pulse": latest_pulse,
+            }
 
     return api

@@ -1,33 +1,21 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { Shell } from '../src/app/Shell';
-import { WeeklyPulsePage } from '../src/features/pulse/WeeklyPulsePage';
-import { RunPublishPage } from '../src/features/run/RunPublishPage';
-import { ThemesPage } from '../src/features/themes/ThemesPage';
-import { DataImportPage } from '../src/features/import/DataImportPage';
-import { HelpPage } from '../src/features/help/HelpPage';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { screen } from '@testing-library/react';
+import { FakeApi, app } from './fakeApi';
+import { openRoute } from './openRoute';
 
-// Helper to render routes wrapped in Shell
 const renderWithRouter = (initialRoute: string) => {
-  return render(
-    <MemoryRouter initialEntries={[initialRoute]}>
-      <Routes>
-        <Route path="/" element={<Shell />}>
-          <Route index element={<WeeklyPulsePage />} />
-          <Route path="themes" element={<ThemesPage />} />
-          <Route path="run" element={<RunPublishPage />} />
-          <Route path="import" element={<DataImportPage />} />
-          <Route path="help" element={<HelpPage />} />
-        </Route>
-      </Routes>
-    </MemoryRouter>
-  );
+  new FakeApi().apps(app('groww', 'Groww')).install();
+  return openRoute(initialRoute);
 };
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
 
 describe('Frontend Screens Suite', () => {
   it('WeeklyPulsePage renders score, top 3 themes, verbatim quotes, and action ideas', async () => {
-    renderWithRouter('/');
+    renderWithRouter('/sample');
 
     // Wait for mock API response to resolve and render content
     const themesTitle = await screen.findByText('Top 3 Themes', {}, { timeout: 2000 });

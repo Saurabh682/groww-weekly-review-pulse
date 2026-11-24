@@ -146,7 +146,7 @@ PulseScore = Math.round(
         'Persistent Local Storage: Remembers your linked Google Document URL across sessions.',
       ],
       workflow: [
-        'Navigate to Run & Publish (/run) or Weekly Pulse (/).',
+        'Navigate to Run & Publish (/run) or Weekly Pulse (/sample).',
         'Click "Open Google Doc" or open the Google Docs Integration modal.',
         'On first run, grant OAuth consent (documents and gmail.send scopes).',
         'The backend executes batchUpdate to inject the executive report into your document.',
@@ -735,7 +735,7 @@ const data = await pulseApi.getRun(week, scenario);`,
                   </div>
                   <div>
                     <h3 className="text-sm font-bold font-display text-white">
-                      1. Weekly Pulse (/)
+                      1. Weekly Pulse (/sample)
                     </h3>
                     <span className="text-[10px] font-mono text-text-muted">
                       90-Second Executive Read Note

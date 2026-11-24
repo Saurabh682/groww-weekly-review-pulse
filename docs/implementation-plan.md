@@ -536,13 +536,20 @@ Fixed on the way:
 **Objective:** The operator picks an app and sees everything about it, and manages apps from one page.
 
 #### Tasks
-- [ ] **12.1 Routes** `/apps/:appKey`, `/apps/:appKey/weeks/:week`, `/manage`; app switcher in the header.
-- [ ] **12.2 Overview:** latest pulse, theme table, 8-week theme share trend, Doc and draft links, health card.
+- [ ] **12.1 Routes** `/apps/:appKey`, `/apps/:appKey/weeks/:week`, `/manage`; app switcher in the header. (Done except `/manage`.)
+- [x] **12.2 Overview:** latest pulse, theme table, 8-week theme share trend, Doc and draft links, health card.
 - [ ] **12.3 Manage Apps:** slot counter, search → per-store choice (including "not on this store") → confirm, rename, replace, archive with confirmation.
 - [ ] **12.4 Operator sign-in** (Supabase Auth magic link) gating Manage Apps writes.
-- [ ] **12.5 States:** waking backend, empty app (backfilling), failed app, archived app, short coverage.
+- [x] **12.5 States:** waking backend, empty app (backfilling), failed app, archived app, short coverage.
 - [ ] **12.6 Help explorer** entries for the new features.
 - [ ] **12.7 UI consistency** pass with the `ui-consistency` skills before and after building.
+
+#### Decisions
+- The v1 pages run on built-in data. They stay, under "Sample data" in the menu and with a "Sample data" badge; the v1 weekly pulse moved from `/` to `/sample`.
+- The history and week endpoints return every theme with `is_top3`, so the trend has no holes when a theme leaves the top three. `top_themes` is gone.
+- A read request uses one read-only database connection (`store.reading()`); health took eight.
+- Only the first request may call a slow answer "waking"; later panels show loading.
+- The dashboard reads its API address from `VITE_API_URL` at build time and says so when it is missing.
 
 #### Exit Criteria
 `DSH-*` tests green; every interactive element has an accessible name; screenshots of each route and state attached.

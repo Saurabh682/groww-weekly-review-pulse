@@ -558,7 +558,7 @@ AG should update this table and the affected tests whenever a decision changes.
 
 | ID | Scenario | Expected | Test | Type | Pri |
 |---|---|---|---|---|---|
-| DSH-01 | Switch app in the header | URL changes to `/apps/:appKey`; all panels show that app only | `test_DSH_01_app_switch` | I | P0 |
+| DSH-01 | Switch app in the header | URL changes to `/apps/:appKey`; all panels show that app only | `test_DSH_01_app_switch` (`frontend/tests/Dashboard.test.tsx`) | I | P0 |
 | DSH-02 | Unknown or archived `appKey` in the URL | Unknown: not-found state with link to the app list. Archived: read-only view with an "archived" badge | `test_DSH_02_unknown_or_archived` | I | P1 |
 | DSH-03 | App still backfilling | Progress state, no empty charts | `test_DSH_03_backfilling_state` | I | P1 |
 | DSH-04 | Backend asleep | "Waking backend" state, then data loads | `test_DSH_04_waking_backend` | I | P2 |
@@ -567,6 +567,9 @@ AG should update this table and the affected tests whenever a decision changes.
 | DSH-07 | Archive | Confirmation dialog naming the app; slot counter updates | `test_DSH_07_archive_confirm` | I | P1 |
 | DSH-08 | Short coverage or failed collection | Health card shows the covered window and the error summary | `test_DSH_08_health_flags` | I | P1 |
 | DSH-09 | Every interactive element | Has an accessible name | `test_DSH_09_accessible_names` | U | P1 |
+| DSH-11 | Fewer than two weekly pulses; a week with no pulse; a theme missing from a week | No chart below two weeks; a gap, never a zero | `frontend/tests/themeTrend.test.ts` | U | P1 |
+| DSH-12 | Panel is slow after the backend answered once | Loading, not "Waking backend" | `calls a slow panel loading once the backend has answered` | I | P2 |
+| DSH-13 | Read route | Opens one database connection; a write inside it is refused | `test_read_route_opens_one_connection`, `test_writing_while_reading_is_refused` | I | P1 |
 | DSH-10 | Not signed in | Manage Apps is read-only with a sign-in prompt | `test_DSH_10_signed_out_manage` | I | P1 |
 
 ## 27. Retired v1 Cases

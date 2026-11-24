@@ -24,9 +24,10 @@ Preconditions:
 - Baseline state, then `python $V cli --run $RUN --name publish -- src.pipeline run --app groww --week 2026-11-09`.
 
 - **Apps.** `python $V http --run $RUN --name apps GET /apps` gives 200 with `groww`.
-- **History.** `python $V http --run $RUN --name history GET /apps/groww/pulses` gives 200, one week with `status: published`, three themes, a Doc link and `draft_created: true`.
+- **History.** `python $V http --run $RUN --name history GET /apps/groww/pulses` gives 200, one week with `status: published`, its themes (three with `is_top3`), a Doc link and `draft_created: true`.
 - **One pulse.** `python $V http --run $RUN --name pulse GET /apps/groww/pulses/2026-11-09` gives 200, `status: published`, window `2026-08-24` to `2026-11-15`, and `note_markdown` equal to the kept note.
-- **Health.** `python $V http --run $RUN --name health GET /apps/groww/health` gives 200 and `latest_pulse.status` is `published`. `collections` holds nulls until a collection has run.
+- **Health.** `python $V http --run $RUN --name health GET /apps/groww/health` gives 200 and `latest_pulse.status` is `published`. `stores` counts the reviews per store in that window, and `runs` lists the last 10 collections. `collections` holds nulls until a collection has run.
+- **Dashboard.** Start the API and the dashboard as README step 4 says and open `/`. It opens the first active app; `Choose app` in the header switches to another, and the address becomes `/apps/<key>`. Keep a screenshot of each app.
 - **Missing app.** `python $V http --run $RUN --name missing-app GET /apps/nope/health` gives 404.
 - **Missing week.** `python $V http --run $RUN --name missing-week GET /apps/groww/pulses/2020-01-06` gives 404.
 - **Proof.** `python $V keep --run $RUN --name note outputs/groww/2026-11-09/note.md` matches `note_markdown`.
