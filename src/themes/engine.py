@@ -8,7 +8,7 @@ from src.domains import domain_pack_for
 from src.store.store import AppStore
 from src.store.models import ReviewRecord
 from src.themes.cluster import cluster_reviews
-from src.themes.embed import Embedder
+from src.themes.embed import embed_reviews
 from src.themes.filter import prepare_reviews_for_themes
 from src.themes.label import label_cluster
 from src.themes.rank import compute_theme_stats, rank_themes
@@ -45,9 +45,8 @@ def run_theme_pipeline(
             "Cannot form pulse themes (THM-03)."
         )
 
-    # 2. Vector Embedding (with SQLite cache THM-10, THM-11)
-    embedder = Embedder(store=store, model_name=f"{config.llm.provider}-lsa-64")
-    vectors = embedder.embed_reviews(filtered_reviews)
+    # 2. Vector Embedding
+    vectors = embed_reviews(filtered_reviews)
 
     # 3. Capped Clustering (THM-01..09)
     clusters, centroids, cluster_meta = cluster_reviews(

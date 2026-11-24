@@ -281,7 +281,7 @@ Working `pulse publish`, `publish_state` tracking, contract tests, smoke-test no
 - [x] **5.5 Retention.** Purge rows and raw files older than the rolling window plus one prior window.
 - [x] **5.6 Scheduling.** Weekly trigger via cron or a scheduled CI job (or documented manual command). Confirm the execution environment can reach the MCP servers with authorized sessions.
 - [x] **5.7 Full test pass.** End-to-end test on fixtures with a mock MCP; invariant tests (themes ≤5, 3/3/3, ≤250 words); idempotency test; PII gate test across dataset, note, email, logs, and run report.
-- [x] **5.8 Performance/cost check.** Confirm runtime and LLM/embedding cost per weekly run are acceptable; cache embeddings.
+- [x] **5.8 Performance/cost check.** Confirm runtime and LLM/embedding cost per weekly run are acceptable. *(The vector cache was removed on 2026-11-24, THM-11.)*
 
 ### Deliverables
 `pulse run`, scheduled job configuration, retention job, full passing suite.
@@ -504,7 +504,18 @@ Phases 8, 9 and 10 touch separate folders (`src/ingest/`, `src/registry/` + `src
 #### Exit Criteria
 `SCH-*` tests green; one manual dispatch of each mode succeeds for two apps; a forced failure for one app leaves the other green.
 
-Status 2026-11-24: `SCH-*` green. All four modes and the forced failure ran locally for two apps (Groww and Zerodha Coin) with real store collection, Postgres and a fake Composio server. The branch is pushed, the Supabase project has all four migrations, and the secrets are set. The GitHub dispatches wait on the merge to `main`.
+Status 2026-11-24: `SCH-*` green. All four modes and the forced failure ran locally for two apps (Groww and Zerodha Coin) with real store collection, Postgres and a fake Composio server. The Supabase project has all four migrations, and the secrets are set.
+
+GitHub dispatches on 2026-11-24, on `main` at `3fc7c6e`, for Groww and Zerodha Coin:
+
+| Mode | Run | Result |
+|---|---|---|
+| `backfill` | 45352523571 (Zerodha Coin), 45353275804 (Groww) | Green, 3 and 41 minutes |
+| `pulse` | 45359605884 | Green, same Docs and drafts. Groww's note changed on unchanged reviews (THM-11) |
+| `reconcile` | 45371901419 | Green, 0 new reviews, 0 duplicates |
+| `daily`, with a throwaway app whose listing does not exist | 45374456434 | Throwaway app failed with "listing not found"; both real apps green |
+
+The throwaway app is archived, and no schedule plans it. Reviews are written one row at a time, which is why Groww's backfill took 41 minutes of the 120-minute limit.
 
 Groww's data, with its `publish_state` row for 2026-11-16, was copied from `data/pulse.db` to Supabase on 2026-11-24 in one transaction. Every row matches, and the note built from Supabase has the published note's hash, so that week keeps its Doc and draft.
 

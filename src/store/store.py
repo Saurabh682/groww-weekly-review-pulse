@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
@@ -370,7 +369,7 @@ class AppStore:
     def get_themes(self, run_id: str) -> List[ThemeRecord]:
         with self._session() as s:
             rows = s.fetchall(
-                "SELECT * FROM themes WHERE app_key = ? AND run_id = ? ORDER BY is_top3 DESC, share_pct DESC",
+                "SELECT * FROM themes WHERE app_key = ? AND run_id = ? ORDER BY is_top3 DESC, share_pct DESC, theme_id",
                 (self.app_key, run_id),
             )
         return [_theme(r) for r in rows]
@@ -414,35 +413,6 @@ class AppStore:
                 (self.app_key, state.week_start, state.doc_id, state.doc_url, state.draft_id,
                  state.content_hash, _now()),
             )
-
-    def get_cached_embeddings(self, model_name: str, review_ids: List[str]) -> Dict[str, List[float]]:
-        if not review_ids:
-            return {}
-        placeholders = ", ".join("?" for _ in review_ids)
-        with self._session() as s:
-            rows = s.fetchall(
-                f"SELECT review_id, vector_json FROM embedding_cache WHERE app_key = ? AND model_name = ? "
-                f"AND review_id IN ({placeholders})",
-                (self.app_key, model_name, *review_ids),
-            )
-        return {r["review_id"]: json.loads(r["vector_json"]) for r in rows}
-
-    def save_cached_embeddings(self, model_name: str, items: List[Tuple[str, List[float]]]) -> None:
-        with self._session() as s:
-            for review_id, vector in items:
-                s.execute(
-                    "INSERT INTO embedding_cache (app_key, review_id, model_name, vector_json) VALUES (?, ?, ?, ?) "
-                    "ON CONFLICT (app_key, review_id, model_name) DO UPDATE SET vector_json = excluded.vector_json",
-                    (self.app_key, review_id, model_name, json.dumps(vector)),
-                )
-
-    def cached_embedding_models(self) -> List[str]:
-        with self._session() as s:
-            rows = s.fetchall(
-                "SELECT DISTINCT model_name FROM embedding_cache WHERE app_key = ? ORDER BY model_name",
-                (self.app_key,),
-            )
-        return [r["model_name"] for r in rows]
 
     def purge_reviews_older_than(self, cutoff_date: str, exclude_run_ids: Optional[List[str]] = None) -> int:
         protected = list(exclude_run_ids or [])
