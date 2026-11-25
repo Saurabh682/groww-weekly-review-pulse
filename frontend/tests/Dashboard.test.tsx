@@ -2,13 +2,25 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RETRY_DELAY_MS, SLOW_RESPONSE_MS, WAKE_LIMIT_MS } from '../src/data/apiClient';
-import { app, FakeApi, pulse, run } from './fakeApi';
+import { PulseAttempt } from '../src/data/types';
+import { REFRESH_MS } from '../src/data/useApi';
+import { app, FakeApi, history, pulse, run } from './fakeApi';
 import { openRoute } from './openRoute';
 
 const GROWW = app('groww', 'Groww');
 const COIN = app('zerodha-coin', 'Zerodha Coin');
 const OLD = app('old', 'Old App', 'archived');
 const WEEK = '2026-11-16';
+const APPS = '/apps?include_archived=true';
+const PULSES = (key: string) => `/apps/${key}/pulses?limit=12`;
+const LOW_VOLUME: PulseAttempt = {
+  week_start: WEEK,
+  status: 'low_volume',
+  window_start: '2026-08-31',
+  window_end: '2026-11-22',
+  usable_reviews: 7,
+  min_reviews: 30,
+};
 
 let api: FakeApi;
 
@@ -35,6 +47,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
@@ -131,6 +144,16 @@ describe('app states', () => {
     expect(card).toHaveTextContent(next);
   });
 
+  it('test_DSH_19_low_volume_state', async () => {
+    const small = app('small', 'Small');
+    api.apps(small).shows(small, []).on(PULSES('small'), { body: history(small, [], { latest_run: LOW_VOLUME }) });
+    openRoute('/apps/small');
+    const card = (await page().findByText('Not enough reviews yet')).parentElement!;
+    expect(card).toHaveTextContent('A pulse needs 30 reviews with enough text. Small has 7 from 31 Aug 2026 to 22 Nov 2026.');
+    expect(card).toHaveTextContent('checked again every Monday');
+    expect(page().queryByText(/after the next run/)).toBeNull();
+  });
+
   it('says when the last collection failed and keeps the last pulse', async () => {
     const broken = app('broken', 'Broken', 'failed');
     api.apps(broken).shows(broken, [pulse(WEEK, { Charges: 0.4 })]);
@@ -197,6 +220,102 @@ describe('app states', () => {
     openRoute('/');
     expect(await page().findByRole('alert')).toHaveTextContent('Set VITE_API_URL');
     expect(api.calls).toEqual([]);
+  });
+});
+
+describe('keeping an open page up to date', () => {
+  const FRESH = app('fresh', 'Fresh', 'backfilling');
+  const FRESH_ACTIVE = app('fresh', 'Fresh');
+  const list = (of: typeof FRESH) => ({ body: { slots_used: 1, slots_total: 5, apps: [of] } });
+  const requests = (path: string) => api.calls.filter((call) => call === path).length;
+  const wait = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it('test_DSH_20_waiting_page_fills_in', async () => {
+    api.shows(FRESH, [pulse(WEEK, { Charges: 0.4 })])
+      .on(APPS, list(FRESH), list(FRESH_ACTIVE))
+      .on(
+        PULSES('fresh'),
+        { body: history(FRESH, []) },
+        { body: history(FRESH, [], { latest_run: { ...LOW_VOLUME, status: 'running' } }) },
+        { body: history(FRESH, [pulse(WEEK, { Charges: 0.4 })]) },
+      );
+    openRoute('/apps/fresh');
+    await wait(1);
+    expect(page().getByText('Collecting reviews for Fresh')).toBeInTheDocument();
+    await wait(REFRESH_MS);
+    expect(requests('/apps/fresh/health')).toBe(2);
+    expect(page().queryByText('Collecting reviews for Fresh')).toBeNull();
+    expect(page().getByText('No pulse')).toBeInTheDocument();
+    await wait(REFRESH_MS);
+    expect(page().getByText('Charges')).toBeInTheDocument();
+  });
+
+  it('shows an app when the API is older than the page and sends no latest run', async () => {
+    api.apps(FRESH_ACTIVE).shows(FRESH_ACTIVE, []).on(PULSES('fresh'), { body: { app_key: 'fresh', pulses: [] } });
+    openRoute('/apps/fresh');
+    await wait(1);
+    expect(page().getByText('No pulse')).toBeInTheDocument();
+  });
+
+  it('stops asking once the first run has an answer', async () => {
+    api.apps(FRESH_ACTIVE).shows(FRESH_ACTIVE, []).on(PULSES('fresh'), { body: history(FRESH, [], { latest_run: LOW_VOLUME }) });
+    openRoute('/apps/fresh');
+    await wait(1);
+    const asked = api.calls.length;
+    await wait(3 * REFRESH_MS);
+    expect(api.calls).toHaveLength(asked);
+  });
+
+  it('does not ask while the tab is hidden, and asks when it is opened again', async () => {
+    const visible = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    api.shows(FRESH, []).on(APPS, list(FRESH), list(FRESH_ACTIVE));
+    openRoute('/apps/fresh');
+    await wait(1);
+    await wait(3 * REFRESH_MS);
+    expect(requests(APPS)).toBe(1);
+    expect(page().getByText('Collecting reviews for Fresh')).toBeInTheDocument();
+    visible.mockReturnValue('visible');
+    document.dispatchEvent(new Event('visibilitychange'));
+    await wait(1);
+    expect(requests(APPS)).toBe(2);
+    expect(page().queryByText('Collecting reviews for Fresh')).toBeNull();
+  });
+
+  it.each([[{ status: 500, body: { error: 'Store is down' } }], ['offline' as const]])(
+    'keeps the page on screen when a refresh fails: %j',
+    async (answer) => {
+      api.on(PULSES('groww'), { body: history(GROWW, [pulse(WEEK, { Charges: 0.4 })]) }, answer);
+      openRoute('/apps/groww');
+      await wait(1);
+      document.dispatchEvent(new Event('visibilitychange'));
+      await wait(1);
+      expect(requests(PULSES('groww'))).toBe(2);
+      expect(page().getByText('Charges')).toBeInTheDocument();
+      expect(page().queryByRole('alert')).toBeNull();
+      expect(page().queryByText('Waking backend')).toBeNull();
+    },
+  );
+
+  it('stops asking when the page is closed', async () => {
+    api.shows(FRESH, []).on(APPS, list(FRESH));
+    const added = vi.spyOn(document, 'addEventListener');
+    const removed = vi.spyOn(document, 'removeEventListener');
+    const listeners = (spy: typeof added | typeof removed) =>
+      spy.mock.calls.filter(([type]) => type === 'visibilitychange').map(([, listener]) => listener);
+    const started = vi.spyOn(globalThis, 'setInterval');
+    const cleared = vi.spyOn(globalThis, 'clearInterval');
+    const view = openRoute('/apps/fresh');
+    await wait(1);
+    view.unmount();
+    expect(listeners(added).length).toBeGreaterThan(0);
+    expect(listeners(removed)).toEqual(expect.arrayContaining(listeners(added)));
+    const timers = started.mock.results.map(({ value }) => value);
+    expect(timers.length).toBeGreaterThan(0);
+    expect(cleared.mock.calls.map(([timer]) => timer)).toEqual(expect.arrayContaining(timers));
   });
 });
 

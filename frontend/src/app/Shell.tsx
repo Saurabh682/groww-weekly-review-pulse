@@ -15,14 +15,17 @@ import {
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { Menu, MenuItem } from '../components/Menu';
-import { AppList, ScenarioType, ShellContext } from '../data/types';
+import { AppList, COLLECTING, ScenarioType, ShellContext } from '../data/types';
 import { useApi } from '../data/useApi';
 import { useOperator } from '../data/useOperator';
 import { AppSwitcher } from './AppSwitcher';
 
 const APPS_PATH = '/apps?include_archived=true';
 const SAMPLE_WEEKS = ['Week of 9 Nov 2026', 'Week of 2 Nov 2026', 'Week of 26 Oct 2026', 'Week of 19 Oct 2026'];
-const FIRST_REQUEST = { slowMeansWaking: true };
+const LIST_OPTIONS = {
+  slowMeansWaking: true,
+  refreshWhile: ({ apps }: AppList) => apps.some((app) => COLLECTING.includes(app.status)),
+};
 const ICON = 'w-4 h-4';
 
 const SAMPLE_ITEMS = [
@@ -48,7 +51,7 @@ export const Shell: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const appKey = useMatch('/apps/:appKey/*')?.params.appKey;
-  const apps = useApi<AppList>(APPS_PATH, FIRST_REQUEST);
+  const apps = useApi<AppList>(APPS_PATH, LIST_OPTIONS);
   const operator = useOperator();
   const [selectedWeek, setSelectedWeek] = useState(SAMPLE_WEEKS[0]);
 

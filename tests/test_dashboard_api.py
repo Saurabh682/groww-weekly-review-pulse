@@ -55,6 +55,36 @@ def test_health_has_no_store_counts_before_the_first_pulse(api):
     assert api.get("/apps/groww/health").json()["stores"] == []
 
 
+def test_history_says_how_many_reviews_a_low_volume_week_had(groww, api, composio, tmp_path):
+    path = tmp_path / "short.csv"
+    path.write_text("\n".join(CSV.read_text(encoding="utf-8").splitlines()[:9]) + "\n", encoding="utf-8")
+    ran = run_full_pipeline(groww, WEEK, csv_path=path, mcp_client=composio.client())
+    assert ran["status"] == "low_volume"
+
+    stored = groww.get_run(ran["run_id"])
+    history = api.get("/apps/groww/pulses").json()
+    assert history["pulses"] == []
+    assert history["latest_run"] == {
+        "week_start": WEEK,
+        "status": "low_volume",
+        "window_start": stored.window_start,
+        "window_end": stored.window_end,
+        "usable_reviews": ran["usable_reviews"],
+        "min_reviews": ran["min_reviews"],
+    }
+
+
+def test_history_has_no_latest_run_before_the_first_one(api):
+    assert api.get("/apps/groww/pulses").json()["latest_run"] is None
+
+
+def test_history_reports_the_newest_run(groww, api):
+    groww.save_theme_run("r1", WEEK, "2026-08-24", "2026-11-15", 5, 5, 3.0, 12.0, [_theme("t1")])
+    groww.record_run_start("r2", "2026-11-16", "2026-08-31", "2026-11-22")
+    latest = api.get("/apps/groww/pulses").json()["latest_run"]
+    assert (latest["week_start"], latest["status"]) == ("2026-11-16", "running")
+
+
 @pytest.mark.parametrize("coverage, short", [(7.9, True), (8.0, False)])
 def test_week_says_when_its_coverage_is_short(groww, api, coverage, short):
     groww.save_theme_run("r1", WEEK, "2026-08-24", "2026-11-15", 5, 5, 3.0, coverage, [_theme("t1")])

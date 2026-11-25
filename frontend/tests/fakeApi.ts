@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { AppHealth, AppRecord, AppStatus, CollectionRun, PulseWeek, PulseWeekDetail, StoreCandidate, StoreSearch } from '../src/data/types';
+import { AppHealth, AppRecord, AppStatus, CollectionRun, PulseHistory, PulseWeek, PulseWeekDetail, StoreCandidate, StoreSearch } from '../src/data/types';
 
 export const API_URL = 'http://api.test';
 export const AUTH_URL = 'http://auth.test';
@@ -85,6 +85,10 @@ export function health(of: AppRecord, more: Partial<AppHealth> = {}): AppHealth 
   };
 }
 
+export function history(of: AppRecord, pulses: PulseWeek[], more: Partial<PulseHistory> = {}): PulseHistory {
+  return { app_key: of.app_key, pulses, latest_run: null, ...more };
+}
+
 export function detail(appKey: string, week: PulseWeek): PulseWeekDetail {
   return {
     ...week,
@@ -143,7 +147,7 @@ export class FakeApi {
   }
 
   shows(of: AppRecord, pulses: PulseWeek[], more: Partial<AppHealth> = {}): this {
-    this.on(`/apps/${of.app_key}/pulses?limit=12`, { body: { app_key: of.app_key, pulses } });
+    this.on(`/apps/${of.app_key}/pulses?limit=12`, { body: history(of, pulses) });
     pulses.forEach((p) => this.on(`/apps/${of.app_key}/pulses/${p.week_start}`, { body: detail(of.app_key, p) }));
     return this.on(`/apps/${of.app_key}/health`, { body: health(of, more) });
   }

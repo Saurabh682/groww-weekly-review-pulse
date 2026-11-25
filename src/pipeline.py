@@ -254,7 +254,7 @@ def run_full_pipeline(
             "timings": stage_timings
         }
 
-    usable_reviews = len(store.get_reviews_in_window(window_start, window_end, include_low_info=False))
+    usable_reviews = store.count_usable_reviews(window_start, window_end)
     if not dry_run and stage_limit in (None, "publish") and usable_reviews < config.note.min_reviews:
         store.update_run(run_id=run_id, status="low_volume", finished=True)
         stage_statuses["publish"] = "skipped_low_volume"

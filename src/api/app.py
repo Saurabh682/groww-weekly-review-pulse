@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.auth import AuthError, OperatorAuth
 from src.clean.window import is_short_coverage
+from src.config import load_pulse_config
 from src.ingest.sources import ListingNotFound
 from src.note.coverage import build_store_coverage
 from src.registry.resolve import ResolveError
@@ -96,6 +97,20 @@ def _pulse_dict(row: Dict, themes: List) -> Dict:
     }
 
 
+def _attempt_dict(store: AppStore, min_reviews: int) -> Optional[Dict]:
+    run = store.latest_run()
+    if run is None:
+        return None
+    return {
+        "week_start": run.week_start,
+        "status": run.status,
+        "window_start": run.window_start,
+        "window_end": run.window_end,
+        "usable_reviews": store.count_usable_reviews(run.window_start, run.window_end),
+        "min_reviews": min_reviews,
+    }
+
+
 def _collection_dict(run) -> Dict:
     return {
         "platform": run.platform,
@@ -116,6 +131,7 @@ def _collection_dict(run) -> Dict:
 
 def create_app(service: RegistryService, auth: OperatorAuth, outputs_root: Path, cors_origins: List[str]) -> FastAPI:
     api = FastAPI(title="Weekly Review Pulse API", version="2.0.0")
+    min_reviews = load_pulse_config().note.min_reviews
     if cors_origins:
         api.add_middleware(CORSMiddleware, allow_origins=cors_origins, allow_methods=["*"],
                            allow_headers=["Authorization", "Content-Type"])
@@ -164,7 +180,7 @@ def create_app(service: RegistryService, auth: OperatorAuth, outputs_root: Path,
         with service.store.reading():
             store = app_store(app_key)
             weeks = [_pulse_dict(row, store.get_themes(row["run_id"])) for row in store.list_pulse_weeks(limit)]
-            return {"app_key": app_key, "pulses": weeks}
+            return {"app_key": app_key, "pulses": weeks, "latest_run": _attempt_dict(store, min_reviews)}
 
     @api.get("/apps/{app_key}/pulses/{week}")
     def pulse(app_key: str, week: str) -> Dict:
