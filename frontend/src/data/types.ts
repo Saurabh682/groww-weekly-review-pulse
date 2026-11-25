@@ -100,6 +100,8 @@ export type ScenarioType = 'ok' | 'empty' | 'error' | 'validation-failed' | 'low
 export type AppStatus = 'pending_backfill' | 'backfilling' | 'active' | 'failed' | 'archived';
 export type Platform = 'play_store' | 'app_store';
 
+export const COLLECTING: readonly AppStatus[] = ['pending_backfill', 'backfilling'];
+
 export interface AppRecord {
   app_key: string;
   display_name: string;
@@ -143,9 +145,19 @@ export interface PulseWeek {
   themes: PulseTheme[];
 }
 
+export interface PulseAttempt {
+  week_start: string;
+  status: string;
+  window_start: string;
+  window_end: string;
+  usable_reviews: number;
+  min_reviews: number;
+}
+
 export interface PulseHistory {
   app_key: string;
   pulses: PulseWeek[];
+  latest_run: PulseAttempt | null;
 }
 
 export interface StoreCoverage {

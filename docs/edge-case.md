@@ -576,6 +576,9 @@ AG should update this table and the affected tests whenever a decision changes.
 | DSH-16 | Sign-in link is used, expired, or opened in another browser | Signed out, with the reason and a way to ask for a new link | `says when a sign-in link did not work` | I | P1 |
 | DSH-17 | Link requested for an address that is not an account | Same answer as for an operator; no account is created | `does not reveal whether an address is an operator` | I | P1 |
 | DSH-18 | Build is given a secret or legacy Supabase key | Build stops without printing the key | `frontend/tests/publishableKey.test.ts` | U | P0 |
+| DSH-19 | Active app whose latest run found too few usable reviews | The page gives the count, the window and the minimum, not "after the next run" | `test_DSH_19_low_volume_state`, `test_history_says_how_many_reviews_a_low_volume_week_had` (`tests/test_dashboard_api.py`) | I | P1 |
+| DSH-20 | Page left open during a first collection | The app list, pulses and health refresh every minute until the first run has an answer, and whenever the tab is opened again | `test_DSH_20_waiting_page_fills_in`, `does not ask while the tab is hidden, and asks when it is opened again` | I | P1 |
+| DSH-21 | A background refresh fails | What was on screen stays | `keeps the page on screen when a refresh fails` | I | P1 |
 | DSH-10 | Not signed in | Manage Apps is read-only with a sign-in prompt | `test_DSH_10_signed_out_manage` | I | P1 |
 
 ## 26a. Deployment

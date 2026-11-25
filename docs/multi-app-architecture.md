@@ -342,7 +342,7 @@ The v1 `config/mcp.yaml` contains a committed bearer token for the `gmail-docs-m
 | PATCH | `/apps/{key}` | operator | Rename |
 | POST | `/apps/{key}/replace` | operator | Archive + create |
 | DELETE | `/apps/{key}` | operator | Archive |
-| GET | `/apps/{key}/pulses?limit=` | none | Week list: summary, Doc link, draft flag, short-coverage flag and every theme (`is_top3` marks the note's three) |
+| GET | `/apps/{key}/pulses?limit=` | none | Week list: summary, Doc link, draft flag, short-coverage flag and every theme (`is_top3` marks the note's three); `latest_run`: the newest run's status, window, usable reviews now in that window and the minimum |
 | GET | `/apps/{key}/pulses/{week}` | none | The same summary and themes, `stores` (reviews and caveat per store) and the rendered note |
 | GET | `/apps/{key}/health` | none | Latest collection per store, the last 10 `runs`, `stores` for the latest pulse window, latest pulse |
 

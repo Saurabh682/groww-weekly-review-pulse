@@ -8,6 +8,7 @@ from src.store.models import (
     AppRecord,
     CollectionRunRecord,
     PublishStateRecord,
+    PulseAttempt,
     ReviewRecord,
     RunRecord,
     ThemeRecord,
@@ -231,6 +232,13 @@ class AppStore:
             rows = s.fetchall(sql, (self.app_key, start_date, end_date))
         return [_review(r) for r in rows]
 
+    def count_usable_reviews(self, start_date: str, end_date: str) -> int:
+        with self._session() as s:
+            return int(s.scalar(
+                "SELECT COUNT(*) AS n FROM reviews WHERE app_key = ? AND date >= ? AND date <= ? AND low_info = 0",
+                (self.app_key, start_date, end_date),
+            ))
+
     def count_reviews(self) -> int:
         with self._session() as s:
             return int(s.scalar("SELECT COUNT(*) AS n FROM reviews WHERE app_key = ?", (self.app_key,)))
@@ -286,6 +294,24 @@ class AppStore:
         with self._session() as s:
             row = s.fetchone("SELECT * FROM runs WHERE app_key = ? AND run_id = ?", (self.app_key, run_id))
         return _run(row) if row else None
+
+    def latest_attempt(self) -> Optional[PulseAttempt]:
+        with self._session() as s:
+            row = s.fetchone(
+                "SELECT week_start, status, window_start, window_end FROM runs "
+                "WHERE app_key = ? AND window_start IS NOT NULL AND window_end IS NOT NULL "
+                "ORDER BY created_at DESC LIMIT 1",
+                (self.app_key,),
+            )
+        if row is None:
+            return None
+        return PulseAttempt(
+            week_start=row["week_start"],
+            status=row["status"],
+            window_start=row["window_start"],
+            window_end=row["window_end"],
+            usable_reviews=self.count_usable_reviews(row["window_start"], row["window_end"]),
+        )
 
     def get_active_run_ids(self) -> List[str]:
         with self._session() as s:
