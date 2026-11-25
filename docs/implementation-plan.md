@@ -541,7 +541,7 @@ Fixed on the way:
 - [x] **12.3 Manage Apps:** slot counter, search → per-store choice (including "not on this store") → confirm, rename, replace, archive with confirmation.
 - [x] **12.4 Operator sign-in** (Supabase Auth magic link) gating Manage Apps writes. (Run against the Supabase project on 2026-11-24: signed in by email link, then searched, registered and renamed an app.)
 - [x] **12.5 States:** waking backend, empty app (backfilling), failed app, archived app, short coverage.
-- [ ] **12.6 Help explorer** entries for the new features.
+- [x] **12.6 Help explorer** entries for the new features. (Five entries and five questions under "Your Apps", listed first; tests compare what they say with the settings, the schedule and the status labels. The v1 entries still describe the sample pages.)
 - [ ] **12.7 UI consistency** pass with the `ui-consistency` skills before and after building.
 
 #### Decisions
@@ -564,7 +564,7 @@ Fixed on the way:
 ### Phase 13: Acceptance and Handoff
 
 #### Tasks
-- [ ] **13.1 Deploy:** backend to Vercel from root `src/` (ADR-17; built and run locally from Vercel's own bundle, not yet deployed); dashboard to Vercel; Supabase migrations applied; GitHub secrets set.
+- [x] **13.1 Deploy:** backend to Vercel from root `src/` (ADR-17); dashboard to Vercel; Supabase migrations applied; GitHub secrets set. (Live on 2026-11-25: the dashboard reads from the live API; the operator signed in by email link on the live site and a search found apps; a signed-out search is refused.)
 - [ ] **13.2 End-to-end:** register a second real app from the dashboard; observe backfill, first pulse, Doc, draft and dashboard view with no manual step.
 - [ ] **13.3 README:** setup, sources and limits, Composio setup, every secret by name, running each mode locally, troubleshooting (re-enable a disabled workflow, reconnect Composio).
 - [ ] **13.4 v1 Phase 6 leftovers:** demo, sample output.
@@ -584,7 +584,7 @@ All v2 acceptance criteria checked with evidence; full suite green.
 | 9 | `APP-*`, `RES-*`, `AUTH-*` |
 | 10 | `CMP-*`, v1 `MCP-*` on the mock |
 | 11 | `SCH-*` |
-| 12 | `DSH-*` |
+| 12 | `DSH-*`, `HLP-*` |
 | 13 | `DEP-*`; real-run acceptance |
 
 ### 9.3 Definition of Done (v2)

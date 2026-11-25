@@ -580,6 +580,11 @@ AG should update this table and the affected tests whenever a decision changes.
 | DSH-20 | Page left open during a first collection | The app list, pulses and health refresh every minute until the first run has an answer, and whenever the tab is opened again | `test_DSH_20_waiting_page_fills_in`, `does not ask while the tab is hidden, and asks when it is opened again` | I | P1 |
 | DSH-21 | A background refresh fails | What was on screen stays | `keeps the page on screen when a refresh fails` | I | P1 |
 | DSH-10 | Not signed in | Manage Apps is read-only with a sign-in prompt | `test_DSH_10_signed_out_manage` | I | P1 |
+| HLP-01 | A limit changes (slots, review minimum, window, themes) | Help's figures must change too | `test_HLP_01_matches_the_settings` (`frontend/tests/HelpEntries.test.tsx`) | U | P1 |
+| HLP-02 | The schedule changes | Help's India times must change too | `test_HLP_02_matches_the_schedule` | U | P1 |
+| HLP-03 | An app status is added or renamed | Help explains every status by its label | `test_HLP_03_explains_every_status` | U | P1 |
+| HLP-04 | Help is opened | Live app entries come before the sample page entries | `test_HLP_04_lists_live_app_entries_first` | I | P2 |
+| HLP-05 | A link in Help is followed | It leads to a page that uses it, not to a redirect | `test_HLP_05_links_lead_to_pages_that_use_them` | I | P2 |
 
 ## 26a. Deployment
 
@@ -611,5 +616,5 @@ AG should update this table and the affected tests whenever a decision changes.
 | **9** | APP-*, RES-*, AUTH-* |
 | **10** | CMP-*, v1 MCP-* |
 | **11** | SCH-* |
-| **12** | DSH-* |
+| **12** | DSH-*; HLP-* |
 | **13** | DEP-*; full suite; manual smoke for SCH-06, SCH-07 and the v2 acceptance checklist |

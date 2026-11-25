@@ -2,7 +2,7 @@ import React from 'react';
 import { AppStatus } from '../data/types';
 import { Badge } from './Badge';
 
-const STATUS_BADGES: Record<AppStatus, { text: string; variant: 'teal' | 'amber' | 'coral' | 'gray' }> = {
+export const STATUS_BADGES: Record<AppStatus, { text: string; variant: 'teal' | 'amber' | 'coral' | 'gray' }> = {
   active: { text: 'Active', variant: 'teal' },
   pending_backfill: { text: 'Waiting for first collection', variant: 'amber' },
   backfilling: { text: 'Collecting', variant: 'amber' },
