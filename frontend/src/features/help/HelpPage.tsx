@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Card } from '../../components/Card';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
+import { FaqItem, FeatureDetail } from './entries';
+import { LIVE_APP_FAQS, LIVE_APP_FEATURES } from './liveApps';
 import {
   HelpCircle,
   BookOpen,
@@ -26,28 +28,6 @@ import {
   Check,
   Copy,
 } from 'lucide-react';
-
-interface FaqItem {
-  id: string;
-  category: 'core' | 'pipeline' | 'hygiene' | 'mcp' | 'scenarios';
-  question: string;
-  answer: string;
-  tag: string;
-}
-
-interface FeatureDetail {
-  id: string;
-  title: string;
-  category: 'core' | 'themes' | 'pipeline' | 'mcp' | 'hygiene' | 'invariants' | 'testing';
-  badge: string;
-  badgeVariant: 'teal' | 'coral' | 'blue' | 'gray' | 'amber';
-  summary: string;
-  keyCapabilities: string[];
-  workflow: string[];
-  architecture: string;
-  codeSnippet?: string;
-  safetyGuardrails: string[];
-}
 
 export const HelpPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,6 +73,7 @@ export const HelpPage: React.FC = () => {
   };
 
   const features: FeatureDetail[] = [
+    ...LIVE_APP_FEATURES,
     {
       id: 'feat-pulse',
       title: '90-Second Weekly Executive Note & Scoring Engine',
@@ -110,7 +91,7 @@ export const HelpPage: React.FC = () => {
         '3 Prioritized Operational Interventions with named team ownership (e.g. Core Brokerage, Mobile Reliability).',
       ],
       workflow: [
-        'Open the dashboard root route (/) on Monday morning at 08:30 AM IST.',
+        'Open the sample pulse (/sample) on Monday morning at 08:30 AM IST.',
         'Inspect the Pulse Score gauge and mood indicator to identify macro app health.',
         'Review the Top 3 customer pain points and read verbatim user testimonials.',
         'Examine the Sticky Note Checks Rail on the right to verify quality gate compliance.',
@@ -377,6 +358,7 @@ const data = await pulseApi.getRun(week, scenario);`,
   ];
 
   const faqs: FaqItem[] = [
+    ...LIVE_APP_FAQS,
     {
       id: 'faq-1',
       category: 'core',
@@ -522,6 +504,7 @@ const data = await pulseApi.getRun(week, scenario);`,
           <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
             {[
               { id: 'all', label: 'All Topics' },
+              { id: 'apps', label: 'Your Apps' },
               { id: 'core', label: 'Core Pulse & Scoring' },
               { id: 'mcp', label: 'Google Docs & Gmail MCP' },
               { id: 'themes', label: 'Themes & Orbit' },
@@ -784,7 +767,7 @@ const data = await pulseApi.getRun(week, scenario);`,
             </div>
 
             <div className="pt-3 border-t border-[#1e293b] flex items-center justify-between text-[11px] font-mono text-text-muted">
-              <span>Path: /</span>
+              <span>Path: /sample</span>
               <span className="text-primary font-semibold">Leadership Digest</span>
             </div>
           </Card>
@@ -1149,21 +1132,21 @@ const data = await pulseApi.getRun(week, scenario);`,
               name: 'Normal (ok)',
               desc: 'Standard healthy weekly run with 68/100 score and 1,240 reviews.',
               color: 'text-emerald-400',
-              link: '/?scenario=ok',
+              link: '/sample?scenario=ok',
             },
             {
               scenario: 'empty',
               name: 'Empty State',
               desc: 'Awaiting ingestion. Displays clean zero-data recovery cards.',
               color: 'text-text-muted',
-              link: '/?scenario=empty',
+              link: '/sample?scenario=empty',
             },
             {
               scenario: 'error',
               name: 'API Error (500)',
               desc: 'Simulates network or repository backend failure with retry trigger.',
               color: 'text-amber-400',
-              link: '/?scenario=error',
+              link: '/sample?scenario=error',
             },
             {
               scenario: 'validation-failed',
