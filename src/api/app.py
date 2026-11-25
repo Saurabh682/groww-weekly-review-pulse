@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -98,17 +99,8 @@ def _pulse_dict(row: Dict, themes: List) -> Dict:
 
 
 def _attempt_dict(store: AppStore, min_reviews: int) -> Optional[Dict]:
-    run = store.latest_run()
-    if run is None:
-        return None
-    return {
-        "week_start": run.week_start,
-        "status": run.status,
-        "window_start": run.window_start,
-        "window_end": run.window_end,
-        "usable_reviews": store.count_usable_reviews(run.window_start, run.window_end),
-        "min_reviews": min_reviews,
-    }
+    attempt = store.latest_attempt()
+    return None if attempt is None else {**asdict(attempt), "min_reviews": min_reviews}
 
 
 def _collection_dict(run) -> Dict:

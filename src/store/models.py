@@ -42,6 +42,15 @@ class RunRecord:
     finished_at: Optional[str] = None
 
 
+@dataclass(frozen=True)
+class PulseAttempt:
+    week_start: str
+    status: str
+    window_start: str
+    window_end: str
+    usable_reviews: int
+
+
 PLATFORMS = ("play_store", "app_store")
 COLLECTION_MODES = ("backfill", "daily", "reconcile", "csv_import")
 COLLECTION_STATUSES = ("running", "ok", "failed", "skipped_disabled")
