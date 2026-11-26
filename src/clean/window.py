@@ -7,6 +7,10 @@ from src.store.models import ReviewRecord
 SHORT_COVERAGE_WEEKS = 8.0
 
 
+def mean_rating(reviews: List[ReviewRecord]) -> float:
+    return round(sum(r.rating for r in reviews) / len(reviews), 2) if reviews else 0.0
+
+
 def normalize_to_week_start(input_date_str: str, reference_date: date | None = None) -> date:
     """Normalize input date to Monday-start ISO week date (WIN-06).
     Rejects future week dates (WIN-08).

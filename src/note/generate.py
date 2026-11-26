@@ -8,6 +8,7 @@ Generates:
 
 from typing import List
 from src.domains.pack import DomainPack
+from src.note.fit import base_label
 from src.note.models import ActionItem
 from src.note.words import count_note_words
 from src.store.models import ThemeRecord
@@ -43,20 +44,15 @@ def synthesize_action_items(top_themes: List[ThemeRecord], pack: DomainPack) -> 
     
     for theme in top_themes[:3]:
         # Match domain action blueprint or generate specific action
-        matched = None
-        for key, blueprint in pack.actions.items():
-            if key.lower() in theme.label.lower() or theme.label.lower() in key.lower():
-                matched = (blueprint.owner, blueprint.text)
-                break
-                
-        if matched:
-            owner, action_text = matched
+        blueprint = pack.actions.get(base_label(theme.label))
+        if blueprint:
+            owner, action_text = blueprint.owner, blueprint.text
         else:
             owner = "Engineering Team"
             if theme.avg_rating <= 2.5:
                 action_text = f"Audit {theme.label.lower()} workflows and deploy targeted reliability patches for high-frequency user failure modes."
             else:
-                action_text = f"Analyze positive feedback on {theme.label.lower()} to reinforce design standards across other product modules."
+                action_text = f"Reuse the {theme.label.lower()} experience users praise in one more flow and track its completion rate."
 
         # Enforce <= 30 words bound
         words = action_text.split()

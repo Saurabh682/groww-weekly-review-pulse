@@ -220,7 +220,8 @@
 | QUO-14 | Non-English-only candidates in top themes | Not selected by default; if config allows, verbatim original script preserved | `test_QUO_14_non_english_policy` | U | P1 |
 | QUO-15 | Quote's theme differs from the top 3 | Not allowed unless fallback rule used and recorded | `test_QUO_15_quote_theme_alignment` | U | P1 |
 | QUO-16 | Source review later removed during dedupe/retention between selection and validation | Validator detects missing source; blocks | `test_QUO_16_source_missing_blocks` | I | P1 |
-| QUO-17 | Quote spans markdown-sensitive characters (`*`, `_`, `>`, backticks) | Escaped in Markdown render; verbatim check on the unescaped text | `test_QUO_17_markdown_escaping` | U | P1 |
+| QUO-17 | Quote spans markdown-sensitive characters (`*`, `_`, `>`, backticks) | Escaped in Markdown render; verbatim check on the unescaped text | `test_QUO_18_markdown_escaping` | U | P1 |
+| QUO-18 | A sentence placed under one theme talks about another ("wallet not credited" under Charges & Pricing) | Skipped; a quote must name more of its own theme's keywords than any other theme's | `test_QUO_18_a_quote_names_what_its_theme_is_about`, `test_QUO_18_selection_skips_a_sentence_about_another_theme` | U | P1 |
 
 ---
 
@@ -246,7 +247,9 @@
 | NOT-16 | Low sample size or short coverage | Note includes a short caveat inside the word budget | `test_NOT_16_caveat_within_budget` | I | P1 |
 | NOT-17 | LLM output contains Markdown headings or HTML injection | Rendered through a safe template; unexpected tags stripped | `test_NOT_17_output_sanitized` | U | P1 |
 | NOT-18 | Identical input run twice | Structure and facts identical; LLM wording may differ but validator passes both | `test_NOT_18_rerun_validity` | I | P1 |
-| NOT-19 | Quote counted in the 250-word budget | Yes: quotes count toward the total | `test_NOT_19_quotes_count_in_budget` | U | P0 |
+| NOT-19 | Quote counted in the 250-word budget | Yes: quotes count toward the total | `test_NOT_20_quotes_count_in_budget` | U | P0 |
+| NOT-20 | An action keeps things as they are ("Maintain…", "Analyze…") instead of changing something, or a theme label has no action of its own | Validator rejects status-quo verbs; every pack label has its own action blueprint | `test_NOT_20_validator_rejects_a_status_quo_action`, `test_NOT_20_every_pack_label_has_its_own_action` | U | P1 |
+| NOT-21 | Header rating averages only the themed subset and reads as the app's rating | Header shows the average of every review in the window, labelled "(all reviews)", and the themed count separately | `test_NOT_21_header_rating_says_it_covers_every_review` | U | P1 |
 
 ---
 

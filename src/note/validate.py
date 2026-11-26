@@ -11,6 +11,7 @@ Enforces hard invariants:
 - Play Store scope (no App Store references)
 """
 
+import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 from src.clean.pii import scrub_pii
@@ -18,6 +19,8 @@ from src.note.models import WeeklyPulseNote
 from src.note.words import count_note_words
 from src.note.coverage import store_scope_errors
 from src.store.models import ReviewRecord
+
+STATUS_QUO_ACTION = re.compile(r"^(?:maintain|continue|keep|monitor|analy[sz]e|review|document|reinforce)\b", re.IGNORECASE)
 
 
 @dataclass
@@ -137,6 +140,8 @@ def validate_note(
             generic_traps = ["improve the app", "fix bugs", "make it better", "general improvements"]
             if any(trap in act.text.lower() for trap in generic_traps):
                 errors.append(f"NOT-08: Action #{idx} contains generic non-actionable phrase '{act.text}'.")
+            if STATUS_QUO_ACTION.match(act.text):
+                errors.append(f"NOT-20: Action #{idx} keeps things as they are instead of changing something: '{act.text}'.")
 
         # 5. Scope & Platform Invariant (NOT-14)
         store_errors = store_scope_errors(note, rendered_text)
