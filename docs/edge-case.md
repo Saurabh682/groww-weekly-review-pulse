@@ -250,6 +250,7 @@
 | NOT-19 | Quote counted in the 250-word budget | Yes: quotes count toward the total | `test_NOT_20_quotes_count_in_budget` | U | P0 |
 | NOT-20 | An action keeps things as they are ("Maintain…", "Analyze…") instead of changing something, or a theme label has no action of its own | Validator rejects status-quo verbs; every pack label has its own action blueprint | `test_NOT_20_validator_rejects_a_status_quo_action`, `test_NOT_20_every_pack_label_has_its_own_action` | U | P1 |
 | NOT-21 | Header rating averages only the themed subset and reads as the app's rating | Header shows the average of every review in the window, labelled "(all reviews)", and the themed count separately | `test_NOT_21_header_rating_says_it_covers_every_review` | U | P1 |
+| NOT-22 | Blank lines between action items make the Google Doc restart its numbering, so every action reads "1." | Actions render as one numbered list with no blank line between items | `test_NOT_22_actions_render_as_one_numbered_list` | U | P2 |
 
 ---
 

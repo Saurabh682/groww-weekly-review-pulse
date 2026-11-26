@@ -51,9 +51,11 @@ def render_markdown(note: WeeklyPulseNote) -> str:
 
     # Recommended Actions
     sections.append("## Recommended Actions")
+    action_lines = []
     for idx, act in enumerate(note.actions, 1):
         owner_str = f" *(Owner: {act.owner_team})*" if act.owner_team else ""
-        sections.append(f"{idx}. **[{act.theme_label}]** {act.text}{owner_str}")
+        action_lines.append(f"{idx}. **[{act.theme_label}]** {act.text}{owner_str}")
+    sections.append("\n".join(action_lines))
 
     return "\n\n".join(sections)
 
