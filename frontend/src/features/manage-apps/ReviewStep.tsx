@@ -85,7 +85,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           <Detail label={STORE_NAMES.app_store} value={listing.app_store_id ?? 'Not on this store'} />
           <Detail label="Store country" value={listing.country} />
         </dl>
-        {save.problem && <ErrorState title="Not saved" message={save.problem} />}
+        {save.problem && <ErrorState headingLevel={4} title="Not saved" message={save.problem} />}
       </form>
     </Modal>
   );

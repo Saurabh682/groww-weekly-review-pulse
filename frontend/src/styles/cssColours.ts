@@ -1,0 +1,15 @@
+export const CSS_COLOUR = {
+  background: 'var(--color-bg)',
+  sidebar: 'var(--color-sidebar)',
+  border: 'var(--color-border)',
+  textPrimary: 'var(--color-text-primary)',
+  textMuted: 'var(--color-text-muted)',
+  primary: 'var(--color-primary)',
+  primaryTint: 'var(--color-primary-tint)',
+  friction: 'var(--color-friction)',
+  frictionTint: 'var(--color-friction-tint)',
+  frictionDark: 'var(--color-friction-dark)',
+  critical: 'var(--color-critical)',
+  criticalTint: 'var(--color-critical-tint)',
+  criticalDark: 'var(--color-critical-dark)',
+} as const;

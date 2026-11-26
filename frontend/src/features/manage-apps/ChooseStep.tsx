@@ -92,7 +92,7 @@ export const ChooseStep: React.FC<ChooseStepProps> = ({
             </Button>
           </div>
         </form>
-        {search.problem && <ErrorState title="Search failed" message={search.problem} />}
+        {search.problem && <ErrorState headingLevel={4} title="Search failed" message={search.problem} />}
         {found && (
           <>
             {found.no_matches && (

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '../../components/Badge';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
+import { ErrorState } from '../../components/ErrorState';
 import { AppRecord, PulseHistory, PulseWeekDetail, StoreCoverage } from '../../data/types';
 import { useApi } from '../../data/useApi';
 import { formatIndianNumber } from '../../lib/format';
@@ -48,7 +49,7 @@ const MissingWeek: React.FC<WeekProps> = ({ app, week }) => {
   const navigate = useNavigate();
   return (
     <div className="py-8">
-      <EmptyState
+      <EmptyState headingLevel={2}
         title="Week not found"
         description={`${app.display_name} has no pulse for "${week}".`}
         actionLabel="See the latest pulse"
@@ -72,6 +73,13 @@ const Week: React.FC<WeekProps> = ({ app, week }) => {
       {(pulse) => (
         <div className="space-y-8 animate-fade-in">
           <AppHeading app={app} pulses={pulses} week={pulse.week_start} />
+          {history.state.status === 'error' && (
+            <ErrorState headingLevel={2}
+              title="Could not load the list of weeks"
+              message={history.state.message}
+              onRetry={history.retry}
+            />
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-8 space-y-8 min-w-0">
               <PulseSummary pulse={pulse} />

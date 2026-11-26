@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card } from '../../components/Card';
+import { EmptyState } from '../../components/EmptyState';
 import { PulseWeek } from '../../data/types';
 import { formatDay, formatShortDay } from '../../lib/dates';
 import { formatShare } from '../../lib/format';
@@ -43,9 +44,9 @@ const ThemeChart: React.FC<ThemeChartProps> = ({ series, weeks, top }) => {
   const shownShare = series.shares[shown];
 
   return (
-    <Card className="p-4">
+    <Card padding="tight">
       <h3 className="text-xs font-bold font-display text-white">{series.label}</h3>
-      <p className="text-[11px] font-mono text-text-secondary mt-0.5">
+      <p className="text-2xs font-mono text-text-secondary mt-0.5">
         {shownShare === null ? 'Not in the themes' : formatShare(shownShare)} • {formatShortDay(weeks[shown])}
       </p>
       <svg
@@ -103,7 +104,7 @@ const ThemeChart: React.FC<ThemeChartProps> = ({ series, weeks, top }) => {
           />
         ))}
       </svg>
-      <div className="flex justify-between text-[10px] font-mono text-text-muted">
+      <div className="flex justify-between text-3xs font-mono text-text-muted">
         <span>{formatShortDay(weeks[0])}</span>
         <span>0 to {top}%</span>
         <span>{formatShortDay(weeks[weeks.length - 1])}</span>
@@ -125,9 +126,11 @@ export const ThemeTrendPanel: React.FC<ThemeTrendPanelProps> = ({ pulses }) => {
     <section>
       <SectionTitle>Theme share, last 8 weeks</SectionTitle>
       {weeks.length < MIN_WEEKS ? (
-        <p className="text-xs text-text-secondary bg-surface/60 border border-border-subtle border-dashed rounded-card px-4 py-6 text-center">
-          The trend starts when there are two weekly pulses. This app has {weeks.length} so far.
-        </p>
+        <EmptyState headingLevel={3}
+          compact
+          title="No trend yet"
+          description={`The trend starts when there are two weekly pulses. This app has ${weeks.length} so far.`}
+        />
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -140,7 +143,7 @@ export const ThemeTrendPanel: React.FC<ThemeTrendPanelProps> = ({ pulses }) => {
             <div className="overflow-x-auto mt-2">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-border text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider">
+                  <tr className="border-b border-border text-2xs font-mono font-bold text-text-muted uppercase tracking-wider">
                     <th className="py-3 px-4">Week</th>
                     {series.map((s) => (
                       <th key={s.label} className="py-3 px-4 text-right">

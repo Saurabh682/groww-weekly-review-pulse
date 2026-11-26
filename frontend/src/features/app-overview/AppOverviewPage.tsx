@@ -50,7 +50,7 @@ const NoPulse: React.FC<NoPulseProps> = ({ app, latestRun }) => {
   if (app.status === 'pending_backfill' || app.status === 'backfilling') {
     return (
       <div role="status">
-        <EmptyState
+        <EmptyState headingLevel={2}
           title={`Collecting reviews for ${app.display_name}`}
           description="The first collection can take up to an hour. The first pulse follows it, and this page fills in then."
           icon={<Loader2 className="w-6 h-6 animate-spin" />}
@@ -61,13 +61,13 @@ const NoPulse: React.FC<NoPulseProps> = ({ app, latestRun }) => {
   if (app.status === 'active' && latestRun?.status === 'low_volume') {
     const { min_reviews, usable_reviews, window_start, window_end } = latestRun;
     return (
-      <EmptyState
+      <EmptyState headingLevel={2}
         title="Not enough reviews yet"
         description={`A pulse needs ${min_reviews} reviews with enough text. ${app.display_name} has ${usable_reviews} from ${formatDay(window_start)} to ${formatDay(window_end)}. New reviews are collected every day, and the count is checked again every Monday.`}
       />
     );
   }
-  return <EmptyState title="No pulse" description={NO_PULSE_YET[app.status]} />;
+  return <EmptyState headingLevel={2} title="No pulse" description={NO_PULSE_YET[app.status]} />;
 };
 
 const Overview: React.FC<AppProps> = ({ app }) => {
@@ -83,7 +83,7 @@ const Overview: React.FC<AppProps> = ({ app }) => {
           <div className="space-y-8 animate-fade-in">
             <AppHeading app={app} pulses={pulses} week={latest?.week_start ?? null} />
             {app.status === 'failed' && (
-              <ErrorState
+              <ErrorState headingLevel={2}
                 title="The last collection failed"
                 message="Collection health shows what went wrong. The daily run tries again."
               />

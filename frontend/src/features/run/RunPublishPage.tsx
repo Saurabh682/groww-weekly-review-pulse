@@ -8,12 +8,12 @@ import { Card } from '../../components/Card';
 import { Chip } from '../../components/Chip';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
+import { ErrorState } from '../../components/ErrorState';
 import { Skeleton } from '../../components/Skeleton';
 import { GoogleDocModal, getSavedDocUrl, isMockDocUrl } from '../../components/GoogleDocModal';
 import { GmailDraftModal } from '../../components/GmailDraftModal';
 import {
   Play,
-  RotateCcw,
   ExternalLink,
   Mail,
   FileText,
@@ -129,17 +129,14 @@ export const RunPublishPage: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* 1. Page Header with Run Metadata & Primary Action */}
-      <Card className="p-5 sm:p-6 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
+      <Card padding="roomy">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold font-display tracking-tight text-white">
+              <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-white">
                 Run & Publish Pipeline
               </h1>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#1e293b] border border-[#2a3d5d] text-[10px] font-mono text-text-secondary">
-                #PL-2026W45-09
-              </span>
+              <Badge variant="gray">#PL-2026W45-09</Badge>
             </div>
             <p className="text-xs text-text-secondary mt-1 font-mono">
               Automated end-to-end ingestion, clustering, quote extraction, and leadership dispatch.
@@ -147,24 +144,15 @@ export const RunPublishPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold border ${
-                isFailed
-                  ? 'bg-failure-tint text-failure-dark border-failure-border'
-                  : 'bg-primary-tint text-primary border-primary-border shadow-glow-teal-sm'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isFailed ? 'bg-failure' : 'bg-primary animate-pulse'
-                }`}
-              />
-              {isFailed ? 'Pipeline Halted' : 'All Systems Nominal'}
-            </span>
+            <Chip
+              variant={isFailed ? 'failure' : 'positive'}
+              label={isFailed ? 'Pipeline Halted' : 'All Systems Nominal'}
+              icon={<span className={`w-2 h-2 rounded-full ${isFailed ? 'bg-failure' : 'bg-primary animate-pulse'}`} />}
+            />
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#1e293b]">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
           <div className="text-xs font-mono text-text-muted flex items-center gap-2">
             <span>Last executed: Today, 08:29 AM IST</span>
             <span>•</span>
@@ -186,7 +174,7 @@ export const RunPublishPage: React.FC = () => {
               variant="primary"
               size="sm"
               loading={isRunningSim}
-              icon={<Play className="w-3.5 h-3.5 text-[#0b111e]" />}
+              icon={<Play className="w-3.5 h-3.5 text-primary-on" />}
               onClick={handleTriggerRun}
               className="flex-1 sm:flex-initial text-xs"
             >
@@ -196,21 +184,19 @@ export const RunPublishPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* 2. Pipeline Stage Heartbeat / Pulse Trace */}
-      <Card className="p-5 sm:p-6 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
+      <Card padding="roomy">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-primary" />
-            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+            <h2 className="text-base font-bold font-display text-white">
               Pipeline Stage Heartbeat
             </h2>
           </div>
-          <span className="text-[11px] font-mono text-text-muted">
+          <span className="text-2xs font-mono text-text-muted">
             {stages.filter((s) => s.status === 'done').length} / {stages.length} Stages Complete
           </span>
         </div>
 
-        {/* Desktop Horizontal Stepper Track */}
         <div className="hidden md:block">
           <PulseStepper
             stages={stages}
@@ -222,9 +208,7 @@ export const RunPublishPage: React.FC = () => {
           />
         </div>
 
-        {/* Mobile Vertical Stepper Timeline (Stitch Mobile Pattern) */}
         <div className="md:hidden flex flex-col relative pl-2 py-1">
-          {/* Continuous vertical progress line */}
           <div className="absolute left-[23px] top-4 bottom-4 w-0.5 bg-primary/30" />
 
           {stages.map((stage, idx) => {
@@ -252,16 +236,15 @@ export const RunPublishPage: React.FC = () => {
                 }}
                 className="flex items-start gap-3 relative py-2.5 cursor-pointer group"
               >
-                {/* Node Indicator */}
                 <div
                   className={`z-10 w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold font-mono transition-transform group-active:scale-95 ${
                     isStageFailed
                       ? 'bg-failure text-white shadow-glow-coral'
                       : isRunning
-                      ? 'bg-primary text-[#0b111e] animate-pulse-glow'
+                      ? 'bg-primary text-primary-on animate-pulse-glow'
                       : isDone
                       ? 'bg-primary-tint text-primary border border-primary-border shadow-glow-teal-sm'
-                      : 'bg-[#0e1726] border border-[#2a3d5d] text-text-muted'
+                      : 'bg-sidebar border border-border-subtle text-text-muted'
                   }`}
                 >
                   {isStageFailed ? (
@@ -269,13 +252,12 @@ export const RunPublishPage: React.FC = () => {
                   ) : isDone ? (
                     <Check className="w-4 h-4 stroke-[3]" />
                   ) : isRunning ? (
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#0b111e] animate-ping" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-background animate-ping" />
                   ) : (
                     <span>{idx + 1}</span>
                   )}
                 </div>
 
-                {/* Stage Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span
@@ -289,16 +271,16 @@ export const RunPublishPage: React.FC = () => {
                     >
                       {idx + 1}. {stage.label}
                       {isGate && (
-                        <span className="ml-1.5 px-1.5 py-0.2 rounded text-[9px] bg-primary-tint text-primary font-mono border border-primary-border">
+                        <span className="ml-1.5 px-1.5 py-0.2 rounded text-3xs bg-primary-tint text-primary font-mono border border-primary-border">
                           Gate
                         </span>
                       )}
                     </span>
-                    <span className="text-[10px] font-mono text-text-muted">
+                    <span className="text-3xs font-mono text-text-muted">
                       {stage.durationMs ? `${(stage.durationMs / 1000).toFixed(1)}s` : isRunning ? 'Running' : 'Pending'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-text-secondary truncate mt-0.5 font-mono">
+                  <p className="text-2xs text-text-secondary truncate mt-0.5 font-mono">
                     {stageDescriptions[stage.id] || stage.counter || 'Deterministic pipeline phase'}
                   </p>
                 </div>
@@ -308,66 +290,37 @@ export const RunPublishPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Validation Incident Guard Advisory */}
-      <div className="p-4 rounded-xl bg-[#162238] border border-[#2a3d5d] flex items-start gap-3 shadow-card">
+      <Card padding="tight" className="flex items-start gap-3">
         <div className="w-7 h-7 rounded-full bg-failure/20 text-failure border border-failure/40 flex items-center justify-center shrink-0 mt-0.5">
           <ShieldAlert className="w-4 h-4" />
         </div>
         <div className="min-w-0">
           <div className="text-xs font-bold font-display text-white">Validation Incident Guard</div>
-          <p className="text-[11px] text-text-secondary leading-relaxed mt-0.5">
+          <p className="text-2xs text-text-secondary leading-relaxed mt-0.5">
             Zero-trust fail-safe is armed. Pipeline will automatically flatline dispatches to Google Docs and leadership email distribution if any deterministic constraint fails.
           </p>
         </div>
-      </div>
+      </Card>
 
-      {/* 3. Incident Banner if Validation Gate Failed */}
       {isFailed && (
-        <div
-          role="alert"
-          className="p-5 rounded-card bg-failure-tint border border-failure-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-fade-in shadow-glow-coral"
-        >
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-lg bg-failure/20 text-failure shrink-0 border border-failure/40">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold font-display text-white">
-                  Validation Gate Failed — Publishing Aborted
-                </h3>
-                <Badge variant="coral">Pipeline Halted</Badge>
-              </div>
-              <p className="text-xs text-[#fca5a5] mt-1 max-w-2xl leading-relaxed">
-                The synthesized note exceeded the strict 250-word ceiling (284 words generated). Invariant check failed to prevent executive note bloat. MCP delivery to Google Docs and Gmail draft was automatically skipped.
-              </p>
-            </div>
-          </div>
-
-          <Button
-            variant="danger"
-            size="sm"
-            icon={<RotateCcw className="w-3.5 h-3.5" />}
-            onClick={handleTriggerRun}
-            loading={isRunningSim}
-          >
-            Retry Validation
-          </Button>
-        </div>
+        <ErrorState
+          headingLevel={2}
+          title="Validation Gate Failed — Publishing Aborted"
+          message="The synthesized note exceeded the strict 250-word ceiling (284 words generated). Invariant check failed to prevent executive note bloat. MCP delivery to Google Docs and Gmail draft was automatically skipped."
+          onRetry={handleTriggerRun}
+        />
       )}
 
-      {/* 4. Delivery Artifacts (Google Docs + Gmail Draft Preview) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Artifact 1: Google Doc */}
-        <Card className="p-5 bg-[#162238]/90 border border-[#2a3d5d] shadow-card flex flex-col justify-between">
+        <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-blue-tint border border-blue-border text-blue flex items-center justify-center">
                   <FileText className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-text-muted">
+                  <span className="text-3xs font-mono font-bold uppercase tracking-wider text-text-muted">
                     Google Docs Delivery
                   </span>
                   <h3 className="text-sm font-bold font-display text-white leading-tight">
@@ -388,19 +341,19 @@ export const RunPublishPage: React.FC = () => {
               Formatted one-page note synced directly to Google Drive via official Google Docs MCP server.
             </p>
 
-            <div className="p-3 rounded-lg bg-[#0e1726] border border-[#1e293b] text-xs space-y-1.5 mb-4">
+            <div className="p-3 rounded-lg bg-sidebar border border-border text-xs space-y-1.5 mb-4">
               <div className="flex justify-between">
                 <span className="text-text-muted">Title:</span>
                 <span className="font-semibold text-white">Groww Weekly Review Pulse - Week of 09 Nov 2026</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Updated:</span>
-                <span className="font-mono text-[11px] text-text-secondary">09 Nov 2026, 06:30 IST</span>
+                <span className="font-mono text-2xs text-text-secondary">09 Nov 2026, 06:30 IST</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">MCP Connection:</span>
-                <span className="text-emerald-400 font-semibold flex items-center gap-1 font-mono text-[11px]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-primary font-semibold flex items-center gap-1 font-mono text-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                   Docs MCP Connected
                 </span>
               </div>
@@ -419,16 +372,15 @@ export const RunPublishPage: React.FC = () => {
           </Button>
         </Card>
 
-        {/* Artifact 2: Gmail Draft Preview (STRICTLY NO SEND BUTTON) */}
-        <Card className="p-5 bg-[#162238]/90 border border-[#2a3d5d] shadow-card flex flex-col justify-between">
+        <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-critical-tint border border-critical-border text-critical-dark flex items-center justify-center">
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-text-muted">
+                  <span className="text-3xs font-mono font-bold uppercase tracking-wider text-text-muted">
                     Gmail Staging
                   </span>
                   <h3 className="text-sm font-bold font-display text-white leading-tight">
@@ -448,7 +400,7 @@ export const RunPublishPage: React.FC = () => {
               Pre-composed email draft staged in Gmail for leadership distribution. Never sent automatically.
             </p>
 
-            <div className="p-3 rounded-lg bg-[#0e1726] border border-[#1e293b] text-xs space-y-1.5 mb-4">
+            <div className="p-3 rounded-lg bg-sidebar border border-border text-xs space-y-1.5 mb-4">
               <div className="flex justify-between">
                 <span className="text-text-muted">To:</span>
                 <span className="font-semibold text-white truncate max-w-[240px]">
@@ -463,15 +415,14 @@ export const RunPublishPage: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">MCP Connection:</span>
-                <span className="text-emerald-400 font-semibold flex items-center gap-1 font-mono text-[11px]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-primary font-semibold flex items-center gap-1 font-mono text-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                   Gmail MCP Connected
                 </span>
               </div>
             </div>
           </div>
 
-          {/* User requirement: STRICTLY 'View Gmail draft', NEVER 'Send email' */}
           <Button
             variant="secondary"
             size="sm"
@@ -485,8 +436,7 @@ export const RunPublishPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* 5. Invariants Quality Gate Matrix Table */}
-      <Card className="p-5 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
+      <Card>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-primary" />
@@ -494,17 +444,16 @@ export const RunPublishPage: React.FC = () => {
               Quality Gate Invariant Verification Matrix
             </h3>
           </div>
-          <span className="text-[11px] font-mono text-primary flex items-center gap-1 font-semibold">
+          <span className="text-2xs font-mono text-primary flex items-center gap-1 font-semibold">
             {runState?.validationRows?.filter((r) => r.passed).length} / {runState?.validationRows?.length} Passed
           </span>
         </div>
 
-        {/* Mobile View: Checklist rows (Stitch Mobile Pattern) */}
         <div className="md:hidden flex flex-col gap-2">
           {runState?.validationRows?.map((row) => (
             <div
               key={`mob-${row.id}`}
-              className="flex items-center justify-between py-2 px-3 bg-[#0e1726] border border-[#1e293b] rounded-lg"
+              className="flex items-center justify-between py-2 px-3 bg-sidebar border border-border rounded-lg"
             >
               <div className="flex items-center gap-2 min-w-0">
                 {row.passed ? (
@@ -515,7 +464,7 @@ export const RunPublishPage: React.FC = () => {
                 <span className="text-xs text-white truncate font-medium">{row.label}</span>
               </div>
               <span
-                className={`text-[11px] font-mono font-bold shrink-0 ml-2 ${
+                className={`text-2xs font-mono font-bold shrink-0 ml-2 ${
                   row.passed ? 'text-primary' : 'text-failure'
                 }`}
               >
@@ -525,20 +474,19 @@ export const RunPublishPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Desktop View: Full Matrix Table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-[#1e293b] bg-[#0e1726]/90 text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider">
+              <tr className="border-b border-border bg-sidebar/90 text-2xs font-mono font-bold text-text-muted uppercase tracking-wider">
                 <th className="py-2.5 px-3">Invariant Check</th>
                 <th className="py-2.5 px-3">Enforced Rule</th>
                 <th className="py-2.5 px-3">Evaluation Detail</th>
                 <th className="py-2.5 px-3 text-right">Result</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1e293b]">
+            <tbody className="divide-y divide-border">
               {runState?.validationRows?.map((row) => (
-                <tr key={row.id} className="hover:bg-[#1b2a47]/60 transition-colors">
+                <tr key={row.id} className="hover:bg-surface-elevated/60 transition-colors">
                   <td className="py-3 px-3 font-semibold text-white">
                     {row.label}
                   </td>
@@ -555,12 +503,12 @@ export const RunPublishPage: React.FC = () => {
                       ? 'Zero phone, email, order IDs, account numbers'
                       : 'Coverage threshold met'}
                   </td>
-                  <td className="py-3 px-3 font-mono text-[11px] text-text-muted">
+                  <td className="py-3 px-3 font-mono text-2xs text-text-muted">
                     {row.detail || '-'}
                   </td>
                   <td className="py-3 px-3 text-right">
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono font-bold ${
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-2xs font-mono font-bold ${
                         row.passed
                           ? 'bg-primary-tint text-primary border border-primary-border'
                           : 'bg-failure-tint text-failure-dark border border-failure-border'
@@ -584,7 +532,6 @@ export const RunPublishPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Execution Logs Modal */}
       <RunLogsModal
         isOpen={isLogsOpen}
         onClose={() => setIsLogsOpen(false)}
@@ -592,13 +539,11 @@ export const RunPublishPage: React.FC = () => {
         error={runState?.error}
       />
 
-      {/* Google Doc Connect & View Modal */}
       <GoogleDocModal
         isOpen={docModalOpen}
         onClose={() => setDocModalOpen(false)}
       />
 
-      {/* Gmail Draft Review & Staging Modal */}
       <GmailDraftModal
         isOpen={gmailModalOpen}
         onClose={() => setGmailModalOpen(false)}

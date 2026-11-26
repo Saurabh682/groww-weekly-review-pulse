@@ -27,7 +27,7 @@ export const Stat: React.FC<StatProps> = ({
 
   return (
     <div className={`flex flex-col ${className}`}>
-      <div className="flex items-center justify-between text-text-secondary text-[11px] font-medium uppercase tracking-wider mb-1.5">
+      <div className="flex items-center justify-between text-text-secondary text-2xs font-medium uppercase tracking-wider mb-1.5">
         <span>{label}</span>
         {icon && <span className="text-text-muted">{icon}</span>}
       </div>
@@ -53,7 +53,7 @@ export const Stat: React.FC<StatProps> = ({
               <TrendingDown className="w-3 h-3 mr-0.5" />
             ) : null}
             {trend > 0 ? `+${trend.toFixed(1)}%` : `${trend.toFixed(1)}%`}
-            {trendLabel && <span className="text-[10px] text-text-muted ml-1 font-normal">{trendLabel}</span>}
+            {trendLabel && <span className="text-3xs text-text-muted ml-1 font-normal">{trendLabel}</span>}
           </span>
         )}
       </div>

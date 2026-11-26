@@ -13,7 +13,7 @@ export const Toast: React.FC<ToastProps> = ({
   onClose,
 }) => {
   const typeStyles = {
-    success: 'bg-[#1b2a47] text-text-primary border-primary/40 shadow-glow-teal-sm',
+    success: 'bg-surface-elevated text-text-primary border-primary/40 shadow-glow-teal-sm',
     warning: 'bg-friction-tint text-friction-dark border-friction-border shadow-glow-amber',
     info: 'bg-surface-elevated text-text-primary border-border-subtle shadow-card',
   };

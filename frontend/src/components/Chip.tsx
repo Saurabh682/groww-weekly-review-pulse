@@ -27,7 +27,7 @@ export const Chip: React.FC<ChipProps> = ({
   };
 
   const sizeStyles = {
-    sm: 'text-[11px] py-0.5 px-2.5 gap-1 font-mono',
+    sm: 'text-2xs py-0.5 px-2.5 gap-1 font-mono',
     md: 'text-xs py-1 px-3 gap-1.5 font-medium',
   };
 

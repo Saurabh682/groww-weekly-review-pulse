@@ -51,10 +51,10 @@ export const Drawer: React.FC<DrawerProps> = ({
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
         <div
-          className={`w-screen ${width} bg-[#131f37] shadow-drawer border-l border-border-subtle flex flex-col`}
+          className={`w-screen ${width} bg-surface-low shadow-drawer border-l border-border-subtle flex flex-col`}
         >
           {/* Header */}
-          <div className="p-6 border-b border-border flex items-start justify-between bg-[#0e1726]/95">
+          <div className="p-6 border-b border-border flex items-start justify-between bg-sidebar/95">
             <div>
               <h2 className="text-lg font-bold font-display text-text-primary">{title}</h2>
               {subtitle && (

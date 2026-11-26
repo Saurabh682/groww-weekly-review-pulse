@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { WeekPoint } from '../data/types';
+import { CSS_COLOUR } from '../styles/cssColours';
 
 interface PulseLineProps {
   weeks: WeekPoint[];
@@ -76,7 +77,6 @@ export const PulseLine: React.FC<PulseLineProps> = ({
         role="region"
       >
         <defs>
-          {/* Luminous Neon Filters */}
           <filter id="ecgGlowTeal" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="3.5" result="blur" />
             <feMerge>
@@ -92,27 +92,24 @@ export const PulseLine: React.FC<PulseLineProps> = ({
             </feMerge>
           </filter>
 
-          {/* Area Gradients */}
           <linearGradient id="areaGradientTeal" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#00D09C" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#00D09C" stopOpacity="0" />
+            <stop offset="0%" stopColor={CSS_COLOUR.primary} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={CSS_COLOUR.primary} stopOpacity="0" />
           </linearGradient>
         </defs>
 
-        {/* Subtle grid lines */}
         <line
           x1="0"
           y1={baselineY}
           x2={viewBoxWidth}
           y2={baselineY}
-          stroke="#1e293b"
+          stroke={CSS_COLOUR.border}
           strokeWidth="1"
           strokeDasharray="4 4"
         />
 
-        {/* ECG Segments with Neon Glow */}
         {segments.map((seg) => {
-          const strokeColor = seg.isUnderThreshold ? '#F59E0B' : '#00D09C';
+          const strokeColor = seg.isUnderThreshold ? CSS_COLOUR.friction : CSS_COLOUR.primary;
           const filterId = seg.isUnderThreshold ? 'url(#ecgGlowAmber)' : 'url(#ecgGlowTeal)';
           return (
             <g key={`seg-${seg.index}`}>
@@ -130,11 +127,10 @@ export const PulseLine: React.FC<PulseLineProps> = ({
           );
         })}
 
-        {/* Interactive Beat Nodes */}
         {beatCoords.map((beat, idx) => {
           const isCurrent = beat.week.isCurrent;
           const isHovered = activeBeatIndex === idx;
-          const fillColor = beat.isUnderThreshold ? '#F59E0B' : '#00D09C';
+          const fillColor = beat.isUnderThreshold ? CSS_COLOUR.friction : CSS_COLOUR.primary;
 
           return (
             <g
@@ -150,7 +146,6 @@ export const PulseLine: React.FC<PulseLineProps> = ({
               onBlur={() => setActiveBeatIndex(null)}
               className="cursor-pointer focus:outline-none"
             >
-              {/* Outer pulsing ring for current beat */}
               {isCurrent && (
                 <circle
                   cx={beat.x}
@@ -164,25 +159,23 @@ export const PulseLine: React.FC<PulseLineProps> = ({
                 />
               )}
 
-              {/* Node core dot */}
               <circle
                 cx={beat.x}
                 cy={beat.y}
                 r={isHovered ? 6 : isCurrent ? 5.5 : 4}
                 fill={fillColor}
-                stroke="#0b111e"
+                stroke={CSS_COLOUR.background}
                 strokeWidth="2"
                 className="transition-all duration-200"
               />
 
-              {/* Week date label below baseline */}
               <text
                 x={beat.x}
                 y={baselineY + 24}
                 textAnchor="middle"
                 fontSize="11"
                 fontWeight={isCurrent ? '700' : '500'}
-                fill={isCurrent ? '#f8fafc' : '#64748b'}
+                fill={isCurrent ? CSS_COLOUR.textPrimary : CSS_COLOUR.textMuted}
                 className="select-none font-mono"
               >
                 {beat.week.label}
@@ -192,10 +185,9 @@ export const PulseLine: React.FC<PulseLineProps> = ({
         })}
       </svg>
 
-      {/* Floating Tooltip */}
       {activeBeatIndex !== null && (
         <div
-          className="absolute z-20 pointer-events-none transform -translate-x-1/2 -translate-y-full bg-[#1b2a47] text-white text-xs py-1.5 px-3 rounded-lg border border-[#2a3d5d] shadow-drawer whitespace-nowrap transition-all duration-150"
+          className="absolute z-20 pointer-events-none transform -translate-x-1/2 -translate-y-full bg-surface-elevated text-white text-xs py-1.5 px-3 rounded-lg border border-border-subtle shadow-drawer whitespace-nowrap transition-all duration-150"
           style={{
             left: `${((beatCoords[activeBeatIndex].x / viewBoxWidth) * 100).toFixed(1)}%`,
             top: `${Math.max(10, (beatCoords[activeBeatIndex].y / viewBoxHeight) * height - 8)}px`,
@@ -214,12 +206,12 @@ export const PulseLine: React.FC<PulseLineProps> = ({
               {beatCoords[activeBeatIndex].week.avgRating.toFixed(1)}★
             </span>
             {beatCoords[activeBeatIndex].isUnderThreshold && (
-              <span className="text-[10px] text-friction-dark bg-friction-tint px-1.5 py-0.5 rounded border border-friction-border font-mono">
+              <span className="text-3xs text-friction-dark bg-friction-tint px-1.5 py-0.5 rounded border border-friction-border font-mono">
                 Under 3.8
               </span>
             )}
             {beatCoords[activeBeatIndex].week.isCurrent && (
-              <span className="text-[10px] text-primary bg-primary-tint px-1.5 py-0.5 rounded border border-primary-border font-mono">
+              <span className="text-3xs text-primary bg-primary-tint px-1.5 py-0.5 rounded border border-primary-border font-mono">
                 Current
               </span>
             )}

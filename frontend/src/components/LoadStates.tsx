@@ -15,7 +15,7 @@ export const LoadingPanels: React.FC = () => (
 
 export const WakingBackend: React.FC = () => (
   <div className="py-8" role="status">
-    <EmptyState
+    <EmptyState headingLevel={2}
       title="Waking backend"
       description="The data service sleeps when nobody uses it. It can take a minute to start, and this page loads by itself when it is ready."
       icon={<Loader2 className="w-6 h-6 animate-spin" />}
@@ -42,7 +42,7 @@ export function Loaded<T>({ resource, errorTitle, missing, children }: LoadedPro
     case 'error':
       return (
         <div className="py-8">
-          <ErrorState title={errorTitle} message={state.message} onRetry={retry} />
+          <ErrorState headingLevel={2} title={errorTitle} message={state.message} onRetry={retry} />
         </div>
       );
     case 'ready':

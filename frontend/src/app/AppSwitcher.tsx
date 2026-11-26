@@ -42,7 +42,7 @@ export const AppSwitcher: React.FC<AppSwitcherProps> = ({ state, appKey }) => {
     >
       {(close) => (
         <>
-          <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-text-muted">
+          <div className="px-3 py-1.5 text-3xs font-mono uppercase tracking-wider text-text-muted">
             {slots_used} of {slots_total} app slots used
           </div>
           {listed.map((app) => (

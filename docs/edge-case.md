@@ -591,6 +591,20 @@ AG should update this table and the affected tests whenever a decision changes.
 | HLP-09 | A Help topic is chosen | Every topic has entries and questions | `test_HLP_09_every_topic_has_entries` | U | P2 |
 | HLP-10 | A long question is opened on a phone | The whole question shows, and it reports open or closed | `test_HLP_10_shows_whole_questions` | I | P2 |
 | HLP-11 | The phone menu is used | It reaches Manage Apps | `test_HLP_11_phone_menu_reaches_manage_apps` | I | P1 |
+| UIC-01 | A page writes a hex colour class | The test fails and names the theme colour to use | `test_UIC_01_no_hex_colour_classes` (`frontend/tests/designTokens.test.ts`) | U | P2 |
+| UIC-02 | A page writes a pixel text size | The test fails and names `text-2xs` or `text-3xs` | `test_UIC_02_no_pixel_text_sizes` | U | P2 |
+| UIC-03 | A page writes a Tailwind palette colour | The test fails and names the theme colour to use | `test_UIC_03_no_default_palette_colours` | U | P2 |
+| UIC-04 | A page uses an animation class | The theme defines it, so it is not a no-op | `test_UIC_04_every_animation_exists` | U | P2 |
+| UIC-05 | The list of weeks fails to load | The week page says so and offers Retry | `test_UIC_05_says_when_the_list_of_weeks_fails` (`frontend/tests/Dashboard.test.tsx`) | I | P1 |
+| UIC-06 | A Help feature's details are opened | The button reports open or closed | `test_UIC_06_details_report_open_or_closed` (`frontend/tests/HelpEntries.test.tsx`) | I | P2 |
+| UIC-07 | A Help search matches nothing | It says so and offers to show everything | `test_UIC_07_says_when_nothing_matches` | I | P2 |
+| UIC-08 | A dialog shows an error | Its heading sits one level under the dialog title | `test_UIC_08_dialog_error_heading_sits_under_the_dialog_title` (`frontend/tests/ManageApps.test.tsx`) | I | P2 |
+| UIC-09 | A page or chart writes a hex or rgba colour | The test fails and names `CSS_COLOUR` or a theme class | `test_UIC_09_no_colour_literals` (`frontend/tests/designTokens.test.ts`) | U | P2 |
+| UIC-10 | A Card is given padding, colour, border or shadow classes | The test fails and names Card's padding, variant and tone props | `test_UIC_10_cards_take_only_layout_classes` | U | P2 |
+| UIC-11 | A page writes a raw `<button>` | The test fails and names Button or a shared component | `test_UIC_11_pages_use_the_shared_button` | U | P2 |
+| UIC-12 | A page hand-writes a pill or a card box | The test fails and names Chip, Badge or Card | `test_UIC_12_pages_use_the_shared_pill_and_card` | U | P2 |
+| UIC-13 | A control on a sample page or Help has no accessible name, including the clear button that shows after typing | The test fails and lists the control | `test_UIC_13_every_control_has_a_name` (`frontend/tests/Screens.test.tsx`) | I | P1 |
+| UIC-14 | A heading on a sample page or Help goes more than one level deeper than the one before | The test fails and names the skip | `test_UIC_14_headings_never_skip_a_level` (`frontend/tests/Screens.test.tsx`) | I | P2 |
 
 ## 26a. Deployment
 
@@ -622,5 +636,5 @@ AG should update this table and the affected tests whenever a decision changes.
 | **9** | APP-*, RES-*, AUTH-* |
 | **10** | CMP-*, v1 MCP-* |
 | **11** | SCH-* |
-| **12** | DSH-*; HLP-* |
+| **12** | DSH-*; HLP-*; UIC-* |
 | **13** | DEP-*; full suite; manual smoke for SCH-06, SCH-07 and the v2 acceptance checklist |

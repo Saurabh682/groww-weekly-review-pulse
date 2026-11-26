@@ -1,11 +1,11 @@
 export const HELP_TOPICS = [
-  { id: 'apps', label: 'Your Apps' },
-  { id: 'note', label: 'Weekly Note' },
+  { id: 'apps', label: 'Your apps' },
+  { id: 'note', label: 'Weekly note' },
   { id: 'themes', label: 'Themes' },
   { id: 'checks', label: 'Checks' },
   { id: 'publishing', label: 'Google Doc & Gmail' },
-  { id: 'cleaning', label: 'Cleaning & Privacy' },
-  { id: 'sample', label: 'Sample Pages' },
+  { id: 'cleaning', label: 'Cleaning & privacy' },
+  { id: 'sample', label: 'Sample pages' },
 ] as const;
 
 export type HelpTopic = (typeof HELP_TOPICS)[number]['id'];

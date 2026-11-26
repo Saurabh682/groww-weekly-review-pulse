@@ -182,8 +182,8 @@ export const GoogleDocModal: React.FC<GoogleDocModalProps> = ({
     >
       <div className="space-y-4 text-sm">
         {/* Notice Banner */}
-        <div className="p-3.5 rounded-card bg-[#0b111e]/80 border border-teal-500/30 text-teal-200 text-xs leading-relaxed flex items-start gap-2.5">
-          <FileText className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-card bg-background/80 border border-primary-border text-primary text-xs leading-relaxed flex items-start gap-2.5">
+          <FileText className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <div>
             <strong>Google Docs Sync & Export</strong>
             <p className="text-text-muted mt-0.5">
@@ -193,26 +193,26 @@ export const GoogleDocModal: React.FC<GoogleDocModalProps> = ({
         </div>
 
         {/* Action 1: Create New Doc or Copy Note */}
-        <div className="p-4 rounded-card bg-[#0b111e]/50 border border-border-subtle space-y-3">
+        <div className="p-4 rounded-card bg-background/50 border border-border-subtle space-y-3">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-text-primary flex items-center gap-2 text-xs uppercase tracking-wider text-teal-400">
+            <span className="font-semibold text-text-primary flex items-center gap-2 text-xs uppercase tracking-wider text-primary">
               <Plus className="w-4 h-4" /> Option A: Create or Copy Note
             </span>
             {copied && (
-              <span className="text-xs text-teal-400 font-medium flex items-center gap-1 animate-pulse">
+              <span className="text-xs text-primary font-medium flex items-center gap-1 animate-pulse">
                 <Check className="w-3.5 h-3.5" /> Copied to clipboard!
               </span>
             )}
           </div>
           <p className="text-xs text-text-muted">
-            Copies the full 231-word weekly executive note to your clipboard so you can paste (<kbd className="px-1 py-0.5 rounded bg-surface-elevated border border-border text-[10px]">Ctrl+V</kbd>) into your document.
+            Copies the full 231-word weekly executive note to your clipboard so you can paste (<kbd className="px-1 py-0.5 rounded bg-surface-elevated border border-border text-3xs">Ctrl+V</kbd>) into your document.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
             <Button
               variant="secondary"
               size="sm"
-              icon={copied ? <Check className="w-3.5 h-3.5 text-teal-400" /> : <Copy className="w-3.5 h-3.5" />}
+              icon={copied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
               onClick={handleCopyOnly}
               className="w-full justify-center"
             >
@@ -247,9 +247,9 @@ export const GoogleDocModal: React.FC<GoogleDocModalProps> = ({
                   rows={8}
                   value={activeContent}
                   onClick={(e) => (e.target as HTMLTextAreaElement).select()}
-                  className="w-full p-2.5 rounded-lg bg-[#0e1726] border border-[#2a3d5d] text-text-secondary text-xs font-mono focus:outline-none focus:border-teal-400 transition-colors"
+                  className="w-full p-2.5 rounded-lg bg-sidebar border border-border-subtle text-text-secondary text-xs font-mono focus:outline-none focus:border-primary transition-colors"
                 />
-                <span className="text-[10px] text-text-muted block mt-1">
+                <span className="text-3xs text-text-muted block mt-1">
                   Click inside the box to select all text, then press Ctrl+C.
                 </span>
               </div>
@@ -258,7 +258,7 @@ export const GoogleDocModal: React.FC<GoogleDocModalProps> = ({
         </div>
 
         {/* Action 2: Link Live Doc URL */}
-        <div className="p-4 rounded-card bg-[#0b111e]/50 border border-border-subtle space-y-2.5">
+        <div className="p-4 rounded-card bg-background/50 border border-border-subtle space-y-2.5">
           <span className="font-semibold text-text-primary flex items-center gap-2 text-xs uppercase tracking-wider text-text-secondary">
             <Link2 className="w-4 h-4 text-primary" /> Option B: Live Google Doc Link
           </span>
@@ -270,7 +270,7 @@ export const GoogleDocModal: React.FC<GoogleDocModalProps> = ({
             value={docUrl}
             onChange={(e) => setDocUrl(e.target.value)}
             placeholder="https://docs.google.com/document/d/YOUR_DOC_ID/edit"
-            className="w-full px-3 py-2 rounded-lg bg-[#0e1726] border border-[#2a3d5d] text-text-primary text-xs font-mono focus:outline-none focus:border-teal-400 transition-colors"
+            className="w-full px-3 py-2 rounded-lg bg-sidebar border border-border-subtle text-text-primary text-xs font-mono focus:outline-none focus:border-primary transition-colors"
           />
         </div>
       </div>

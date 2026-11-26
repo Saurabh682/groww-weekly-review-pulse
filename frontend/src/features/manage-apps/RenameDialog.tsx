@@ -52,7 +52,7 @@ export const RenameDialog: React.FC<RenameDialogProps> = ({ app, rename, onRenam
           Only the name changes. Its stores, history, Docs and drafts stay as they are.
         </p>
         <TextField label="Display name" value={name} maxLength={NAME_LIMIT} onChange={setName} autoFocus />
-        {save.problem && <ErrorState title="Not saved" message={save.problem} />}
+        {save.problem && <ErrorState headingLevel={4} title="Not saved" message={save.problem} />}
       </form>
     </Modal>
   );

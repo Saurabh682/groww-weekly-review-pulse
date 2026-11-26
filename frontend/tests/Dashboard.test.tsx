@@ -408,6 +408,18 @@ describe('past week', () => {
     expect(currentPath()).toBe('/apps/groww');
   });
 
+  it('test_UIC_05_says_when_the_list_of_weeks_fails', async () => {
+    api.shows(GROWW, [LATEST, PAST]);
+    api.on('/apps/groww/pulses?limit=12', { status: 500, body: { error: 'Store is down' } }, { body: history(GROWW, [LATEST, PAST]) });
+    openRoute('/apps/groww/weeks/2026-11-09');
+    const alert = await page().findByRole('alert');
+    expect(within(alert).getByRole('heading', { name: 'Could not load the list of weeks' })).toBeInTheDocument();
+    expect(page().getByText('Reviews per store')).toBeInTheDocument();
+    await userEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByRole('button', { name: 'Choose week: Week of 9 Nov 2026' })).toBeInTheDocument();
+    expect(page().queryByRole('alert')).toBeNull();
+  });
+
   it('says when the app has no pulse for that week', async () => {
     openRoute('/apps/groww/weeks/2020-01-06');
     expect(await page().findByText('Week not found')).toBeInTheDocument();

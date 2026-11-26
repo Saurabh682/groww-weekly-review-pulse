@@ -134,14 +134,14 @@ describe('Help page', () => {
 
   it('shows only live app entries when that topic is chosen', async () => {
     openRoute('/help');
-    await userEvent.click(await screen.findByRole('button', { name: 'Your Apps' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Your apps' }));
     expect(screen.getByText(`${LIVE_APP_FEATURES.length} features`)).toBeInTheDocument();
     expect(screen.getByText(`${LIVE_APP_FAQS.length} answers available`)).toBeInTheDocument();
   });
 
   it('finds the answer for an app without a pulse', async () => {
     openRoute('/help');
-    await userEvent.type(await screen.findByRole('textbox'), 'no pulse');
+    await userEvent.type(await screen.findByRole('textbox', { name: 'Search Help' }), 'no pulse');
     const question = screen.getByRole('button', { name: /Why does an app have no pulse yet\?/ });
     await userEvent.click(question);
     expect(within(question.parentElement!).getByText(/fewer than 30 reviews/)).toBeInTheDocument();
@@ -162,9 +162,27 @@ describe('Help page', () => {
     expect(question).toHaveAttribute('aria-expanded', 'true');
   });
 
+  it('test_UIC_06_details_report_open_or_closed', async () => {
+    openRoute('/help');
+    const [details] = await screen.findAllByRole('button', { name: 'Show details' });
+    expect(details).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(details);
+    expect(details).toHaveAttribute('aria-expanded', 'true');
+    expect(details).toHaveTextContent('Hide details');
+    expect(document.getElementById(details.getAttribute('aria-controls')!)).toHaveTextContent('Steps');
+  });
+
+  it('test_UIC_07_says_when_nothing_matches', async () => {
+    openRoute('/help');
+    await userEvent.type(await screen.findByRole('textbox', { name: 'Search Help' }), 'zzzz');
+    expect(screen.getByRole('heading', { name: 'Nothing matches' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Show everything' }));
+    expect(screen.getByRole('textbox', { name: 'Search Help' })).toHaveValue('');
+  });
+
   it('test_HLP_11_phone_menu_reaches_manage_apps', async () => {
     const { currentPath } = openRoute('/apps/groww');
-    await userEvent.click(within(await screen.findByRole('navigation', { name: 'Mobile' })).getByRole('link', { name: /Manage Apps/ }));
+    await userEvent.click(within(await screen.findByRole('navigation', { name: 'Mobile' })).getByRole('link', { name: /Manage apps/ }));
     expect(currentPath()).toBe('/manage');
   });
 

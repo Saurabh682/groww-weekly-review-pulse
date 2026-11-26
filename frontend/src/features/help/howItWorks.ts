@@ -18,9 +18,9 @@ export const RANK_FORMULA = 'share × (0.6 + 0.4 × negative share)';
 export const HOW_IT_WORKS_FEATURES: FeatureDetail[] = [
   {
     id: 'feat-note',
-    title: 'The Weekly Note',
+    title: 'The weekly note',
     category: 'note',
-    badge: 'Weekly Note',
+    badge: 'Weekly note',
     badgeVariant: 'teal',
     summary: `A note of at most ${NOTE_FACTS.maxWords} words for each live app, written every Monday from the last ${HELP_FACTS.windowWeeks} weeks of reviews.`,
     keyCapabilities: [
@@ -46,7 +46,7 @@ export const HOW_IT_WORKS_FEATURES: FeatureDetail[] = [
   },
   {
     id: 'feat-themes',
-    title: 'Themes: How Reviews Are Grouped and Ranked',
+    title: 'Themes: how reviews are grouped and ranked',
     category: 'themes',
     badge: 'Themes',
     badgeVariant: 'blue',
@@ -72,7 +72,7 @@ export const HOW_IT_WORKS_FEATURES: FeatureDetail[] = [
   },
   {
     id: 'feat-checks',
-    title: 'Checks Before Publishing',
+    title: 'Checks before publishing',
     category: 'checks',
     badge: 'Checks',
     badgeVariant: 'coral',
@@ -95,9 +95,9 @@ export const HOW_IT_WORKS_FEATURES: FeatureDetail[] = [
   },
   {
     id: 'feat-publishing',
-    title: 'Google Doc and Gmail Draft',
+    title: 'Google Doc and Gmail draft',
     category: 'publishing',
-    badge: 'Draft Only',
+    badge: 'Draft only',
     badgeVariant: 'coral',
     summary: 'Each published note is written to a Google Doc for the app and saved as a Gmail draft. No email is ever sent.',
     keyCapabilities: [
@@ -119,7 +119,7 @@ export const HOW_IT_WORKS_FEATURES: FeatureDetail[] = [
   },
   {
     id: 'feat-cleaning',
-    title: 'Cleaning and Privacy',
+    title: 'Cleaning and privacy',
     category: 'cleaning',
     badge: 'Privacy',
     badgeVariant: 'teal',
@@ -142,9 +142,9 @@ export const HOW_IT_WORKS_FEATURES: FeatureDetail[] = [
   },
   {
     id: 'feat-sample',
-    title: 'Sample Pages',
+    title: 'Sample pages',
     category: 'sample',
-    badge: 'Sample Data',
+    badge: 'Sample data',
     badgeVariant: 'amber',
     summary:
       'Weekly Pulse, Themes, Run & Publish and Data Import show fixed sample data. They are a preview of the design and do not read or change any live app.',
@@ -177,7 +177,7 @@ export const HOW_IT_WORKS_FAQS: FaqItem[] = [
     question: 'Can the system send emails?',
     answer:
       'No. It only creates and updates Gmail drafts. A person opens the draft in Gmail and decides whether to send it.',
-    tag: 'Draft Only',
+    tag: 'Draft only',
   },
   {
     id: 'faq-privacy',
@@ -207,14 +207,14 @@ export const HOW_IT_WORKS_FAQS: FaqItem[] = [
     question: 'Are the sample pages connected to my apps?',
     answer:
       'No. Weekly Pulse, Themes, Run & Publish and Data Import show fixed sample data. A file chosen on Data Import is not uploaded. Choose an app in the top bar to see live data.',
-    tag: 'Sample Data',
+    tag: 'Sample data',
   },
 ];
 
 export const SAMPLE_SCENARIOS = [
-  { scenario: 'ok', name: 'Normal', desc: 'A complete sample week.', color: 'text-emerald-400', link: '/sample?scenario=ok' },
+  { scenario: 'ok', name: 'Normal', desc: 'A complete sample week.', color: 'text-primary', link: '/sample?scenario=ok' },
   { scenario: 'empty', name: 'Empty', desc: 'A week with no reviews yet.', color: 'text-text-muted', link: '/sample?scenario=empty' },
-  { scenario: 'error', name: 'Server Error', desc: 'The page when the server does not answer.', color: 'text-amber-400', link: '/sample?scenario=error' },
-  { scenario: 'validation-failed', name: 'Failed Check', desc: 'A run whose note failed a check.', color: 'text-rose-400', link: '/run?scenario=validation-failed' },
-  { scenario: 'low-coverage', name: 'Low Coverage', desc: 'Fewer weeks of reviews than the window.', color: 'text-amber-400', link: '/import?scenario=low-coverage' },
+  { scenario: 'error', name: 'Server error', desc: 'The page when the server does not answer.', color: 'text-friction-dark', link: '/sample?scenario=error' },
+  { scenario: 'validation-failed', name: 'Failed check', desc: 'A run whose note failed a check.', color: 'text-critical-dark', link: '/run?scenario=validation-failed' },
+  { scenario: 'low-coverage', name: 'Low coverage', desc: 'Fewer weeks of reviews than the window.', color: 'text-friction-dark', link: '/import?scenario=low-coverage' },
 ];

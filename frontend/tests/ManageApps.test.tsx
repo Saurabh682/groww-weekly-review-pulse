@@ -360,6 +360,19 @@ describe('adding an app', () => {
     expect(dialog().getByRole('textbox', { name: 'Display name' })).toHaveValue('Kite');
   });
 
+  it('test_UIC_08_dialog_error_heading_sits_under_the_dialog_title', async () => {
+    api.on('POST /apps', { status: 409, body: { error: 'com.zerodha.kite3 already belongs to Groww (groww).' } });
+    await searchFor('Kite');
+    await userEvent.click(store('Google Play').getByRole('radio', { name: /Kite by Zerodha/ }));
+    await userEvent.click(store('App Store').getByRole('radio', { name: /Zerodha Kite/ }));
+    await userEvent.click(dialog().getByRole('button', { name: 'Review' }));
+    await userEvent.click(dialog().getByRole('button', { name: 'Add app' }));
+    const alert = within(await dialog().findByRole('alert'));
+    const title = dialog().getAllByRole('heading')[0];
+    const levelOf = (heading: HTMLElement) => Number(heading.tagName.slice(1));
+    expect(levelOf(alert.getByRole('heading'))).toBe(levelOf(title) + 1);
+  });
+
   it('keeps the choices when going back', async () => {
     await searchFor('Kite');
     await userEvent.click(store('Google Play').getByRole('radio', { name: /Kite by Zerodha/ }));
