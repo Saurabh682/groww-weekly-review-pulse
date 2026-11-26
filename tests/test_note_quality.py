@@ -108,3 +108,15 @@ def test_NOT_21_header_rating_says_it_covers_every_review():
     for rendered in (render_markdown(note), render_html(note), render_plain_text(note)):
         assert "Avg rating 4.2★ (all reviews)" in rendered
         assert "Themes from 1,799 detailed reviews" in rendered
+
+
+def test_NOT_22_actions_render_as_one_numbered_list():
+    actions = [
+        ActionItem("Charges & Pricing", "Show an itemised fee breakdown on every order confirmation screen."),
+        ActionItem("Customer Support", "Route unresolved payment tickets older than 48 hours to a priority queue."),
+        ActionItem("Positive UX & Simplicity", "Bring the one-minute SIP setup flow to stock and IPO orders."),
+    ]
+    section = render_markdown(_note(actions)).split("## Recommended Actions", 1)[1].strip()
+    assert [line[:3] for line in section.split("\n")] == ["1. ", "2. ", "3. "], (
+        "A blank line between items makes a Doc start a new list at 1 for every action."
+    )
