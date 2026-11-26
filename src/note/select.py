@@ -7,6 +7,8 @@ and exact substring preservation (the LLM never writes or rewrites quote text).
 
 import re
 from typing import Dict, List, Set, Tuple
+from src.domains.pack import DomainPack
+from src.note.fit import fits_theme
 from src.note.models import Quote
 from src.note.words import count_note_words
 from src.store.models import ReviewRecord, ThemeRecord
@@ -121,6 +123,7 @@ def extract_verbatim_quote(full_text: str, candidate: str) -> str:
 def select_quotes_for_themes(
     top_themes: List[ThemeRecord],
     theme_reviews: Dict[str, List[ReviewRecord]],
+    pack: DomainPack,
     max_quotes: int = 3
 ) -> List[Quote]:
     """Select 3 verbatim quotes from 3 distinct reviews matching top themes (QUO-01..16)."""
@@ -139,7 +142,7 @@ def select_quotes_for_themes(
                 continue
                 
             for sent in split_sentences(rev.text):
-                if is_candidate_eligible(sent):
+                if is_candidate_eligible(sent) and fits_theme(sent, theme.label, pack):
                     verbatim_span = extract_verbatim_quote(rev.text, sent)
                     # Double check word bounds on the exact verbatim span
                     if 6 <= count_note_words(verbatim_span) <= 22:

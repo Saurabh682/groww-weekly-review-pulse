@@ -16,6 +16,6 @@ GENERIC_PACK = DomainPack(
             "Audit unresolved tickets behind these reviews and set a first-response time target for them."),
         "Positive UX & Simplicity": ActionBlueprint(
             "Product Design Team",
-            "Document the flows users praise here and keep them unchanged in upcoming redesigns."),
+            "Reuse the flow users praise here in one more screen and track its completion rate."),
     },
 )

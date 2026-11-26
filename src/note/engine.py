@@ -4,7 +4,7 @@ from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from src.clean.window import is_short_coverage
+from src.clean.window import is_short_coverage, mean_rating
 from src.config import outputs_root, resolve_project_path
 from src.domains import domain_pack_for
 from src.note.coverage import build_store_coverage
@@ -59,6 +59,7 @@ def build_and_validate_pulse_note(
     selected_quotes = select_quotes_for_themes(
         top_themes=top_themes,
         theme_reviews=theme_reviews,
+        pack=pack,
         max_quotes=3
     )
 
@@ -90,7 +91,7 @@ def build_and_validate_pulse_note(
         store_coverage=build_store_coverage(store, run_record.window_start, run_record.window_end),
         total_reviews=run_record.total_reviews,
         analyzed_reviews=run_record.analyzed_reviews,
-        avg_rating=run_record.avg_rating,
+        avg_rating=mean_rating(store.get_reviews_in_window(run_record.window_start, run_record.window_end)),
         top_themes=theme_summaries,
         quotes=selected_quotes,
         actions=action_items,

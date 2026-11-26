@@ -12,6 +12,15 @@ from src.note.coverage import sources_line
 from src.note.titles import pulse_doc_title
 
 
+def header_facts(note: WeeklyPulseNote) -> list[str]:
+    return [
+        f"Reviews {note.window_start} to {note.window_end}",
+        sources_line(note),
+        f"Avg rating {note.avg_rating:.1f}★ (all reviews)",
+        f"Themes from {note.analyzed_reviews:,} detailed reviews",
+    ]
+
+
 def render_markdown(note: WeeklyPulseNote) -> str:
     """Render WeeklyPulseNote into clean, compliant Markdown."""
     sections = []
@@ -20,7 +29,7 @@ def render_markdown(note: WeeklyPulseNote) -> str:
     sections.append(f"# {pulse_doc_title(note.app_name, note.week_start)}")
     
     # Metadata / Scope line (NOT-14)
-    meta = f"Reviews {note.window_start} to {note.window_end} • {sources_line(note)} • Analyzed: {note.analyzed_reviews} • Avg Rating: {note.avg_rating:.1f}★"
+    meta = " • ".join(header_facts(note))
     sections.append(meta)
     
     # Short coverage caveat if applicable (NOT-16)
@@ -52,7 +61,7 @@ def render_markdown(note: WeeklyPulseNote) -> str:
 def render_html(note: WeeklyPulseNote) -> str:
     """Render WeeklyPulseNote into clean HTML for email body (MCP-20)."""
     h_title = html.escape(pulse_doc_title(note.app_name, note.week_start))
-    h_meta = html.escape(f"Reviews {note.window_start} to {note.window_end} • {sources_line(note)} • Analyzed: {note.analyzed_reviews} • Rating: {note.avg_rating:.1f}★")
+    h_meta = html.escape(" • ".join(header_facts(note)))
     
     items_themes = "".join(
         f"<li><strong>{html.escape(t.label)}</strong> ({(t.share_pct * 100 if t.share_pct <= 1.0 else t.share_pct):.1f}% share, {t.avg_rating:.1f}★)<br>{html.escape(t.one_liner)}</li>"
@@ -93,7 +102,7 @@ def render_plain_text(note: WeeklyPulseNote) -> str:
     """Render clean plain text fallback without markdown syntax (MCP-20)."""
     lines = [
         pulse_doc_title(note.app_name, note.week_start),
-        f"Reviews {note.window_start} to {note.window_end} | {sources_line(note)} | Rating: {note.avg_rating:.1f}★",
+        " | ".join(header_facts(note)),
         "",
         "TOP THEMES:"
     ]

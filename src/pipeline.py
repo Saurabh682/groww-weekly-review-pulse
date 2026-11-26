@@ -20,6 +20,7 @@ from src.clean.window import (
     calculate_window_bounds,
     compute_coverage_weeks,
     is_short_coverage,
+    mean_rating,
     normalize_to_week_start,
 )
 from src.config import (
@@ -34,7 +35,6 @@ from src.ingest.persist import clean_raw_reviews
 from src.ingest.play_csv import PlayStoreImportSource
 from src.run_report import write_run_report
 from src.store.factory import open_store
-from src.store.models import ReviewRecord
 from src.mcp.capabilities import load_mcp_config
 from src.mcp.composio import ComposioClient, ToolCaller
 from src.mcp.errors import MCPError, PublishStoppedArchived
@@ -128,6 +128,7 @@ def run_themes_stage(
         window_start=window_start,
         window_end=window_end,
         coverage_weeks=compute_coverage_weeks(stored),
+        window_avg_rating=mean_rating(stored),
         config=config,
         run_id=run_id,
     )
@@ -158,10 +159,6 @@ PUBLISH_RUN_STATUSES = {
 
 def final_run_status(pub_result: Optional[PublishResult]) -> str:
     return "validated" if pub_result is None else PUBLISH_RUN_STATUSES[pub_result.status]
-
-
-def mean_rating(reviews: List[ReviewRecord]) -> float:
-    return round(sum(r.rating for r in reviews) / len(reviews), 2) if reviews else 0.0
 
 
 def run_full_pipeline(

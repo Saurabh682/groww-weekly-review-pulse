@@ -21,6 +21,7 @@ def run_theme_pipeline(
     window_start: str,
     window_end: str,
     coverage_weeks: float,
+    window_avg_rating: float,
     config: Optional[PulseConfig] = None,
     run_id: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -92,9 +93,6 @@ def run_theme_pipeline(
     ranked_themes = rank_themes(raw_themes, enforce_issue_in_top3=True)
 
     # 6. Persist Run and Themes to SQLite
-    ratings = [r.rating for r in filtered_reviews]
-    overall_avg_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0.0
-
     store.save_theme_run(
         run_id=active_run_id,
         week_start=week_str,
@@ -102,7 +100,7 @@ def run_theme_pipeline(
         window_end=window_end,
         total_reviews=len(reviews),
         analyzed_reviews=len(filtered_reviews),
-        avg_rating=overall_avg_rating,
+        avg_rating=window_avg_rating,
         coverage_weeks=coverage_weeks,
         themes=ranked_themes,
     )

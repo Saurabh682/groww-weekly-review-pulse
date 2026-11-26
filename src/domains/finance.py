@@ -35,17 +35,20 @@ FINANCE_PACK = DomainPack(
         "Customer Support": ActionBlueprint(
             "Customer Operations",
             "Implement priority escalation routing for unresolved payment tickets older than 48 hours."),
-        "Onboarding & KYC": ActionBlueprint(
+        "Account Opening & KYC": ActionBlueprint(
             "Identity Verification Team",
             "Extend video KYC session timeout to 15 minutes and integrate automated DigiLocker retry webhooks."),
-        "Payments & Withdrawals": ActionBlueprint(
+        "Payments & UPI": ActionBlueprint(
             "Banking Integrations Team",
             "Implement real-time UPI transaction reconciliation with partner bank gateways to prevent debit/credit lag."),
-        "Trading & Order Execution": ActionBlueprint(
-            "Order Engine Team",
-            "Optimize stop-loss order trigger latency during high market volatility at 9:15 AM opening."),
+        "Withdrawals & Payouts": ActionBlueprint(
+            "Banking Integrations Team",
+            "Show each withdrawal's settlement status and expected credit date in-app, and alert ops when one passes T+2."),
+        "Mutual Funds & SIPs": ActionBlueprint(
+            "Mutual Funds Team",
+            "Send an in-app alert with the reason and a retry button when a SIP instalment or mandate fails."),
         "Positive UX & Simplicity": ActionBlueprint(
             "Product Design Team",
-            "Maintain current simplified mutual fund dashboard layout while streamlining advanced equity analytics."),
+            "Bring the one-minute SIP setup flow users praise to stock and IPO orders, and track order completion time."),
     },
 )
