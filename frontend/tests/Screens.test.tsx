@@ -1,5 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { FakeApi, app } from './fakeApi';
 import { openRoute } from './openRoute';
 
@@ -75,12 +76,41 @@ describe('Frontend Screens Suite', () => {
   it('HelpPage renders features, sample scenarios and questions', async () => {
     renderWithRouter('/help');
 
-    const helpHeading = await screen.findByRole('heading', { level: 1, name: 'App Guide & Knowledge Base' });
+    const helpHeading = await screen.findByRole('heading', { level: 1, name: 'Help' });
     expect(helpHeading).toBeInTheDocument();
 
-    expect(screen.getByRole('heading', { level: 2, name: 'Features and How They Work' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Sample Page Scenarios' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Frequently Asked Questions' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Features and how they work' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Sample page scenarios' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Frequently asked questions' })).toBeInTheDocument();
     expect(screen.queryByText('The Six Deterministic Invariant Checks')).toBeNull();
+  });
+
+  it.each([
+    ['/sample', 'Weekly Review Pulse'],
+    ['/themes', 'Themes Explorer'],
+    ['/run', 'Run & Publish Pipeline'],
+    ['/import', 'Data Ingestion & Hygiene'],
+    ['/help', 'Help'],
+  ])('test_UIC_13_every_control_has_a_name: %s', async (route, title) => {
+    renderWithRouter(route);
+    await screen.findByRole('heading', { level: 1, name: title }, { timeout: 2000 });
+    for (const field of screen.queryAllByRole('textbox')) await userEvent.type(field, 'a');
+    const controls = ['button', 'textbox', 'combobox', 'link'].flatMap((role) => screen.queryAllByRole(role));
+    expect(controls.length).toBeGreaterThan(3);
+    controls.forEach((control) => expect(control, control.outerHTML.slice(0, 160)).toHaveAccessibleName());
+  });
+
+  it.each([
+    ['/sample', 'Weekly Review Pulse'],
+    ['/themes', 'Themes Explorer'],
+    ['/run', 'Run & Publish Pipeline'],
+    ['/import', 'Data Ingestion & Hygiene'],
+    ['/help', 'Help'],
+  ])('test_UIC_14_headings_never_skip_a_level: %s', async (route, title) => {
+    renderWithRouter(route);
+    await screen.findByRole('heading', { level: 1, name: title }, { timeout: 2000 });
+    const levels = screen.getAllByRole('heading').map((heading) => Number(heading.tagName.slice(1)));
+    const skips = levels.flatMap((level, i) => (i > 0 && level > levels[i - 1] + 1 ? [`h${levels[i - 1]} then h${level}`] : []));
+    expect(skips, 'A heading may go at most one level deeper than the heading before it.').toEqual([]);
   });
 });

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CSS_COLOUR } from '../styles/cssColours';
 
 interface VolumePoint {
   week: string;
@@ -60,29 +61,26 @@ export const PulseWaveMini: React.FC<PulseWaveMiniProps> = ({
           </filter>
         </defs>
 
-        {/* Baseline */}
         <line
           x1="0"
           y1={baselineY}
           x2={width}
           y2={baselineY}
-          stroke="#1e293b"
+          stroke={CSS_COLOUR.border}
           strokeWidth="1"
           strokeDasharray="2 2"
         />
 
-        {/* Volume waveform path */}
         <path
           d={pathD}
           fill="none"
-          stroke="#00D09C"
+          stroke={CSS_COLOUR.primary}
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           filter="url(#waveGlow)"
         />
 
-        {/* Data points & missing week markers */}
         {markers.map((m, idx) => (
           <g
             key={`marker-${idx}`}
@@ -92,13 +90,13 @@ export const PulseWaveMini: React.FC<PulseWaveMiniProps> = ({
           >
             {m.isMissing ? (
               <g>
-                <circle cx={m.x} cy={m.y} r="5" fill="rgba(245, 158, 11, 0.2)" stroke="#F59E0B" strokeWidth="2" />
+                <circle cx={m.x} cy={m.y} r="5" fill={CSS_COLOUR.frictionTint} stroke={CSS_COLOUR.friction} strokeWidth="2" />
                 <line
                   x1={m.x - 2}
                   y1={m.y - 2}
                   x2={m.x + 2}
                   y2={m.y + 2}
-                  stroke="#F59E0B"
+                  stroke={CSS_COLOUR.friction}
                   strokeWidth="1.5"
                 />
               </g>
@@ -107,8 +105,8 @@ export const PulseWaveMini: React.FC<PulseWaveMiniProps> = ({
                 cx={m.x}
                 cy={m.y}
                 r={hoveredIdx === idx ? 4.5 : 3}
-                fill="#00D09C"
-                stroke="#0b111e"
+                fill={CSS_COLOUR.primary}
+                stroke={CSS_COLOUR.background}
                 strokeWidth="1.5"
               />
             )}
@@ -116,10 +114,9 @@ export const PulseWaveMini: React.FC<PulseWaveMiniProps> = ({
         ))}
       </svg>
 
-      {/* Mini Tooltip */}
       {hoveredIdx !== null && (
         <div
-          className="absolute z-20 pointer-events-none transform -translate-x-1/2 -translate-y-full bg-[#1b2a47] text-white text-[11px] py-1 px-2.5 rounded shadow-drawer border border-[#2a3d5d] whitespace-nowrap"
+          className="absolute z-20 pointer-events-none transform -translate-x-1/2 -translate-y-full bg-surface-elevated text-white text-2xs py-1 px-2.5 rounded shadow-drawer border border-border-subtle whitespace-nowrap"
           style={{
             left: `${((markers[hoveredIdx].x / width) * 100).toFixed(1)}%`,
             top: `${Math.max(0, markers[hoveredIdx].y - 6)}px`,

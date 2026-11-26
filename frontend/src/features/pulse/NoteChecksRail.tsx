@@ -2,6 +2,7 @@ import React from 'react';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Check, X, ShieldCheck, Info, Sliders, TrendingUp } from 'lucide-react';
+import { CSS_COLOUR } from '../../styles/cssColours';
 
 interface NoteCheckItem {
   id: string;
@@ -29,15 +30,12 @@ export const NoteChecksRail: React.FC<NoteChecksRailProps> = ({
   const progressRatio = Math.min(1, wordCount / maxWords);
   const strokeDashoffset = circumference - progressRatio * circumference;
 
-  let strokeColor = '#00D09C';
-  let statusTextColor = 'text-primary';
-  if (isOverLimit) {
-    strokeColor = '#F43F5E';
-    statusTextColor = 'text-critical font-bold';
-  } else if (isNearLimit) {
-    strokeColor = '#F59E0B';
-    statusTextColor = 'text-friction-dark font-bold';
-  }
+  const strokeColor = isOverLimit ? CSS_COLOUR.critical : isNearLimit ? CSS_COLOUR.friction : CSS_COLOUR.primary;
+  const statusTextColor = isOverLimit
+    ? 'text-critical font-bold'
+    : isNearLimit
+      ? 'text-friction-dark font-bold'
+      : 'text-primary';
 
   const checkSubtitles: Record<string, string> = {
     'top-themes': 'Balanced: 1 positive, 2 friction',
@@ -49,10 +47,8 @@ export const NoteChecksRail: React.FC<NoteChecksRailProps> = ({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* 1. Quality Gate Card */}
-      <Card className="p-4 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#1e293b]">
+      <Card padding="tight">
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-border">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-primary" />
             <h3 className="text-xs font-bold font-display uppercase tracking-wider text-white">
@@ -62,8 +58,7 @@ export const NoteChecksRail: React.FC<NoteChecksRailProps> = ({
           <Info className="w-3.5 h-3.5 text-text-muted hover:text-white cursor-pointer" />
         </div>
 
-        {/* Circular Word Counter */}
-        <div className="flex items-center gap-4 mb-5 p-3 rounded-xl bg-[#0e1726] border border-[#1e293b]">
+        <div className="flex items-center gap-4 mb-5 p-3 rounded-xl bg-sidebar border border-border">
           <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 64 64">
               <circle
@@ -71,7 +66,7 @@ export const NoteChecksRail: React.FC<NoteChecksRailProps> = ({
                 cy="32"
                 r={radius}
                 fill="none"
-                stroke="#1e293b"
+                stroke={CSS_COLOUR.border}
                 strokeWidth="4"
               />
               <circle
@@ -99,7 +94,7 @@ export const NoteChecksRail: React.FC<NoteChecksRailProps> = ({
             <div className="text-xs font-mono font-bold text-white">
               {wordCount} / {maxWords} words
             </div>
-            <div className="text-[11px] text-text-muted mt-0.5">
+            <div className="text-2xs text-text-muted mt-0.5">
               {isOverLimit ? (
                 <span className="text-critical font-bold">Exceeds 250-word cap!</span>
               ) : isNearLimit ? (
@@ -111,7 +106,6 @@ export const NoteChecksRail: React.FC<NoteChecksRailProps> = ({
           </div>
         </div>
 
-        {/* Checklist items */}
         <div className="space-y-3 mb-4">
           {checks.map((check) => (
             <div
@@ -126,7 +120,7 @@ export const NoteChecksRail: React.FC<NoteChecksRailProps> = ({
                 >
                   {check.label}
                 </div>
-                <div className="text-[10px] font-mono text-text-muted mt-0.5">
+                <div className="text-3xs font-mono text-text-muted mt-0.5">
                   {checkSubtitles[check.id] || 'Verified against database invariants'}
                 </div>
               </div>
@@ -148,24 +142,22 @@ export const NoteChecksRail: React.FC<NoteChecksRailProps> = ({
           ))}
         </div>
 
-        {/* Digest Metadata */}
-        <div className="pt-3 border-t border-[#1e293b] space-y-1.5 text-[10px] font-mono text-text-muted">
+        <div className="pt-3 border-t border-border space-y-1.5 text-3xs font-mono text-text-muted">
           <div className="flex justify-between">
             <span>Model Run</span>
-            <span className="text-[#dde2f5]">Pulse-v2.4 (Claude 3.5 Sonnet)</span>
+            <span className="text-text-primary">Pulse-v2.4 (Claude 3.5 Sonnet)</span>
           </div>
           <div className="flex justify-between">
             <span>Timestamp</span>
-            <span className="text-[#dde2f5]">08:30 IST Today</span>
+            <span className="text-text-primary">08:30 IST Today</span>
           </div>
           <div className="flex justify-between">
             <span>Review Sample</span>
-            <span className="text-[#dde2f5]">N=662 (100% indexed)</span>
+            <span className="text-text-primary">N=662 (100% indexed)</span>
           </div>
         </div>
 
-        {/* Button: Configure digest rules */}
-        <div className="mt-4 pt-3 border-t border-[#1e293b]">
+        <div className="mt-4 pt-3 border-t border-border">
           <Button
             variant="secondary"
             size="sm"
@@ -178,8 +170,7 @@ export const NoteChecksRail: React.FC<NoteChecksRailProps> = ({
         </div>
       </Card>
 
-      {/* 2. Pulse Score Trend Card */}
-      <Card className="p-4 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
+      <Card padding="tight">
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-lg bg-primary-tint border border-primary-border text-primary font-mono font-bold text-xs shrink-0 flex items-center gap-0.5 shadow-glow-teal-sm">
             <TrendingUp className="w-3.5 h-3.5" />
@@ -187,7 +178,7 @@ export const NoteChecksRail: React.FC<NoteChecksRailProps> = ({
           </div>
           <div className="text-xs leading-relaxed">
             <div className="font-bold text-white font-display mb-0.5">Pulse Score Trend</div>
-            <p className="text-text-secondary text-[11px]">
+            <p className="text-text-secondary text-2xs">
               Up from 74/100 last week thanks to UPI AutoPay rollout & resolution of login friction.
             </p>
           </div>

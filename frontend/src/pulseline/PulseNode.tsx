@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sentiment } from '../data/types';
+import { CSS_COLOUR } from '../styles/cssColours';
 
 interface PulseNodeProps {
   sharePct: number;
@@ -20,19 +21,19 @@ export const PulseNode: React.FC<PulseNodeProps> = ({
 
   const colorMap = {
     positive: {
-      bg: 'rgba(0, 208, 156, 0.15)',
-      border: '#00D09C',
-      text: '#00D09C',
+      bg: CSS_COLOUR.primaryTint,
+      border: CSS_COLOUR.primary,
+      text: CSS_COLOUR.primary,
     },
     friction: {
-      bg: 'rgba(245, 158, 11, 0.15)',
-      border: '#F59E0B',
-      text: '#FBBF24',
+      bg: CSS_COLOUR.frictionTint,
+      border: CSS_COLOUR.friction,
+      text: CSS_COLOUR.frictionDark,
     },
     critical: {
-      bg: 'rgba(244, 63, 94, 0.15)',
-      border: '#F43F5E',
-      text: '#FB7185',
+      bg: CSS_COLOUR.criticalTint,
+      border: CSS_COLOUR.critical,
+      text: CSS_COLOUR.criticalDark,
     },
   };
 
@@ -53,7 +54,7 @@ export const PulseNode: React.FC<PulseNodeProps> = ({
           backgroundColor: colors.bg,
           borderColor: colors.border,
         }}
-        className="rounded-full border-2 flex items-center justify-center font-bold text-[10px] font-mono shadow-sm transition-transform duration-200 hover:scale-110"
+        className="rounded-full border-2 flex items-center justify-center font-bold text-3xs font-mono shadow-sm transition-transform duration-200 hover:scale-110"
         title={`Theme share: ${sharePct.toFixed(1)}%`}
       >
         {diameter >= 22 && rank && (

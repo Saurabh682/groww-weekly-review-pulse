@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExternalLink, Mail } from 'lucide-react';
 import { Badge } from '../../components/Badge';
+import { ExternalButtonLink } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Stat } from '../../components/Stat';
 import { PulseWeek } from '../../data/types';
@@ -8,9 +9,6 @@ import { formatDay, formatMoment, weekLabel } from '../../lib/dates';
 import { formatIndianNumber, formatRating } from '../../lib/format';
 
 const GMAIL_DRAFTS_URL = 'https://mail.google.com/mail/#drafts';
-const LINK =
-  'inline-flex items-center justify-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium bg-surface-elevated/70 text-text-primary border border-border-subtle hover:bg-surface-elevated hover:border-primary/40 transition-all';
-
 interface PulseSummaryProps {
   pulse: PulseWeek;
 }
@@ -18,7 +16,7 @@ interface PulseSummaryProps {
 export const PulseSummary: React.FC<PulseSummaryProps> = ({ pulse }) => {
   const isPublished = pulse.status === 'published';
   return (
-    <Card className="p-6 space-y-6">
+    <Card padding="roomy" className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -32,16 +30,14 @@ export const PulseSummary: React.FC<PulseSummaryProps> = ({ pulse }) => {
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           {pulse.doc_url && (
-            <a href={pulse.doc_url} target="_blank" rel="noreferrer" className={LINK}>
-              <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalButtonLink href={pulse.doc_url} icon={<ExternalLink className="w-3.5 h-3.5" />}>
               Open Google Doc
-            </a>
+            </ExternalButtonLink>
           )}
           {pulse.draft_created && (
-            <a href={GMAIL_DRAFTS_URL} target="_blank" rel="noreferrer" className={LINK}>
-              <Mail className="w-3.5 h-3.5" />
+            <ExternalButtonLink href={GMAIL_DRAFTS_URL} icon={<Mail className="w-3.5 h-3.5" />}>
               View Gmail draft
-            </a>
+            </ExternalButtonLink>
           )}
         </div>
       </div>

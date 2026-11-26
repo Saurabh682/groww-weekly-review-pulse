@@ -38,7 +38,7 @@ export const AppRows: React.FC<AppRowsProps> = ({ title, apps, onAction }) => (
                 </Link>
                 <AppStatusBadge status={app.status} />
               </div>
-              <dl className="text-[11px] font-mono space-y-1">
+              <dl className="text-2xs font-mono space-y-1">
                 {PLATFORMS.map((platform) => (
                   <div key={platform} className="flex gap-2">
                     <dt className="text-text-muted whitespace-nowrap">{STORE_NAMES[platform]}</dt>

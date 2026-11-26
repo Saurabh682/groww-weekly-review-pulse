@@ -19,10 +19,9 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
   versionTag = 'Nov 8, 2026 Android v18.2.1',
 }) => {
   return (
-    <Card className="flex flex-col justify-between bg-[#162238]/85 border border-[#2a3d5d] hover:border-primary/40 transition-all duration-150">
+    <Card className="flex flex-col justify-between">
       <div>
-        {/* Top Header: Verified verbatim + Theme Tag + Star rating */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b border-[#1e293b]">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b border-border">
           <div className="flex items-center gap-1.5">
             {quote.verifiedVerbatim && (
               <Chip
@@ -39,20 +38,18 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-1 font-mono text-xs font-bold text-amber-400">
-            <Star className="w-3 h-3 fill-amber-400" />
+          <div className="flex items-center gap-1 font-mono text-xs font-bold text-friction-dark">
+            <Star className="w-3 h-3 fill-friction-dark" />
             <span>({formatRating(quote.rating)})</span>
           </div>
         </div>
 
-        {/* Verbatim quote blockquote */}
-        <blockquote className="text-xs font-normal text-[#dde2f5] leading-relaxed italic relative pl-3 border-l-2 border-primary/50 mb-4">
+        <blockquote className="text-xs font-normal text-text-primary leading-relaxed italic relative pl-3 border-l-2 border-primary/50 mb-4">
           &ldquo;{sanitizePii(quote.text)}&rdquo;
         </blockquote>
       </div>
 
-      {/* Footer: Version and date metadata (Zero names) */}
-      <div className="pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] font-mono text-text-muted">
+      <div className="pt-2 border-t border-border flex items-center justify-between text-3xs font-mono text-text-muted">
         <span>Google Play Store</span>
         <span>{versionTag}</span>
       </div>

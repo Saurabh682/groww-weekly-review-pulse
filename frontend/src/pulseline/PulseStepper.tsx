@@ -21,15 +21,13 @@ export const PulseStepper: React.FC<PulseStepperProps> = ({
   return (
     <div className="w-full py-4 select-none">
       <div className="relative flex items-center justify-between">
-        {/* Background track line */}
-        <div className="absolute left-6 right-6 top-5 -translate-y-1/2 h-[3px] bg-[#1e293b] z-0" />
+        <div className="absolute left-6 right-6 top-5 -translate-y-1/2 h-[3px] bg-border z-0" />
 
-        {/* Dynamic coloured segment lines between nodes */}
         {stages.map((stage, idx) => {
           if (idx === stages.length - 1) return null;
           const nextStage = stages[idx + 1];
 
-          let segmentColor = 'bg-[#1e293b]';
+          let segmentColor = 'bg-border';
           if (hasFailed && idx >= failedStageIndex) {
             segmentColor = 'bg-critical shadow-glow-coral';
           } else if (stage.status === 'done' && (nextStage.status === 'done' || nextStage.status === 'running')) {
@@ -53,7 +51,6 @@ export const PulseStepper: React.FC<PulseStepperProps> = ({
           );
         })}
 
-        {/* 7 Stage Nodes */}
         {stages.map((stage, idx) => {
           const isGate = stage.id === 'validate';
           const isSelected = activeStageId === stage.id;
@@ -64,15 +61,15 @@ export const PulseStepper: React.FC<PulseStepperProps> = ({
 
           const size = isGate ? 'w-11 h-11' : 'w-9 h-9';
 
-          let nodeClasses = 'border-2 bg-[#0e1726] text-text-muted border-[#2a3d5d]';
+          let nodeClasses = 'border-2 bg-sidebar text-text-muted border-border-subtle';
           if (isDone) {
-            nodeClasses = 'bg-primary border-primary text-[#0b111e] font-bold shadow-glow-teal';
+            nodeClasses = 'bg-primary border-primary text-primary-on font-bold shadow-glow-teal';
           } else if (isRunning) {
             nodeClasses = 'bg-primary-tint border-primary text-primary animate-pulse shadow-glow-teal-sm';
           } else if (isFailed) {
             nodeClasses = 'bg-critical-tint border-critical text-critical shadow-glow-coral';
           } else if (isSkipped) {
-            nodeClasses = 'bg-[#080e1b] border-dashed border-[#1e293b] text-text-muted/40';
+            nodeClasses = 'bg-canvas-subtle border-dashed border-border text-text-muted/40';
           }
 
           return (
@@ -89,22 +86,20 @@ export const PulseStepper: React.FC<PulseStepperProps> = ({
                 }
               }}
             >
-              {/* Outer pulsing ring for running */}
               {isRunning && (
                 <div className="absolute inset-0 rounded-full border-2 border-primary animate-pulse-glow -m-1" />
               )}
 
-              {/* Node Circle */}
               <div
                 className={`rounded-full flex items-center justify-center transition-all duration-200 ${size} ${nodeClasses} ${
-                  isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-[#0b111e]' : ''
+                  isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
                 } group-hover:scale-105`}
               >
                 {isGate ? (
                   isFailed ? (
                     <ShieldAlert className="w-5 h-5 text-critical" />
                   ) : isDone ? (
-                    <ShieldCheck className="w-5 h-5 text-[#0b111e] stroke-[2.5]" />
+                    <ShieldCheck className="w-5 h-5 text-primary-on stroke-[2.5]" />
                   ) : isRunning ? (
                     <Loader2 className="w-5 h-5 animate-spin text-primary" />
                   ) : (
@@ -121,7 +116,6 @@ export const PulseStepper: React.FC<PulseStepperProps> = ({
                 )}
               </div>
 
-              {/* Stage label below */}
               <div className="mt-2 text-center max-w-[100px]">
                 <div
                   className={`text-xs font-semibold leading-tight line-clamp-2 ${
@@ -137,7 +131,7 @@ export const PulseStepper: React.FC<PulseStepperProps> = ({
                   {stage.label}
                 </div>
                 {stage.counter && (
-                  <div className="text-[10px] font-mono text-text-muted mt-0.5 whitespace-nowrap">
+                  <div className="text-3xs font-mono text-text-muted mt-0.5 whitespace-nowrap">
                     {stage.counter}
                   </div>
                 )}

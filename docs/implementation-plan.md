@@ -542,7 +542,7 @@ Fixed on the way:
 - [x] **12.4 Operator sign-in** (Supabase Auth magic link) gating Manage Apps writes. (Run against the Supabase project on 2026-11-24: signed in by email link, then searched, registered and renamed an app.)
 - [x] **12.5 States:** waking backend, empty app (backfilling), failed app, archived app, short coverage.
 - [x] **12.6 Help explorer** entries for the new features. (Five entries and five questions under "Your Apps", listed first; tests compare what they say with the settings, the schedule and the status labels. The v1 entries that described the sample pages as live were replaced with what the code does, and each figure is tied to the code by a test.)
-- [ ] **12.7 UI consistency** pass with the `ui-consistency` skills before and after building.
+- [x] **12.7 UI consistency** pass with the `ui-consistency` skills before and after building.
 
 #### Decisions
 - The v1 pages run on built-in data. They stay, under "Sample data" in the menu and with a "Sample data" badge; the v1 weekly pulse moved from `/` to `/sample`.

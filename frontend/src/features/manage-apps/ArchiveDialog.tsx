@@ -41,7 +41,7 @@ export const ArchiveDialog: React.FC<ArchiveDialogProps> = ({ app, archive, onAr
           {app.display_name} stops collecting reviews and its slot is freed. Its history and Docs stay readable. An
           archived app cannot be made live again.
         </p>
-        {save.problem && <ErrorState title="Not archived" message={save.problem} />}
+        {save.problem && <ErrorState headingLevel={4} title="Not archived" message={save.problem} />}
       </div>
     </Modal>
   );

@@ -18,7 +18,7 @@ export const SCHEDULE = {
   monthly: { cron: '30 21 1 * *', text: 'on the 2nd of each month at 03:00 India time' },
 };
 
-const BADGE = { badge: 'Your Apps', badgeVariant: 'teal' } as const;
+const BADGE = { badge: 'Your apps', badgeVariant: 'teal' } as const;
 
 const STATUS_MEANING: Record<AppStatus, string> = {
   pending_backfill: 'The app was added and its first collection has not started.',
@@ -33,7 +33,7 @@ const STATUS_ORDER: AppStatus[] = ['pending_backfill', 'backfilling', 'active', 
 export const LIVE_APP_FEATURES: FeatureDetail[] = [
   {
     id: 'feat-app-overview',
-    title: 'App Overview: One App, Its Latest Pulse',
+    title: 'App overview: one app, its latest pulse',
     category: 'apps',
     ...BADGE,
     summary:
@@ -62,7 +62,7 @@ export const LIVE_APP_FEATURES: FeatureDetail[] = [
   },
   {
     id: 'feat-manage-apps',
-    title: 'Manage Apps: Add, Rename, Replace, Archive',
+    title: 'Manage apps: add, rename, replace, archive',
     category: 'apps',
     ...BADGE,
     summary: `Choose which apps get a weekly pulse. There are ${HELP_FACTS.slots} slots, and every live app uses one.`,
@@ -73,7 +73,7 @@ export const LIVE_APP_FEATURES: FeatureDetail[] = [
       'Archive: Stops collection and frees the slot. An archived app cannot be made live again.',
     ],
     workflow: [
-      'Sign in: Use the sign-in card on Manage Apps.',
+      'Sign in: Use the sign-in card on Manage apps.',
       'Add app: Search by name and pick the matching listing in each store.',
       'Review: Check the display name and both listings.',
       'Confirm: Nothing is added before this step.',
@@ -88,7 +88,7 @@ export const LIVE_APP_FEATURES: FeatureDetail[] = [
   },
   {
     id: 'feat-app-status',
-    title: 'App Status: What Each Label Means',
+    title: 'App status: what each label means',
     category: 'apps',
     ...BADGE,
     summary: 'The label next to an app name says where the app is between being added and its weekly pulse.',
@@ -111,7 +111,7 @@ export const LIVE_APP_FEATURES: FeatureDetail[] = [
   },
   {
     id: 'feat-collection',
-    title: 'Collection Health & Schedule',
+    title: 'Collection health and schedule',
     category: 'apps',
     ...BADGE,
     summary: 'Shows when each store was last read, which days were covered and how many reviews were new.',
@@ -137,7 +137,7 @@ export const LIVE_APP_FEATURES: FeatureDetail[] = [
   },
   {
     id: 'feat-sign-in',
-    title: 'Operator Sign-in by Email Link',
+    title: 'Operator sign-in by email link',
     category: 'apps',
     ...BADGE,
     summary: 'Operators sign in with a link sent to their email. There is no password.',
@@ -147,7 +147,7 @@ export const LIVE_APP_FEATURES: FeatureDetail[] = [
       'Existing accounts only: A link goes out only to an address that already has an account.',
     ],
     workflow: [
-      'Ask for a link: Enter your email on Manage Apps.',
+      'Ask for a link: Enter your email on Manage apps.',
       'Open the email: Use the same browser, on the same device.',
       'Make changes: The buttons appear next to each app.',
       'Sign out: Use the button in the same card.',
@@ -167,14 +167,14 @@ export const LIVE_APP_FAQS: FaqItem[] = [
     category: 'apps',
     question: 'Why does an app have no pulse yet?',
     answer: `Its first collection has not finished, it failed, or the last ${HELP_FACTS.windowWeeks} weeks hold fewer than ${HELP_FACTS.minReviews} reviews with enough text. The app page says which. A small app can stay without a pulse for a long time; its reviews are still collected, and the count is checked again every Monday.`,
-    tag: 'App Status',
+    tag: 'App status',
   },
   {
     id: 'faq-first-result',
     category: 'apps',
     question: 'How long until a new app shows something?',
     answer: `If this dashboard is connected to GitHub, the first collection is requested when you add the app. If it is not, the app waits for the daily run, ${SCHEDULE.daily.text}. GitHub can start a run some hours late, and the collection itself can take up to an hour. The message after adding says which applies.`,
-    tag: 'First Collection',
+    tag: 'First collection',
   },
   {
     id: 'faq-sign-in-link',
@@ -190,7 +190,7 @@ export const LIVE_APP_FAQS: FaqItem[] = [
     question: `All ${HELP_FACTS.slots} slots are used. How do I add another app?`,
     answer:
       'Use Replace to archive an app and put the new one in its slot, or Archive to free the slot first. The old app stays readable, but it cannot be made live again.',
-    tag: 'Manage Apps',
+    tag: 'Manage apps',
   },
   {
     id: 'faq-app-store-count',
@@ -198,6 +198,6 @@ export const LIVE_APP_FAQS: FaqItem[] = [
     question: 'Why are there fewer App Store reviews than Google Play reviews?',
     answer:
       "Apple's public feed holds only about the 500 newest reviews for a country. For a busy app that can be less than the whole window, and the pulse then says the App Store is only partly covered.",
-    tag: 'Store Limits',
+    tag: 'Store limits',
   },
 ];

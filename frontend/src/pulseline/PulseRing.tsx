@@ -1,6 +1,7 @@
 import React from 'react';
 import { Theme } from '../data/types';
 import { Activity } from 'lucide-react';
+import { CSS_COLOUR } from '../styles/cssColours';
 
 interface PulseRingProps {
   themes: Theme[];
@@ -24,9 +25,9 @@ export const PulseRing: React.FC<PulseRingProps> = ({
   const orbitRadius = 120;
 
   const colorMap = {
-    positive: { stroke: '#00D09C', fill: 'rgba(0, 208, 156, 0.18)', text: '#00D09C' },
-    friction: { stroke: '#F59E0B', fill: 'rgba(245, 158, 11, 0.18)', text: '#FBBF24' },
-    critical: { stroke: '#F43F5E', fill: 'rgba(244, 63, 94, 0.18)', text: '#FB7185' },
+    positive: { stroke: CSS_COLOUR.primary, fill: CSS_COLOUR.primaryTint, text: CSS_COLOUR.primary },
+    friction: { stroke: CSS_COLOUR.friction, fill: CSS_COLOUR.frictionTint, text: CSS_COLOUR.frictionDark },
+    critical: { stroke: CSS_COLOUR.critical, fill: CSS_COLOUR.criticalTint, text: CSS_COLOUR.criticalDark },
   };
 
   return (
@@ -46,18 +47,16 @@ export const PulseRing: React.FC<PulseRingProps> = ({
           </filter>
         </defs>
 
-        {/* Outer Orbit Guide Line */}
         <circle
           cx={centerX}
           cy={centerY}
           r={orbitRadius}
           fill="none"
-          stroke="#1e293b"
+          stroke={CSS_COLOUR.border}
           strokeWidth="1.5"
           strokeDasharray="4 4"
         />
 
-        {/* Orbit Connectors to Center */}
         {themes.map((theme, idx) => {
           const angle = (idx * (2 * Math.PI)) / themes.length - Math.PI / 2;
           const nodeX = centerX + orbitRadius * Math.cos(angle);
@@ -72,7 +71,7 @@ export const PulseRing: React.FC<PulseRingProps> = ({
               y1={centerY}
               x2={nodeX}
               y2={nodeY}
-              stroke={isSelected ? colors.stroke : '#1e293b'}
+              stroke={isSelected ? colors.stroke : CSS_COLOUR.border}
               strokeWidth={isSelected ? '2' : '1'}
               strokeDasharray={isSelected ? 'none' : '2 2'}
               className="transition-colors duration-200"
@@ -80,29 +79,27 @@ export const PulseRing: React.FC<PulseRingProps> = ({
           );
         })}
 
-        {/* Central Pulse Core */}
         <g
           transform={`translate(${centerX}, ${centerY})`}
           className="cursor-default"
         >
           <circle
             r="28"
-            fill="#0e1726"
-            stroke="#00D09C"
+            fill={CSS_COLOUR.sidebar}
+            stroke={CSS_COLOUR.primary}
             strokeWidth="2"
             className="shadow-glow-teal-sm"
           />
           <circle
             r="36"
             fill="none"
-            stroke="#00D09C"
+            stroke={CSS_COLOUR.primary}
             strokeWidth="1.5"
             opacity="0.4"
             className="animate-pulse-glow"
           />
         </g>
 
-        {/* Orbit Theme Nodes */}
         {themes.map((theme, idx) => {
           const angle = (idx * (2 * Math.PI)) / themes.length - Math.PI / 2;
           const nodeX = centerX + orbitRadius * Math.cos(angle);
@@ -138,7 +135,6 @@ export const PulseRing: React.FC<PulseRingProps> = ({
                 />
               )}
 
-              {/* Theme Bubble */}
               <circle
                 cx={nodeX}
                 cy={nodeY}
@@ -150,7 +146,6 @@ export const PulseRing: React.FC<PulseRingProps> = ({
                 className="transition-all duration-200 group-hover:scale-105"
               />
 
-              {/* Text Inside Node */}
               <text
                 x={nodeX}
                 y={nodeY - 2}
@@ -178,7 +173,6 @@ export const PulseRing: React.FC<PulseRingProps> = ({
         })}
       </svg>
 
-      {/* Center Icon Overlay */}
       <div className="absolute pointer-events-none text-primary flex items-center justify-center">
         <Activity className="w-6 h-6 animate-heartbeat text-primary" />
       </div>

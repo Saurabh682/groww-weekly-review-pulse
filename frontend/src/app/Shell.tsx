@@ -42,10 +42,10 @@ const sideLink = (isActive: boolean) =>
       : 'text-text-secondary hover:text-white hover:bg-surface/60'
   }`;
 
-const MANAGE_ITEM = { to: '/manage', label: 'Manage Apps', icon: <ListChecks className={ICON} /> };
+const MANAGE_ITEM = { to: '/manage', label: 'Manage apps', icon: <ListChecks className={ICON} /> };
 
 const bottomLink = (isActive: boolean) =>
-  `flex flex-col items-center justify-center min-w-[56px] h-12 py-1 px-2 text-[10px] font-medium transition-all ${
+  `flex flex-col items-center justify-center min-w-[56px] h-12 py-1 px-2 text-3xs font-medium transition-all ${
     isActive ? 'text-primary font-bold scale-105' : 'text-text-muted hover:text-white'
   }`;
 
@@ -96,7 +96,7 @@ export const Shell: React.FC = () => {
             </div>
             <div>
               <div className="font-bold font-display text-sm leading-tight tracking-tight text-white">Review Pulse</div>
-              <div className="text-[10px] font-mono text-text-secondary tracking-wider">Weekly Review Intel</div>
+              <div className="text-3xs font-mono text-text-secondary tracking-wider">Weekly Review Intel</div>
             </div>
           </div>
         </div>
@@ -115,7 +115,7 @@ export const Shell: React.FC = () => {
             <span className="font-medium">Help</span>
           </NavLink>
 
-          <div className="pt-4 pb-1 px-3.5 text-[10px] font-mono uppercase tracking-wider text-text-muted">
+          <div className="pt-4 pb-1 px-3.5 text-3xs font-mono uppercase tracking-wider text-text-muted">
             Sample data
           </div>
           {SAMPLE_ITEMS.map((item) => (
@@ -130,7 +130,7 @@ export const Shell: React.FC = () => {
           <div className="p-3.5 border-t border-border bg-canvas-subtle/60">
             <label
               htmlFor="scenario"
-              className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-text-muted mb-2"
+              className="flex items-center gap-1.5 text-3xs font-mono uppercase tracking-wider text-text-muted mb-2"
             >
               <SlidersHorizontal className="w-3 h-3 text-primary" />
               Scenario Simulator

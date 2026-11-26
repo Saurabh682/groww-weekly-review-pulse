@@ -63,6 +63,10 @@ export default {
         display: ['Space Grotesk', 'Inter', 'sans-serif'],
         mono: ['JetBrains Mono', 'Consolas', 'monospace'],
       },
+      fontSize: {
+        '2xs': '11px',
+        '3xs': '10px',
+      },
       borderRadius: {
         card: '10px',
         chip: '9999px',
@@ -78,6 +82,10 @@ export default {
         'glow-coral': '0 0 16px rgba(244, 63, 94, 0.3)',
       },
       keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
         pulseGlow: {
           '0%, 100%': { transform: 'scale(1)', opacity: '0.9' },
           '50%': { transform: 'scale(1.35)', opacity: '0.35' },
@@ -91,6 +99,7 @@ export default {
         },
       },
       animation: {
+        'fade-in': 'fadeIn 200ms ease-out',
         'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'heartbeat': 'heartbeat 1.6s ease-in-out infinite',
       },

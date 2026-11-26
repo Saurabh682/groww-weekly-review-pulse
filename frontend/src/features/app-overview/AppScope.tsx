@@ -12,7 +12,7 @@ interface UnknownAppProps {
 
 const UnknownApp: React.FC<UnknownAppProps> = ({ appKey, apps }) => (
   <div className="py-8 space-y-6">
-    <EmptyState title="App not found" description={`There is no app called "${appKey}" here. Pick one of these apps.`} />
+    <EmptyState headingLevel={2} title="App not found" description={`There is no app called "${appKey}" here. Pick one of these apps.`} />
     <Card>
       <h2 className="text-base font-bold font-display text-white">Apps</h2>
       <ul className="mt-3 space-y-2">

@@ -42,7 +42,7 @@ const LinkForm: React.FC<SignInCardProps> = ({ operator }) => {
           If this address belongs to an operator, a sign-in link is on its way. Open it in this browser.
         </p>
       )}
-      {request.problem && <ErrorState title="No link sent" message={request.problem} />}
+      {request.problem && <ErrorState headingLevel={3} title="No link sent" message={request.problem} />}
     </form>
   );
 };
@@ -63,7 +63,7 @@ const SignOut: React.FC<SignInCardProps & { email: string }> = ({ operator, emai
       >
         Sign out
       </Button>
-      {request.problem && <ErrorState title="Not signed out" message={request.problem} />}
+      {request.problem && <ErrorState headingLevel={3} title="Not signed out" message={request.problem} />}
     </div>
   );
 };
@@ -90,7 +90,7 @@ const SessionPanel: React.FC<SignInCardProps> = ({ operator }) => {
       return (
         <div className="space-y-4">
           {session.linkFailed && (
-            <ErrorState
+            <ErrorState headingLevel={3}
               title="That sign-in link did not work"
               message="A link works once, for an hour, in the browser that asked for it. Ask for a new one."
             />

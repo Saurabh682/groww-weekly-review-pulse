@@ -88,7 +88,7 @@ export const ManageAppsPage: React.FC = () => {
                   {live.length > 0 ? (
                     <AppRows title="Live apps" apps={live} onAction={canChange ? (kind, app) => open({ kind, app }) : null} />
                   ) : (
-                    <EmptyState title="No apps yet" description="Add an app to start collecting its reviews." />
+                    <EmptyState headingLevel={2} title="No apps yet" description="Add an app to start collecting its reviews." />
                   )}
                   {archived.length > 0 && <AppRows title="Archived apps" apps={archived} onAction={null} />}
                 </div>

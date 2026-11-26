@@ -14,11 +14,11 @@ interface ThemeTableProps {
 export const ThemeTable: React.FC<ThemeTableProps> = ({ themes }) => (
   <section>
     <SectionTitle>Themes</SectionTitle>
-    <Card className="!p-0 overflow-hidden">
+    <Card padding="none" className="overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-border bg-sidebar/90 text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider">
+            <tr className="border-b border-border bg-sidebar/90 text-2xs font-mono font-bold text-text-muted uppercase tracking-wider">
               <th className="py-3 px-4">Rank</th>
               <th className="py-3 px-4">Theme</th>
               <th className="py-3 px-4 text-right">Review Share</th>
@@ -37,7 +37,7 @@ export const ThemeTable: React.FC<ThemeTableProps> = ({ themes }) => (
                 </td>
                 <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono">
                   <div className="font-bold text-white">{formatShare(theme.share_pct * PERCENT)}</div>
-                  <div className="text-[10px] text-text-muted">{formatIndianNumber(theme.review_count)} revs</div>
+                  <div className="text-3xs text-text-muted">{formatIndianNumber(theme.review_count)} revs</div>
                 </td>
                 <td className="py-3.5 px-4 text-center font-mono font-bold text-friction-dark whitespace-nowrap">
                   {formatRating(theme.avg_rating)}

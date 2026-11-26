@@ -56,7 +56,7 @@ const StoreHealth: React.FC<StoreHealthProps> = ({ name, run, isListed, reviews,
         <Badge variant="gray">{isListed ? 'No run yet' : 'Not on this store'}</Badge>
       )}
     </div>
-    <dl className="text-[11px] font-mono space-y-1">
+    <dl className="text-2xs font-mono space-y-1">
       {reviews !== null && <Detail label="In pulse window">{formatIndianNumber(reviews)}</Detail>}
       {run && (
         <>
@@ -111,7 +111,7 @@ export const HealthCard: React.FC<HealthCardProps> = ({ health }) => (
                 <div className="text-text-primary">
                   {RUN_MODES[run.mode]} • {STORE_NAMES[run.platform]}
                 </div>
-                <div className="text-[10px] font-mono text-text-muted">
+                <div className="text-3xs font-mono text-text-muted">
                   {formatMoment(run.started_at)} • {formatIndianNumber(run.inserted)} new
                 </div>
               </div>

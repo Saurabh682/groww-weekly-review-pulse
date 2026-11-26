@@ -52,10 +52,10 @@ export const Modal: React.FC<ModalProps> = ({
       />
 
       <div
-        className={`relative w-full ${maxWidthStyles[maxWidth]} bg-[#162238] rounded-card shadow-drawer border border-border-subtle overflow-hidden z-10 flex flex-col max-h-[90vh]`}
+        className={`relative w-full ${maxWidthStyles[maxWidth]} bg-surface rounded-card shadow-drawer border border-border-subtle overflow-hidden z-10 flex flex-col max-h-[90vh]`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-[#0e1726]/80">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-sidebar/80">
           <h3 id="modal-title" className="text-base font-bold font-display text-text-primary">
             {title}
           </h3>
@@ -73,7 +73,7 @@ export const Modal: React.FC<ModalProps> = ({
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-3.5 bg-[#0e1726]/90 border-t border-border">
+          <div className="flex items-center justify-end gap-3 px-6 py-3.5 bg-sidebar/90 border-t border-border">
             {footer}
           </div>
         )}

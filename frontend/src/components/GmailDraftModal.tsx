@@ -135,8 +135,8 @@ export const GmailDraftModal: React.FC<GmailDraftModalProps> = ({
     >
       <div className="space-y-4 text-sm">
         {/* Safety Policy Banner */}
-        <div className="p-3.5 rounded-card bg-[#0b111e]/80 border border-emerald-500/30 text-emerald-200 text-xs leading-relaxed flex items-start gap-2.5">
-          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-card bg-background/80 border border-primary-border text-primary text-xs leading-relaxed flex items-start gap-2.5">
+          <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <div>
             <strong>Strict Human-in-the-Loop Policy</strong>
             <p className="text-text-muted mt-0.5">
@@ -146,10 +146,10 @@ export const GmailDraftModal: React.FC<GmailDraftModalProps> = ({
         </div>
 
         {/* Draft Metadata Card */}
-        <div className="p-4 rounded-card bg-[#0b111e]/50 border border-border-subtle space-y-2.5">
+        <div className="p-4 rounded-card bg-background/50 border border-border-subtle space-y-2.5">
           <div className="flex justify-between items-center text-xs pb-2 border-b border-border-subtle">
             <span className="text-text-muted">Status:</span>
-            <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium font-mono text-[11px] border border-emerald-500/20">
+            <span className="px-2 py-0.5 rounded bg-primary-tint text-primary font-medium font-mono text-2xs border border-primary-border">
               Draft Staged (Manual Review Required)
             </span>
           </div>
@@ -157,7 +157,7 @@ export const GmailDraftModal: React.FC<GmailDraftModalProps> = ({
           <div className="space-y-2 text-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
               <span className="text-text-muted font-medium w-20 shrink-0">Recipients:</span>
-              <span className="font-mono text-text-primary text-[11px] break-all bg-surface-elevated px-2 py-1 rounded border border-border-subtle w-full sm:w-auto">
+              <span className="font-mono text-text-primary text-2xs break-all bg-surface-elevated px-2 py-1 rounded border border-border-subtle w-full sm:w-auto">
                 {to}
               </span>
             </div>
@@ -186,7 +186,7 @@ export const GmailDraftModal: React.FC<GmailDraftModalProps> = ({
           <Button
             variant="secondary"
             size="sm"
-            icon={copied ? <Check className="w-3.5 h-3.5 text-teal-400" /> : <Copy className="w-3.5 h-3.5" />}
+            icon={copied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
             onClick={handleCopyEmail}
             className="w-full justify-center"
           >
@@ -195,7 +195,7 @@ export const GmailDraftModal: React.FC<GmailDraftModalProps> = ({
         </div>
 
         {/* Email Body Preview */}
-        <div className="p-3.5 rounded-card bg-[#0b111e]/40 border border-border-subtle/70">
+        <div className="p-3.5 rounded-card bg-background/40 border border-border-subtle/70">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5" /> Email Body Preview
@@ -203,14 +203,14 @@ export const GmailDraftModal: React.FC<GmailDraftModalProps> = ({
             <button
               type="button"
               onClick={() => setShowFullBody(!showFullBody)}
-              className="text-[11px] text-teal-400 hover:text-teal-300 transition-colors underline"
+              className="text-2xs text-primary hover:text-primary-hover transition-colors underline"
             >
               {showFullBody ? 'Collapse' : 'Expand Full Text'}
             </button>
           </div>
 
           <pre
-            className={`font-sans text-xs text-text-muted leading-relaxed whitespace-pre-wrap p-2.5 rounded bg-[#090d16] border border-[#1e293b] overflow-y-auto ${
+            className={`font-sans text-xs text-text-muted leading-relaxed whitespace-pre-wrap p-2.5 rounded bg-canvas-subtle border border-border overflow-y-auto ${
               showFullBody ? 'max-h-72' : 'max-h-36'
             }`}
           >

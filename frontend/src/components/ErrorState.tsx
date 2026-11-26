@@ -1,11 +1,13 @@
 import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from './Button';
+import { HeadingLevel } from './headingLevel';
 
 interface ErrorStateProps {
   title?: string;
   message: string;
   onRetry?: () => void;
+  headingLevel: HeadingLevel;
   className?: string;
 }
 
@@ -13,8 +15,10 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   title = 'Something went wrong',
   message,
   onRetry,
+  headingLevel,
   className = '',
 }) => {
+  const Heading = `h${headingLevel}` as const;
   return (
     <div
       role="alert"
@@ -25,7 +29,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           <AlertCircle className="w-5 h-5" />
         </div>
         <div>
-          <h4 className="text-sm font-bold font-display text-failure-dark">{title}</h4>
+          <Heading className="text-sm font-bold font-display text-failure-dark">{title}</Heading>
           <p className="text-xs text-failure-dark/80 mt-0.5 max-w-xl leading-relaxed">{message}</p>
         </div>
       </div>

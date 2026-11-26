@@ -1,4 +1,5 @@
 import React from 'react';
+import { CSS_COLOUR } from '../styles/cssColours';
 
 interface PulseDividerProps {
   className?: string;
@@ -7,12 +8,12 @@ interface PulseDividerProps {
 
 export const PulseDivider: React.FC<PulseDividerProps> = ({
   className = '',
-  color = '#00D09C',
+  color = CSS_COLOUR.primary,
 }) => {
   return (
     <div className={`w-full flex items-center justify-center my-6 select-none ${className}`} aria-hidden="true">
       <div className="w-full flex items-center">
-        <div className="flex-1 h-[1px] bg-[#1e293b]" />
+        <div className="flex-1 h-[1px] bg-border" />
         <svg
           width="48"
           height="16"
@@ -29,7 +30,7 @@ export const PulseDivider: React.FC<PulseDividerProps> = ({
             style={{ filter: `drop-shadow(0 0 4px ${color})` }}
           />
         </svg>
-        <div className="flex-1 h-[1px] bg-[#1e293b]" />
+        <div className="flex-1 h-[1px] bg-border" />
       </div>
     </div>
   );

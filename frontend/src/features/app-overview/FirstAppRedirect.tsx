@@ -8,7 +8,7 @@ const NoApps: React.FC = () => {
   const navigate = useNavigate();
   return (
     <div className="py-8">
-      <EmptyState
+      <EmptyState headingLevel={2}
         title="No apps yet"
         description="Register an app to start collecting its reviews."
         actionLabel="Manage apps"

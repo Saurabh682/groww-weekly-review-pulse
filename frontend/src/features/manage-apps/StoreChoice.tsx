@@ -47,7 +47,7 @@ const Candidate: React.FC<CandidateProps> = ({ candidate }) => (
     <span className="min-w-0">
       <span className="block font-bold text-text-primary break-words">{candidate.title}</span>
       {candidate.developer && <span className="block text-text-secondary break-words">{candidate.developer}</span>}
-      <span className="block text-[11px] font-mono text-text-muted">{ratingText(candidate)}</span>
+      <span className="block text-2xs font-mono text-text-muted">{ratingText(candidate)}</span>
     </span>
   </>
 );

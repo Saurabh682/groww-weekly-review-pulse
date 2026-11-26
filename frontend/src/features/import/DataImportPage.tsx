@@ -7,6 +7,8 @@ import { Dropzone } from './Dropzone';
 import { Card } from '../../components/Card';
 import { Stat } from '../../components/Stat';
 import { Badge } from '../../components/Badge';
+import { Button } from '../../components/Button';
+import { Chip } from '../../components/Chip';
 import { Skeleton } from '../../components/Skeleton';
 import { Toast } from '../../components/Toast';
 import {
@@ -19,6 +21,22 @@ import {
   History,
 } from 'lucide-react';
 import { formatIndianNumber } from '../../lib/format';
+
+const SCENARIOS = [
+  { id: 'ok', label: 'Active' },
+  { id: 'empty', label: 'Empty State' },
+  { id: 'error', label: 'Schema Error' },
+  { id: 'low-coverage', label: 'Low Coverage' },
+] as const;
+
+const openScenario = (id: (typeof SCENARIOS)[number]['id']) => {
+  const params = new URLSearchParams(window.location.search);
+  if (id === 'ok') params.delete('scenario');
+  else params.set('scenario', id);
+  const query = params.toString();
+  window.history.pushState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+  window.location.reload();
+};
 
 export const DataImportPage: React.FC = () => {
   const { currentScenario } = useOutletContext<{ currentScenario: ScenarioType }>();
@@ -88,7 +106,6 @@ export const DataImportPage: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* 1. Header */}
       <div>
         <div className="flex items-center gap-3">
           <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-white">
@@ -99,77 +116,27 @@ export const DataImportPage: React.FC = () => {
           </Badge>
         </div>
         <p className="text-xs text-text-secondary mt-1 font-mono">
-          Review pipeline hygiene gates: Deduplication, $\le 8$ words & non-English filtering, and PII masking.
+          Review pipeline hygiene gates: Deduplication, ≤ 8 words & non-English filtering, and PII masking.
         </p>
       </div>
 
-      {/* 2. Scenario Switcher Tabs (Stitch Mobile Pattern) */}
-      <div className="flex items-center justify-between bg-[#162238] p-1 rounded-xl border border-[#2a3d5d] text-xs font-mono">
-        <button
-          onClick={() => {
-            const params = new URLSearchParams(window.location.search);
-            params.delete('scenario');
-            window.history.pushState({}, '', `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`);
-            window.location.reload();
-          }}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-center font-semibold transition-all ${
-            currentScenario === 'ok'
-              ? 'bg-primary text-[#0b111e] shadow-glow-teal-sm'
-              : 'text-text-muted hover:text-white'
-          }`}
-        >
-          Active
-        </button>
-        <button
-          onClick={() => {
-            const params = new URLSearchParams(window.location.search);
-            params.set('scenario', 'empty');
-            window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
-            window.location.reload();
-          }}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-center font-semibold transition-all ${
-            currentScenario === 'empty'
-              ? 'bg-primary text-[#0b111e] shadow-glow-teal-sm'
-              : 'text-text-muted hover:text-white'
-          }`}
-        >
-          Empty State
-        </button>
-        <button
-          onClick={() => {
-            const params = new URLSearchParams(window.location.search);
-            params.set('scenario', 'error');
-            window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
-            window.location.reload();
-          }}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-center font-semibold transition-all ${
-            currentScenario === 'error'
-              ? 'bg-primary text-[#0b111e] shadow-glow-teal-sm'
-              : 'text-text-muted hover:text-white'
-          }`}
-        >
-          Schema Error
-        </button>
-        <button
-          onClick={() => {
-            const params = new URLSearchParams(window.location.search);
-            params.set('scenario', 'low-coverage');
-            window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
-            window.location.reload();
-          }}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-center font-semibold transition-all ${
-            currentScenario === 'low-coverage'
-              ? 'bg-primary text-[#0b111e] shadow-glow-teal-sm'
-              : 'text-text-muted hover:text-white'
-          }`}
-        >
-          Low Coverage
-        </button>
+      <div className="flex items-center gap-1" role="group" aria-label="Sample scenario">
+        {SCENARIOS.map((scenario) => (
+          <Button
+            key={scenario.id}
+            size="sm"
+            variant={currentScenario === scenario.id ? 'primary' : 'ghost'}
+            aria-pressed={currentScenario === scenario.id}
+            onClick={() => openScenario(scenario.id)}
+            className="flex-1"
+          >
+            {scenario.label}
+          </Button>
+        ))}
       </div>
 
-      {/* 3. Four Health Metrics Stat Cards (2x2 on mobile, 4-col on desktop) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="p-3.5 sm:p-4 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
+        <Card padding="tight">
           <Stat
             label="Reviews Cleaned & Indexed"
             value={formatIndianNumber(summary?.imported || 0)}
@@ -178,7 +145,7 @@ export const DataImportPage: React.FC = () => {
           />
         </Card>
 
-        <Card className="p-3.5 sm:p-4 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
+        <Card padding="tight">
           <Stat
             label="Duplicates Pruned"
             value={formatIndianNumber(summary?.duplicatesRemoved || 0)}
@@ -187,7 +154,7 @@ export const DataImportPage: React.FC = () => {
           />
         </Card>
 
-        <Card className="p-3.5 sm:p-4 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
+        <Card padding="tight">
           <Stat
             label="Low-Info Excluded"
             value={formatIndianNumber(summary?.lowInfoExcluded || 0)}
@@ -196,38 +163,35 @@ export const DataImportPage: React.FC = () => {
           />
         </Card>
 
-        <Card className="p-3.5 sm:p-4 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
+        <Card padding="tight">
           <Stat
             label="PII Entities Redacted"
             value={formatIndianNumber(summary?.piiRedacted || 0)}
             subtext="Phones, emails, ref IDs"
-            icon={<ShieldCheck className="w-4 h-4 text-emerald-400" />}
+            icon={<ShieldCheck className="w-4 h-4 text-primary" />}
           />
         </Card>
       </div>
 
-      {/* Zero-PII Active Banner */}
-      <div className="p-3.5 rounded-xl bg-[#162238] border border-[#2a3d5d] flex items-start gap-2.5 text-xs text-text-secondary">
+      <Card padding="tight" className="flex items-start gap-2.5 text-xs text-text-secondary">
         <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <p className="leading-relaxed">
           <strong className="text-white font-medium">Zero-PII Active:</strong> Reviewer names and IDs ignored automatically at parser layer. Phone, PAN & Aadhaar masks enforced.
         </p>
-      </div>
+      </Card>
 
-      {/* 4. Dropzone for CSV / JSON Upload */}
       <Dropzone
         onFileUploaded={handleFileUpload}
         isUploading={isUploading}
       />
 
-      {/* 4. PulseWaveMini Weekly Coverage Strip */}
-      <Card className="p-6 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
+      <Card padding="roomy">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold font-display text-white">
+              <h2 className="text-sm font-bold font-display text-white">
                 12-Week Ingestion Volume Waveform
-              </h3>
+              </h2>
               <Badge variant={isLowCoverage ? 'amber' : 'teal'}>
                 {summary?.coverageWeeks} / 12 Weeks Covered
               </Badge>
@@ -249,7 +213,6 @@ export const DataImportPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Low Coverage Warning Banner */}
         {isLowCoverage && (
           <div className="mb-4 p-3 rounded-lg bg-friction-tint border border-friction-border text-friction-dark text-xs flex items-center gap-2 shadow-glow-amber">
             <AlertTriangle className="w-4 h-4 text-friction shrink-0" />
@@ -264,26 +227,24 @@ export const DataImportPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* 5. Ingestion History Table & Mobile Cards */}
-      <Card className="p-5 bg-[#162238]/90 border border-[#2a3d5d] shadow-card">
+      <Card>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-bold font-display text-white">
+            <h2 className="text-sm font-bold font-display text-white">
               Recent Batch Ingestion History
-            </h3>
+            </h2>
           </div>
-          <span className="text-[11px] font-mono text-text-muted">
+          <span className="text-2xs font-mono text-text-muted">
             {summary?.history?.length} Batches Synced
           </span>
         </div>
 
-        {/* Mobile View: Batch Cards (Stitch Mobile Pattern) */}
         <div className="md:hidden flex flex-col gap-2.5">
           {summary?.history?.map((item, idx) => (
             <div
               key={`mob-batch-${idx}`}
-              className="p-3 bg-[#0e1726] border border-[#1e293b] rounded-xl flex flex-col gap-2"
+              className="p-3 bg-sidebar border border-border rounded-xl flex flex-col gap-2"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -294,47 +255,45 @@ export const DataImportPage: React.FC = () => {
                     <div className="font-mono text-xs font-semibold text-white truncate">
                       {item.fileName}
                     </div>
-                    <div className="text-[10px] font-mono text-text-muted">
+                    <div className="text-3xs font-mono text-text-muted">
                       {item.date} • +{formatIndianNumber(item.rowsAdded)} rows
                     </div>
                   </div>
                 </div>
 
-                <span className="px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-[10px] font-mono font-semibold text-emerald-400 shrink-0">
-                  Ready for Pulse
-                </span>
+                <Chip variant="positive" size="sm" label="Ready for Pulse" className="shrink-0" />
               </div>
 
-              <div className="flex items-center justify-between pt-1 border-t border-[#1e293b]/60 text-[10px] font-mono text-text-muted">
+              <div className="flex items-center justify-between pt-1 border-t border-border/60 text-3xs font-mono text-text-muted">
                 <span className="flex items-center gap-1 text-primary">
                   <CheckCircle2 className="w-3 h-3" />
                   Sanitization Passed
                 </span>
-                <button
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => alert(`Audit log for ${item.fileName}:\n• Deduplication: Clean\n• Zero-PII: Passed\n• Rows indexed: ${item.rowsAdded}`)}
-                  className="px-2 py-0.5 rounded bg-[#162238] border border-[#2a3d5d] text-white hover:text-primary font-semibold transition-colors"
                 >
                   View Audit
-                </button>
+                </Button>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Desktop View: Data Table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-[#1e293b] bg-[#0e1726]/90 text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider">
+              <tr className="border-b border-border bg-sidebar/90 text-2xs font-mono font-bold text-text-muted uppercase tracking-wider">
                 <th className="py-2.5 px-3">Batch File Name</th>
                 <th className="py-2.5 px-3">Timestamp (IST)</th>
                 <th className="py-2.5 px-3 text-right">Reviews Added</th>
                 <th className="py-2.5 px-3 text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1e293b]">
+            <tbody className="divide-y divide-border">
               {summary?.history?.map((item, idx) => (
-                <tr key={idx} className="hover:bg-[#1b2a47]/60 transition-colors">
+                <tr key={idx} className="hover:bg-surface-elevated/60 transition-colors">
                   <td className="py-3 px-3 font-mono font-medium text-white flex items-center gap-2">
                     <FileText className="w-3.5 h-3.5 text-text-muted" />
                     {item.fileName}
@@ -346,10 +305,7 @@ export const DataImportPage: React.FC = () => {
                     +{formatIndianNumber(item.rowsAdded)}
                   </td>
                   <td className="py-3 px-3 text-right">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                      Cleaned & Stored
-                    </span>
+                    <Chip variant="positive" size="sm" icon={<CheckCircle2 className="w-3 h-3" />} label="Cleaned & Stored" />
                   </td>
                 </tr>
               ))}
@@ -358,7 +314,6 @@ export const DataImportPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Floating Toast Notification */}
       {toastMessage && (
         <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       )}

@@ -24,13 +24,13 @@ export const RunLogsModal: React.FC<RunLogsModalProps> = ({
       maxWidth="xl"
     >
       <div className="space-y-4">
-        <div className="p-3 bg-text-primary text-slate-200 rounded-lg font-mono text-[11px] leading-relaxed overflow-x-auto">
-          <div className="text-emerald-400 font-bold mb-1">
+        <div className="p-3 bg-text-primary text-text-primary rounded-lg font-mono text-2xs leading-relaxed overflow-x-auto">
+          <div className="text-primary font-bold mb-1">
             [PIPELINE ORCHESTRATOR] Initializing Groww Weekly Review Pulse Engine...
           </div>
           <div>Target week: Week of 09 Nov 2026</div>
           <div>Review Source: Google Play Store (AppId: com.nextbillion.groww)</div>
-          <div className="my-2 border-b border-slate-700" />
+          <div className="my-2 border-b border-border" />
 
           {stages.map((stage, idx) => {
             const isDone = stage.status === 'done';
@@ -44,18 +44,18 @@ export const RunLogsModal: React.FC<RunLogsModalProps> = ({
                   <span
                     className={
                       isDone
-                        ? 'text-emerald-400 font-bold'
+                        ? 'text-primary font-bold'
                         : isFailed
-                        ? 'text-rose-400 font-bold'
+                        ? 'text-critical-dark font-bold'
                         : isSkipped
-                        ? 'text-slate-500'
-                        : 'text-amber-400'
+                        ? 'text-text-muted'
+                        : 'text-friction-dark'
                     }
                   >
                     {stage.status.toUpperCase()}
                   </span>
                 </span>
-                <span className="text-slate-400 text-[10px]">
+                <span className="text-text-secondary text-3xs">
                   {stage.durationMs ? `${stage.durationMs}ms` : '-'}
                 </span>
               </div>
@@ -63,20 +63,19 @@ export const RunLogsModal: React.FC<RunLogsModalProps> = ({
           })}
 
           {error && (
-            <div className="mt-3 p-2 bg-rose-950/80 border border-rose-500/50 text-rose-200 rounded">
-              <span className="font-bold text-rose-400">[FATAL ERROR] </span>
+            <div className="mt-3 p-2 bg-critical-tint border border-critical-border text-critical-dark rounded">
+              <span className="font-bold text-critical-dark">[FATAL ERROR] </span>
               {error}
             </div>
           )}
 
-          <div className="mt-2 text-slate-400">
+          <div className="mt-2 text-text-secondary">
             {error
               ? 'Execution aborted at Stage 6 (Validate Gate). MCP delivery bypassed.'
               : 'Pipeline completed successfully. Google Doc published & Gmail draft staged.'}
           </div>
         </div>
 
-        {/* Stage details breakdown */}
         <div className="space-y-2">
           <div className="text-xs font-bold uppercase tracking-wider text-text-muted">
             Stage Health Check
@@ -97,7 +96,7 @@ export const RunLogsModal: React.FC<RunLogsModalProps> = ({
                   )}
                   <span className="font-medium text-text-primary truncate">{s.label}</span>
                 </div>
-                <span className="text-[11px] font-mono text-text-muted shrink-0">
+                <span className="text-2xs font-mono text-text-muted shrink-0">
                   {s.durationMs ? `${s.durationMs}ms` : '0ms'}
                 </span>
               </div>

@@ -74,7 +74,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         className={`relative border-2 border-dashed rounded-card p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${
           isDragOver
             ? 'border-primary bg-primary-tint/30 scale-[1.01] shadow-glow-teal-sm'
-            : 'border-[#2a3d5d] bg-[#162238]/60 hover:border-primary/50 hover:bg-[#162238]'
+            : 'border-border-subtle bg-surface/60 hover:border-primary/50 hover:bg-surface'
         }`}
       >
         <input
@@ -93,11 +93,11 @@ export const Dropzone: React.FC<DropzoneProps> = ({
           )}
         </div>
 
-        <h3 className="text-sm font-bold font-display text-white mb-1">
+        <h2 className="text-sm font-bold font-display text-white mb-1">
           {isUploading
             ? 'Processing and sanitizing reviews...'
             : 'Drop Google Play Store review export here, or browse'}
-        </h3>
+        </h2>
         <p className="text-xs text-text-secondary max-w-sm mb-4 leading-relaxed font-sans">
           Accepts CSV or JSON exports with review text, star ratings, and timestamps.
           Automatic hygiene filtering, deduplication, and PII anonymization will run immediately.
