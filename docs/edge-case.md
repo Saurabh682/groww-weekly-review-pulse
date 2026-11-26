@@ -585,6 +585,12 @@ AG should update this table and the affected tests whenever a decision changes.
 | HLP-03 | An app status is added or renamed | Help explains every status by its label | `test_HLP_03_explains_every_status` | U | P1 |
 | HLP-04 | Help is opened | Live app entries come before the sample page entries | `test_HLP_04_lists_live_app_entries_first` | I | P2 |
 | HLP-05 | A link in Help is followed | It leads to a page that uses it, not to a redirect | `test_HLP_05_links_lead_to_pages_that_use_them` | I | P2 |
+| HLP-06 | A note check changes (word cap, quote length, action length, grouping, short history) | Help's figures must change too | `test_HLP_06_matches_the_note_checks` | U | P1 |
+| HLP-07 | The theme ranking changes | Help's formula must change too | `test_HLP_07_matches_the_ranking` | U | P1 |
+| HLP-08 | Help describes publishing | It never says the system can send email, and the allowed tools include no send | `test_HLP_08_never_claims_the_system_can_send` | U | P0 |
+| HLP-09 | A Help topic is chosen | Every topic has entries and questions | `test_HLP_09_every_topic_has_entries` | U | P2 |
+| HLP-10 | A long question is opened on a phone | The whole question shows, and it reports open or closed | `test_HLP_10_shows_whole_questions` | I | P2 |
+| HLP-11 | The phone menu is used | It reaches Manage Apps | `test_HLP_11_phone_menu_reaches_manage_apps` | I | P1 |
 
 ## 26a. Deployment
 
