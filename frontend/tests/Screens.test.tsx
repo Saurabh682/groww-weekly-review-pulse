@@ -72,15 +72,15 @@ describe('Frontend Screens Suite', () => {
     expect(screen.getByText(/12-Week Ingestion Volume Waveform/i)).toBeInTheDocument();
   });
 
-  it('HelpPage renders app guide, core screens, invariants, and FAQ', async () => {
+  it('HelpPage renders features, sample scenarios and questions', async () => {
     renderWithRouter('/help');
 
     const helpHeading = await screen.findByRole('heading', { level: 1, name: 'App Guide & Knowledge Base' });
     expect(helpHeading).toBeInTheDocument();
 
-    expect(screen.getByText('The 4 Core Dashboard Screens')).toBeInTheDocument();
-    expect(screen.getByText('The Six Deterministic Invariant Checks')).toBeInTheDocument();
-    expect(screen.getByText('Mathematical Models & Formulas')).toBeInTheDocument();
-    expect(screen.getByText('Frequently Asked Questions')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Features and How They Work' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Sample Page Scenarios' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Frequently Asked Questions' })).toBeInTheDocument();
+    expect(screen.queryByText('The Six Deterministic Invariant Checks')).toBeNull();
   });
 });

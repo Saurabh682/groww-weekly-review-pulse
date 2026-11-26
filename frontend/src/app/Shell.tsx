@@ -42,8 +42,10 @@ const sideLink = (isActive: boolean) =>
       : 'text-text-secondary hover:text-white hover:bg-surface/60'
   }`;
 
+const MANAGE_ITEM = { to: '/manage', label: 'Manage Apps', icon: <ListChecks className={ICON} /> };
+
 const bottomLink = (isActive: boolean) =>
-  `flex flex-col items-center justify-center min-w-[64px] h-12 py-1 px-2 text-[10px] font-medium transition-all ${
+  `flex flex-col items-center justify-center min-w-[56px] h-12 py-1 px-2 text-[10px] font-medium transition-all ${
     isActive ? 'text-primary font-bold scale-105' : 'text-text-muted hover:text-white'
   }`;
 
@@ -104,9 +106,9 @@ export const Shell: React.FC = () => {
             {overviewItem.icon}
             <span className="font-medium">{overviewItem.label}</span>
           </NavLink>
-          <NavLink to="/manage" className={({ isActive }) => sideLink(isActive)}>
-            <ListChecks className={ICON} />
-            <span className="font-medium">Manage Apps</span>
+          <NavLink to={MANAGE_ITEM.to} className={({ isActive }) => sideLink(isActive)}>
+            {MANAGE_ITEM.icon}
+            <span className="font-medium">{MANAGE_ITEM.label}</span>
           </NavLink>
           <NavLink to="/help" className={({ isActive }) => sideLink(isActive)}>
             <HelpCircle className={ICON} />
@@ -225,7 +227,7 @@ export const Shell: React.FC = () => {
         aria-label="Mobile"
         className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface-dim/95 backdrop-blur-xl border-t border-border flex items-center justify-around z-40 px-1 pb-safe"
       >
-        {[overviewItem, ...SAMPLE_ITEMS].map((item) => (
+        {[overviewItem, MANAGE_ITEM, ...SAMPLE_ITEMS].map((item) => (
           <NavLink key={item.label} to={item.to} end={item.to === '/'} className={({ isActive }) => bottomLink(isActive)}>
             <div className="text-current mb-0.5">{item.icon}</div>
             <span className="font-mono tracking-tight leading-none text-center">{item.label}</span>
